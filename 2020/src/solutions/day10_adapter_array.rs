@@ -19,7 +19,7 @@ fn part1(input: &Vec<usize>) -> usize {
 }
 
 #[aoc(day10, part2)]
-fn part2(_input: &Vec<usize>) -> usize {
+fn part2(input: &Vec<usize>) -> usize {
     
     return 0;
 }

@@ -6,7 +6,7 @@ fn part1(input: &str) -> usize {
     // Count number of uniq non-whitespace chars for each group by putting them in a HashSet and getting the length
     // Sum across all groups
     return input.split("\r\n\r\n")
-        .map(|group| group.chars().filter(|c| !c.is_whitespace()).collect::<HashSet<char>>().len())
+        .map(|group| group.lines().flat_map(|l| l.chars()).collect::<HashSet<char>>().len())
         .sum();
 }
 

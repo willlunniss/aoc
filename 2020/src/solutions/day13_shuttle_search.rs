@@ -24,7 +24,7 @@ fn part1(input: &(f64, Vec<f64>)) -> usize {
 }
 
 #[aoc(day13, part2)]
-fn part2(_input: &(f64, Vec<f64>)) -> usize {
+fn part2(input: &(f64, Vec<f64>)) -> usize {
     
     return 0;
 }

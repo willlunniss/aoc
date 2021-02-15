@@ -102,11 +102,7 @@ pub fn promote_add(node: &Node) -> Node {
 
 #[aoc_generator(day18)]
 pub fn gen(input: &str) -> Vec<Node> {
-    let mut equations = Vec::new();
-    for line in input.lines() {
-        equations.push(Node::root(parse(&mut line.chars())));
-    }
-    return equations;
+    return input.lines().map(|line| Node::root(parse(&mut line.chars()))).collect();
 }
 
 #[aoc(day18, part1)]

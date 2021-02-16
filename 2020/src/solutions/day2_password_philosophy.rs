@@ -12,7 +12,7 @@ pub struct PasswordPolicy {
 impl FromStr for PasswordPolicy {
     type Err = Infallible;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // Decode the password and polcy of form
+        // Decode the password and policy of form
         // 1-3 a: abcde
         let (policy, password) = s.splitn(2, ": ").collect_tuple().unwrap();
         let (val1, val2, policy_char) = policy.splitn(3, &['-', ' '][..]).collect_tuple().unwrap();

@@ -48,7 +48,7 @@ fn execute_instr(program: &Vec<Instr>, state: &mut State) {
     }
 }
 
-/// Executes the supplied program until it ends or hits and infinate loop
+/// Executes the supplied program until it ends or hits and infinite loop
 /// Returns the final program state
 fn execute(program: &Vec<Instr>) -> State {    
     let mut state = State{pc: 0, acc: 0};
@@ -73,7 +73,7 @@ fn part2(input: &Vec<Instr>) -> isize {
     // Create a copy of the program so that we can try to correct it
     let mut program = input.to_vec();
     for idx in 0..program.len() {
-        // Loop through everying instruction and see if it's one we can swap (nop/jmp)
+        // Loop through everything instruction and see if it's one we can swap (nop/jmp)
         let instr = program[idx];        
         match instr.op {
             Op::Jmp => program[idx] = Instr{op: Op::Nop, value: instr.value},

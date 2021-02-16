@@ -33,8 +33,8 @@ impl Grid {
         self.points.iter().flatten().flatten().flatten().filter(|&x| *x == State::Active).count()
     }
 
-    /// Counts the active neighboughs in 3D space
-    pub fn active_neighboughs3(&self, point: Point) -> usize {
+    /// Counts the active neighbours in 3D space
+    pub fn active_neighbours3(&self, point: Point) -> usize {
         let mut count = 0;
         for z in point.z-1..=point.z+1 {
             for y in point.y-1..=point.y+1 {
@@ -49,8 +49,8 @@ impl Grid {
         return count;
     }
 
-    /// Counts the active neighboughs in 4D space
-    pub fn active_neighboughs4(&self, point: Point) -> usize {
+    /// Counts the active neighbours in 4D space
+    pub fn active_neighbours4(&self, point: Point) -> usize {
         let mut count = 0;
         for w in point.w-1..=point.w+1 {
             for z in point.z-1..=point.z+1 {
@@ -172,18 +172,18 @@ impl State {
     }
 
     /// Return the next state based on current state and the supplied
-    /// number of active neighboughs
-    pub fn cycle(&self, active_neighboughs: usize) -> State {
+    /// number of active neighbours
+    pub fn cycle(&self, active_neighbours: usize) -> State {
         match self {
             State::Active => {
-                if active_neighboughs == 2 || active_neighboughs == 3 {
+                if active_neighbours == 2 || active_neighbours == 3 {
                     State::Active
                 } else {
                     State::Inactive
                 }
             },
             State::Inactive => {
-                if active_neighboughs == 3 {
+                if active_neighbours == 3 {
                     State::Active
                 } else {
                     State::Inactive
@@ -197,15 +197,15 @@ impl State {
 pub fn gen(input: &str) -> Grid {    
     // Assumption: The we get an NxN slice to start
     // Assumption: We won't simulate for more than 6 cycles and we won't grow
-    // by more than 1 per cycle in EACH direction so can set overal size to N + 12
+    // by more than 1 per cycle in EACH direction so can set overall size to N + 12
     let start_size = input.lines().next().unwrap().len();
     let offset = start_size as isize / 2;
     let mut grid = Grid::new(start_size + 12);
     for (y, line) in input.lines().enumerate() {
-        let y_centered = y as isize - offset;
+        let y_centred = y as isize - offset;
         for (x, state) in line.chars().enumerate() {
-            let x_centered = x as isize - offset;
-            grid.set(Point::new2(x_centered, y_centered), State::new(state));
+            let x_centred = x as isize - offset;
+            grid.set(Point::new2(x_centred, y_centred), State::new(state));
         }
     }
 
@@ -220,7 +220,7 @@ fn part1(input: &Grid) -> usize {
     for _cycle in 1..=6 {
         std::mem::swap(&mut next, &mut current);
         for point in current.explore3() {
-            let count = current.active_neighboughs3(point);
+            let count = current.active_neighbours3(point);
             next.set(point, current.get(point).cycle(count));
         }
     }
@@ -234,7 +234,7 @@ fn part2(input: &Grid) -> usize {
     for _cycle in 1..=6 {
         std::mem::swap(&mut next, &mut current);
         for point in current.explore4() {
-            let count = current.active_neighboughs4(point);
+            let count = current.active_neighbours4(point);
             next.set(point, current.get(point).cycle(count));
         }
     }

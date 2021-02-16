@@ -59,7 +59,7 @@ pub fn operate(op: &Operator, a: usize, b: usize) -> usize {
 }
 
 /// Evaluates the equation left to right
-pub fn evaulate(node: &Node) -> usize {
+pub fn evaluate(node: &Node) -> usize {
     let mut result = 0;
     let mut op : Operator = Operator::Add;
     for child in &node.children {
@@ -67,7 +67,7 @@ pub fn evaulate(node: &Node) -> usize {
             Token::Num(value) => { result = operate(&op, result, value) },
             Token::Add => { op = Operator::Add },
             Token::Mult => { op = Operator::Mult },
-            Token::Paren => { result = operate(&op, result, evaulate(&child)) }
+            Token::Paren => { result = operate(&op, result, evaluate(&child)) }
             _ => { panic!("Unexpected child {:?}", child.entry) }
         }
     }
@@ -75,7 +75,7 @@ pub fn evaulate(node: &Node) -> usize {
 }
 
 /// Transforms the equation such that addition has higher
-/// precendence by wrappinng them in parens
+/// precedence by wrapping them in parens
 pub fn promote_add(node: &Node) -> Node {
     let mut it = node.children.iter().peekable();
     let mut new = Node { children: Vec::new(), entry: node.entry.clone() };
@@ -107,10 +107,10 @@ pub fn gen(input: &str) -> Vec<Node> {
 
 #[aoc(day18, part1)]
 fn part1(input: &Vec<Node>) -> usize {
-    return input.iter().map(|e| evaulate(e)).sum();
+    return input.iter().map(|e| evaluate(e)).sum();
 }
 
 #[aoc(day18, part2)]
 fn part2(input: &Vec<Node>) -> usize {
-    return input.iter().map(|e| evaulate(&promote_add(e))).sum();
+    return input.iter().map(|e| evaluate(&promote_add(e))).sum();
 }

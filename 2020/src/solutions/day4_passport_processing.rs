@@ -11,7 +11,7 @@ lazy_static! {
 }
 
 fn has_required(data: &HashMap<&str, &str>) -> bool {
-    // Check all required fields (don't requir cid)
+    // Check all required fields (don't require cid)
     let required_fields = ["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"];
     for required in required_fields.iter() {
         if !data.contains_key(required) {
@@ -70,7 +70,7 @@ fn is_valid(key: &str, value: &str) -> bool {
 }
 
 fn all_valid(data: &HashMap<&str, &str>) -> bool {
-    // Check all required fields (don't requir cid)
+    // Check all required fields (don't require cid)
     if !has_required(data) {
         return false;
     }

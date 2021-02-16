@@ -14,7 +14,7 @@ fn traverse_slope(input: &str, right: usize, down: usize) -> i64 {
     let mut trees = 0;
     for row in input.lines() {
         let width = row.len();
-        // Only check if we have moved over onto an exact integrer position (for when we move down more than 1 per move)
+        // Only check if we have moved over onto an exact integer position (for when we move down more than 1 per move)
         if x.fract() == 0.0 && row.chars().nth(x as usize % width).unwrap() == '#' {
             trees += 1;
         }

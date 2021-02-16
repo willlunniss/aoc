@@ -6,32 +6,34 @@ pub fn gen(input: &str) -> Vec<usize> {
 }
 
 fn find_nth_number(input: &Vec<usize>, n: usize) -> usize {    
-    let mut last_occurances : HashMap<usize, usize> = HashMap::new();
+    // TODO This is very slow with a large n, could optimise for speed by using a massive vector
+    // with number for each entry instead at the expense of lots of RAM
+    let mut last_occurrences : HashMap<usize, usize> = HashMap::new();
     let mut last_number;
     // Record starting numbers
     for (index, value) in input.iter().enumerate() {
-        last_occurances.insert(*value, index + 1);
+        last_occurrences.insert(*value, index + 1);
     }
-    // Fetch the last and then remove it (will be add at the end of the first loop itteration)
+    // Fetch the last and then remove it (will be add at the end of the first loop iteration)
     last_number = *input.last().unwrap();
-    last_occurances.remove(&last_number);
+    last_occurrences.remove(&last_number);
     // Now play the memory game until turn n
     let mut turn = input.len() + 1;
     while turn <= n {
         // Find when we last said the last number before the last turn
-        let last_occurance = last_occurances.get(&last_number);
+        let last_occurrence = last_occurrences.get(&last_number);
         let next_number;
-        if last_occurance.is_some() {
+        if last_occurrence.is_some() {
             // We have seen this number before the last turn
             // New value is diff between this turn and when we saw it previously
-            next_number = turn - 1 - last_occurance.unwrap();
+            next_number = turn - 1 - last_occurrence.unwrap();
         } else {
             // Not seen before the last turn
             // New value is 0
             next_number = 0;
         }
-        // Now update the last occurance from the previous iteration
-        last_occurances.insert(last_number, turn - 1);
+        // Now update the last occurrence from the previous iteration
+        last_occurrences.insert(last_number, turn - 1);
         // And then assign next to last and increment the turn
         last_number = next_number;
         turn += 1;

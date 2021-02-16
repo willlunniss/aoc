@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use regex::Regex;
 
-/// Recurisvely find all the bag that can ultimately contain the supplied bag
+/// Recursively find all the bag that can ultimately contain the supplied bag
 fn resolve_containers(mappings: &HashMap<&str, HashSet<&str>>, bag: &str, solutions: &mut HashSet<String>) {
     let containers = mappings.get(bag).unwrap();
     for container in containers.iter() {

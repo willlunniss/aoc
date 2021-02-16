@@ -30,7 +30,7 @@ fn part2(input: &Vec<usize>) -> usize {
     let preamble = 25;
     let target = find_invalid(input, preamble);
     
-    // Now find a continguous set of 2+ numbers that adds up to the target
+    // Now find a contiguous set of 2+ numbers that adds up to the target
     for i in 0 .. input.len() {
         let mut total = 0;
         for n in i .. input.len() {

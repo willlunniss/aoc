@@ -138,21 +138,21 @@ fn part2(input: &TicketData) -> usize {
         }
     }
     
-    // Now repeatidly pass over the options until each filed only has one possibility
+    // Now repeatedly pass over the options until each filed only has one possibility
     // (Find the fields with only one option and remove that option from others, and repeat...)
     let mut resolved_field_names : Vec<String> = vec!["?".to_string(); input.ticket.len()];
     loop {
         let mut single_options = HashSet::new();
-        for (index, possible_fileds) in possibilities.iter().enumerate() {
-            if possible_fileds.len() == 1 {
+        for (index, possible_fields) in possibilities.iter().enumerate() {
+            if possible_fields.len() == 1 {
                 // This field only has one option so we know it needs to be this
-                let rule = possible_fileds.keys().next().unwrap();
+                let rule = possible_fields.keys().next().unwrap();
                 resolved_field_names[index] = rule.to_string();
                 single_options.insert(rule.to_string());
             }
         }
         if single_options.is_empty() {
-            // Can't do anthing more
+            // Can't do anything more
             break;
         } else {
             // Remove the possible fields from ones with > 1
@@ -164,11 +164,11 @@ fn part2(input: &TicketData) -> usize {
         }
     }
     // Now finally multiply all of the departure field values
-    let mut depature_fields_multiplied = 1;
+    let mut departure_fields_multiplied = 1;
     for (index, name) in resolved_field_names.iter().enumerate() {
         if name.starts_with("departure") {
-            depature_fields_multiplied *= &input.ticket[index];
+            departure_fields_multiplied *= &input.ticket[index];
         }
     }
-    return depature_fields_multiplied;
+    return departure_fields_multiplied;
 }

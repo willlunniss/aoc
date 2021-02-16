@@ -71,7 +71,7 @@ fn get_mask_bits_values(mask: &str) -> Vec<(usize, char)> {
     let mut result = Vec::new();
     for (index, value) in mask.char_indices().rev() {
         // Calculate the value of the bit
-        // As we get the chars in revese we then need to re-revese the index
+        // As we get the chars in reverse we then need to re-reverse the index
         let bit_value = 2i64.pow((mask.len() - index - 1) as u32);
         result.push((bit_value as usize, value));
     }

@@ -20,7 +20,7 @@ impl fmt::Debug for State {
 
 #[derive(PartialEq, Clone, Copy)]
 enum Mode {
-    ImediateNeighbough,
+    ImmediateNeighbour,
     FirstVisibleSeat
 }
 
@@ -77,13 +77,13 @@ fn occupied_seats_from_pos(input: &Vec<Vec<State>>, pos: (usize, usize), mode: M
     for angle in angles() {
         let mut range = 1;
         loop {
-            let neighbough = get_pos(height, width, pos, angle, range);
-            if neighbough == None {
+            let neighbour = get_pos(height, width, pos, angle, range);
+            if neighbour == None {
                 // Reached edge of grid, move to next angle
                 break;
             } else {
                 // See if there is a seat here
-                let (y, x) = neighbough.unwrap();
+                let (y, x) = neighbour.unwrap();
                 let state = input[y][x];
                 if state == State::Floor && mode == Mode::FirstVisibleSeat {
                     // No seat and using first visible, increase range and try again
@@ -117,7 +117,7 @@ fn count_occupied(input: &Vec<Vec<State>>) -> usize {
 
 
 fn simulate_seating(input: &Vec<Vec<State>>, occupied_limit: usize, mode: Mode) -> Vec<Vec<State>> {
-    // Create two copies as we need to apply state changes simultainiously to all positions
+    // Create two copies as we need to apply state changes simultaneously to all positions
     let mut previous : Vec<Vec<State>> = input.clone();
     let mut next : Vec<Vec<State>> = input.clone();
 
@@ -150,7 +150,7 @@ fn simulate_seating(input: &Vec<Vec<State>>, occupied_limit: usize, mode: Mode) 
 
 #[aoc(day11, part1)]
 fn part1(input: &Vec<Vec<State>>) -> usize {
-    let layout = simulate_seating(input, 4, Mode::ImediateNeighbough);    
+    let layout = simulate_seating(input, 4, Mode::ImmediateNeighbour);    
     return count_occupied(&layout);
 }
 

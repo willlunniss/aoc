@@ -3,10 +3,8 @@ name: "2020"
 on:
   push:
     branches: [ master ]
-    paths: [ 2020/ ]
   pull_request:
     branches: [ master ]
-    paths: [ 2020/ ]
 
 env:
   CARGO_TERM_COLOR: always

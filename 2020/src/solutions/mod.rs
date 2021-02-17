@@ -17,3 +17,4 @@ pub mod day16_ticket_translation;
 pub mod day17_conway_cubes;
 pub mod day18_operation_order;
 pub mod day19_monster_messages;
+pub mod day20_jurassic_jigsaw;

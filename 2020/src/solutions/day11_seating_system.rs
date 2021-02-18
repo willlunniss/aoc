@@ -5,7 +5,6 @@ pub enum State {
     Empty,
     Occupied,
     Floor,
-    Error,
 }
 
 impl fmt::Debug for State {
@@ -25,13 +24,15 @@ enum Mode {
 }
 
 
-// TODO: Implement as a trait
-fn to_state(c: char) -> State {
-    match c {
-        'L' => State::Empty,
-        '#' => State::Occupied,
-        '.' => State::Floor,
-        _ => State::Error,
+impl State {
+    /// Create a new State from a char
+    pub fn new(c: char) -> State {
+        match c {
+            'L' => State::Empty,
+            '#' => State::Occupied,
+            '.' => State::Floor,
+            _ => { panic!("Unexpected state '{}'", c) }
+        }
     }
 }
 
@@ -41,7 +42,7 @@ pub fn gen(input: &str) -> Vec<Vec<State>> {
     let mut data : Vec<Vec<State>> = Vec::new();
 
     for line in input.lines() {
-        let row = line.chars().map(|x| to_state(x)).collect::<Vec<State>>();
+        let row = line.chars().map(|x| State::new(x)).collect::<Vec<State>>();
         data.push(row);
     }
     return data;

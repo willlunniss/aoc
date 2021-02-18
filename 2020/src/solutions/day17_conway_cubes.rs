@@ -162,7 +162,7 @@ impl fmt::Debug for State {
 }
 
 impl State {
-    /// Create a new start from a char
+    /// Create a new State from a char
     pub fn new(c: char) -> State {
         match c {
             '#' => State::Active,

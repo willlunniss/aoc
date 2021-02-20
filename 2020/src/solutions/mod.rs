@@ -20,3 +20,4 @@ pub mod day19_monster_messages;
 pub mod day20_jurassic_jigsaw;
 pub mod day21_allergen_assessment;
 pub mod day22_crab_combat;
+pub mod day23_crab_cups;

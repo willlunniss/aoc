@@ -17,9 +17,8 @@ impl CrabCups {
         return None;
     }
 
-    /// Plays the game for the specified number of moves and returns
-    /// the final ordering of cups after cup 1
-    pub fn play(&mut self, moves: usize) -> String {
+    /// Plays the game for the specified number of moves
+    pub fn play(&mut self, moves: usize) {
         // Make a note of lowest and highest for later
         let lowest = self.cups.iter().min().unwrap().clone();
         let highest = self.cups.iter().max().unwrap().clone();
@@ -48,13 +47,6 @@ impl CrabCups {
             // Advance the current cup by 1
             self.cups.rotate_left(1);
         }
-
-        // Find the index of cup 1 and rotate round to it
-        let index = self.find_cup_index(1);
-        let mut final_cups = self.cups.clone();
-        final_cups.rotate_left(index.unwrap());
-        // Skip cup 1 and then collect the other cups' labels clockwise into a single string
-        return final_cups.iter().skip(1).map(|c| c.to_string()).collect::<Vec<String>>().concat();
     }
 }
 
@@ -66,11 +58,35 @@ pub fn gen(input: &str) -> CrabCups {
 #[aoc(day23, part1)]
 fn part1(input: &CrabCups) -> String {
     let mut game = input.clone();
-    return game.play(100);
+    // Play for 100 turns
+    game.play(100);
+
+    // Find the index of cup 1 and rotate round to it
+    let index = game.find_cup_index(1);
+    game.cups.rotate_left(index.unwrap());
+    // Skip cup 1 and then collect the other cups' labels clockwise into a single string
+    return game.cups.iter().skip(1).map(|c| c.to_string()).collect::<Vec<String>>().concat();
 }
 
 #[aoc(day23, part2)]
 fn part2(input: &CrabCups) -> usize {
+    let highest = input.cups.iter().max().unwrap().clone();
+    let mut cups = VecDeque::with_capacity(1000000);
+    input.cups.iter().for_each(|cup| cups.push_back(*cup));
+    // Add cups starting from highest until we have 1 million
+    for cup in highest + 1 ..=1000000 {
+        cups.push_back(cup);
+    }
+    // Build a new game from our very big list of cups!
+    let mut game = CrabCups { cups: cups };
+    // Play for 10 million turns
+    // TODO: Need to optimise solution as this is incredibly slow
+    game.play(10000000);
     
-    return 0;
+    // Find the index of cup 1 and rotate round to it
+    let index = game.find_cup_index(1);
+    game.cups.rotate_left(index.unwrap());
+
+    // Get the next two cups after cup 1 and multiply their values
+    return game.cups.get(1).unwrap() * game.cups.get(2).unwrap();
 }

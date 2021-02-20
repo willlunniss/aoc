@@ -33,7 +33,7 @@ impl Node {
     }
 }
 
-/// Parses a String as a char iterator into a nested vector of nodes
+/// Recursively parses a String as a char iterator into a nested vector of nodes
 pub fn parse(iter: &mut std::str::Chars<'_>) -> Vec<Node> {
     let mut nodes = Vec::new();
     while let Some(c) = iter.next() {
@@ -58,7 +58,7 @@ pub fn operate(op: &Operator, a: usize, b: usize) -> usize {
     }
 }
 
-/// Evaluates the equation left to right
+/// Evaluates the equation left to right (recursing down into parens as needed)
 pub fn evaluate(node: &Node) -> usize {
     let mut result = 0;
     let mut op : Operator = Operator::Add;
@@ -79,6 +79,7 @@ pub fn evaluate(node: &Node) -> usize {
 pub fn promote_add(node: &Node) -> Node {
     let mut it = node.children.iter().peekable();
     let mut new = Node { children: Vec::new(), entry: node.entry.clone() };
+    // If the node has children process them
     while let Some(child) = it.next() {
         if let Some(next) = it.peek() {
             if next.entry == Token::Add {

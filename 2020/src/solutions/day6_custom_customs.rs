@@ -3,7 +3,7 @@ use std::collections::HashSet;
 #[aoc(day6, part1)]
 fn part1(input: &str) -> usize {
     // Split into groups based on empty lines
-    // Count number of uniq non-whitespace chars for each group by putting them in a HashSet and getting the length
+    // Count number of chars in each line for each group by putting them in a HashSet and getting the length
     // Sum across all groups
     return input.split("\r\n\r\n")
         .map(|group| group.lines().flat_map(|l| l.chars()).collect::<HashSet<char>>().len())

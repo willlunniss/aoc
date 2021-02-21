@@ -22,3 +22,4 @@ pub mod day21_allergen_assessment;
 pub mod day22_crab_combat;
 pub mod day23_crab_cups;
 pub mod day24_lobby_layout;
+pub mod day25_combo_breaker;

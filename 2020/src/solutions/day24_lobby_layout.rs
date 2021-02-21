@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::convert::Infallible;
+use lazy_static::lazy_static;
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum Direction {
@@ -66,6 +67,11 @@ pub struct CubeCoordinate {
     z: isize
 }
 
+lazy_static! {
+    static ref NEIGHBOURS: Vec<CubeCoordinate> = [Direction::E,Direction::SE,Direction::SW,Direction::W,Direction::NW,Direction::NE]
+        .to_vec().iter().map(|d| CubeCoordinate::new(d)).collect();
+}
+
 impl CubeCoordinate {
     /// Creates a new coordinate from a direction
     pub fn new(direction: &Direction) -> CubeCoordinate {
@@ -80,6 +86,10 @@ impl CubeCoordinate {
         }
     }
 
+    pub fn neighbours(&self) -> Vec<CubeCoordinate> {
+        return NEIGHBOURS.iter().map(|n| CubeCoordinate{x: self.x + n.x, y: self.y + n.y, z: self.z + n.z}).collect();
+    }
+
     pub fn origin() -> CubeCoordinate {
         CubeCoordinate{x: 0, y: 0, z: 0}
     }
@@ -90,6 +100,23 @@ impl CubeCoordinate {
     }
 }
 
+/// Gets the next state for a tile
+pub fn next_state(tiles: &HashMap<CubeCoordinate, bool>, tile: &CubeCoordinate) -> bool {
+    let mut flipped_neighbours = 0;
+    for n in tile.neighbours() {
+        if *tiles.get(&n).unwrap_or(&false) {
+            flipped_neighbours += 1;
+        }
+    }
+    return if *tiles.get(&tile).unwrap_or(&false) {
+        // Leave flipped if only 1/2 neighbour is flipped
+        flipped_neighbours == 1 || flipped_neighbours == 2
+    } else {
+        // Flip if 2 neighbours are flipped
+        flipped_neighbours == 2
+    };
+}
+
 #[aoc_generator(day24)]
 pub fn gen(input: &str) -> Vec<CubeCoordinate> {
     return input.lines().map(|s| s.parse::<DirectionList>().unwrap().resolve()).collect();
@@ -97,21 +124,42 @@ pub fn gen(input: &str) -> Vec<CubeCoordinate> {
 
 #[aoc(day24, part1)]
 fn part1(input: &Vec<CubeCoordinate>) -> usize {
-    let mut states : HashMap<&CubeCoordinate, bool> = HashMap::new();
+    let mut tiles : HashMap<CubeCoordinate, bool> = HashMap::new();
     for tile in input {
         // For each referenced tile, get it's state (defaulting to not flipped)
-        let state = states.entry(tile).or_default();
+        let flipped = tiles.entry(tile.clone()).or_default();
         // and then flip it
-        *state ^= true;
+        *flipped ^= true;
     }
     // Count tiles which end in the flipped state
-    return states.values().filter(|state| **state).collect::<Vec<_>>().len();
+    return tiles.values().filter(|flipped| **flipped).collect::<Vec<_>>().len();
 }
 
 #[aoc(day24, part2)]
-fn part2(input: &Vec<CubeCoordinate>) -> usize {
-    
-    return 0;
+fn part2(input: &Vec<CubeCoordinate>) -> usize {    
+    let mut tiles : HashMap<CubeCoordinate, bool> = HashMap::new();
+    for tile in input {
+        // For each referenced tile, get it's state (defaulting to not flipped)
+        let flipped = tiles.entry(tile.clone()).or_default();
+        // and then flip it
+        *flipped ^= true;
+    }
+    // Now do 100 passes flipping the tiles according to the rules
+    for _ in 1..=100 {
+        let mut next : HashMap<CubeCoordinate, bool> = HashMap::new();
+        for tile in tiles.keys() {
+            next.insert(tile.clone(), next_state(&tiles, &tile));
+            // Now check it's neighbours (as the grid will keep expanding)
+            for neighbour in tile.neighbours() {
+                if !next.contains_key(&neighbour) {
+                    next.insert(neighbour.clone(), next_state(&tiles, &neighbour));
+                }
+            }
+        }
+        std::mem::swap(&mut next, &mut tiles);
+    }
+    // Count tiles which end in the flipped state
+    return tiles.values().filter(|flipped| **flipped).collect::<Vec<_>>().len();
 }
 
 #[cfg(test)]

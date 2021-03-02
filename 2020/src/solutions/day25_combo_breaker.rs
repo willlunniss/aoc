@@ -36,9 +36,3 @@ fn part1(input: &(usize, usize)) -> usize {
     let card_loop_size = find_loop_size(7, card_public_key);
     return transform(door_public_key, card_loop_size);
 }
-
-#[aoc(day25, part2)]
-fn part2(input: &(usize, usize)) -> usize {
-    
-    return 0;
-}

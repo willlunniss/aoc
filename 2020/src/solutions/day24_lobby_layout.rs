@@ -151,6 +151,7 @@ fn part2(input: &Vec<CubeCoordinate>) -> usize {
             next.insert(tile.clone(), next_state(&tiles, &tile));
             // Now check it's neighbours (as the grid will keep expanding)
             for neighbour in tile.neighbours() {
+                // If we haven't already computed the next state for this neighbour then do it now
                 if !next.contains_key(&neighbour) {
                     next.insert(neighbour.clone(), next_state(&tiles, &neighbour));
                 }

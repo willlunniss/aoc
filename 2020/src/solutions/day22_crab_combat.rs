@@ -12,6 +12,7 @@ impl FromStr for Player {
     type Err = Infallible;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         return Ok(Player {
+            // Read in the player's cards (skip the first line which is the Player ID)
             deck: s.lines().skip(1).map(|card| card.parse::<usize>().unwrap()).collect::<VecDeque<usize>>(),
         });
     }
@@ -41,8 +42,8 @@ impl Game {
     pub fn new_sub_game(&self, deck_sizes: [usize; 2]) -> Game {
         Game {
             players: [
-                Player{ deck: self.players[0].copy_deck(deck_sizes[0])},
-                Player{ deck: self.players[1].copy_deck(deck_sizes[1])},            
+                Player{ deck: self.players[0].copy_deck(deck_sizes[0]) },
+                Player{ deck: self.players[1].copy_deck(deck_sizes[1]) },
             ].to_vec()
         }
     }

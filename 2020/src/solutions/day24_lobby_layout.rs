@@ -109,7 +109,7 @@ pub fn next_state(tiles: &HashMap<CubeCoordinate, bool>, tile: &CubeCoordinate) 
         }
     }
     return if *tiles.get(&tile).unwrap_or(&false) {
-        // Leave flipped if only 1/2 neighbour is flipped
+        // Leave flipped if only 1 or 2 neighbour are flipped
         flipped_neighbours == 1 || flipped_neighbours == 2
     } else {
         // Flip if 2 neighbours are flipped
@@ -147,9 +147,12 @@ fn part2(input: &Vec<CubeCoordinate>) -> usize {
     // Now do 100 passes flipping the tiles according to the rules
     for _ in 1..=100 {
         let mut next : HashMap<CubeCoordinate, bool> = HashMap::new();
+        // First check states for all existing tiles
         for tile in tiles.keys() {
             next.insert(tile.clone(), next_state(&tiles, &tile));
-            // Now check it's neighbours (as the grid will keep expanding)
+        }
+        // Now check neighbours (as the grid will keep expanding)
+        for tile in tiles.keys() {
             for neighbour in tile.neighbours() {
                 // If we haven't already computed the next state for this neighbour then do it now
                 if !next.contains_key(&neighbour) {

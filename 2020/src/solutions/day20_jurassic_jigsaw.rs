@@ -50,7 +50,7 @@ impl FromStr for Tile {
         edges[3] = left.into_iter().rev().collect();
         edges[1] = right.into_iter().collect();
 
-        // And the finally read in the actual image data (by discarding edges)
+        // And then finally read in the actual image data (by discarding edges)
         let tile_size = 8;
         let data = s.lines().skip(1+1).take(tile_size).map(|line| line.chars().skip(1).take(tile_size).collect::<Vec<char>>()).collect();
 

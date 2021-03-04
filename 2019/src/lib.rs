@@ -4,5 +4,6 @@ extern crate aoc_runner;
 extern crate aoc_runner_derive;
 
 pub mod solutions;
+pub mod intcode;
 
 aoc_lib! { year = 2019 }

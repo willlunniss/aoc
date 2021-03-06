@@ -18,10 +18,11 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      manifest: ${{ matrix.year }}/Cargo.toml
+
     steps:
     - uses: actions/checkout@v2
-      env:
-        manifest: ${{ matrix.year }}/Cargo.toml
     - name: Build
       run: cargo build --manifest-path=$manifest
     - name: Run tests

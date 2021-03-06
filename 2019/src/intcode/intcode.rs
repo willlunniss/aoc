@@ -26,6 +26,7 @@ pub struct Intcode {
 /// Result of executing an instruction
 enum Result {
     SetIP(usize),
+    InputRequired,
     Exit,
 }
 
@@ -33,7 +34,7 @@ enum Result {
 #[derive(Debug, PartialEq)]
 enum Op {
     Add,
-    Mult,
+    Multiply,
     Input,
     Output,
     JumpIfTrue,
@@ -49,7 +50,7 @@ impl Op {
         use Op::*;
         match opcode {
             1 => Add,
-            2 => Mult,
+            2 => Multiply,
             3 => Input,
             4 => Output,
             5 => JumpIfTrue,
@@ -66,7 +67,7 @@ impl Op {
         use Op::*;
         match self {
             Add => Intcode::instr_1_add,
-            Mult => Intcode::instr_2_mult,
+            Multiply => Intcode::instr_2_multiply,
             Input => Intcode::instr_3_input,
             Output => Intcode::instr_4_output,
             JumpIfTrue => Intcode::instr_5_jump_if_true,
@@ -81,7 +82,7 @@ impl Op {
     fn params(&self) -> usize {
         use Op::*;
         match self {
-            Add | Mult => 3,
+            Add | Multiply => 3,
             Input | Output => 1,
             JumpIfTrue | JumpIfFalse => 2,
             LessThan | Equals => 3,
@@ -93,7 +94,7 @@ impl Op {
     fn output_param(&self) -> Option<usize> {
         use Op::*;
         match self {
-            Add | Mult => Some(2),
+            Add | Multiply => Some(2),
             Input => Some(0),
             LessThan | Equals => Some(2),
             _ => None,
@@ -141,12 +142,15 @@ impl Intcode {
         return self.mem[addr];
     }
 
-    /// Runs the loaded program until completion
-    pub fn run(&mut self) {
+    /// Runs the loaded program until completion (returns true)
+    /// or it is blocked on an input (returns false)
+    /// (In which case an input should be supplied and run should be called again to resume)
+    pub fn run(&mut self) -> bool {
         loop {
             match self.execute(self.ip) {
-                Result::Exit => return,
                 Result::SetIP(ip) => self.ip = ip,
+                Result::InputRequired => return false,
+                Result::Exit => return true,
             }
         }
     }
@@ -215,8 +219,8 @@ impl Intcode {
     }
 
     /// Gets the next available input
-    fn input(&mut self) -> isize {
-        return self.inputs.pop_front().unwrap();
+    fn input(&mut self) -> Option<isize> {
+        return self.inputs.pop_front();
     }
 
     /// Outputs the supplied value
@@ -231,15 +235,25 @@ impl Intcode {
     }
 
     /// Sets the 3rd parameter to the 1st multiplied by the 2nd
-    fn instr_2_mult(&mut self, _: usize, params: Vec<isize>) -> Option<Result> {
+    fn instr_2_multiply(&mut self, _: usize, params: Vec<isize>) -> Option<Result> {
         self.mem[params[2] as usize] = params[0] * params[1];
         return None;
     }
 
     /// Fetches an input and stores it in the 1st parameter
+    /// If no input is available returns InputRequired so that one can
+    /// be provided before resuming
     fn instr_3_input(&mut self, _: usize, params: Vec<isize>) -> Option<Result> {
-        self.mem[params[0] as usize] = self.input();
-        return None;
+        if let Some(value) = self.input() {
+            // Input value is available, write it to memory
+            self.mem[params[0] as usize] = value;
+            return None;
+        } else {
+            // No input available
+            // The IP will not get updated so that next time run() is called
+            // the program will be resumed and this instruction will be re-tried
+            return Some(Result::InputRequired);
+        }
     }
 
     /// Outputs the 1st parameter
@@ -325,7 +339,7 @@ mod tests {
         assert_eq!(Intcode::decode(2).param_modes, [0, 0, 1]);
         assert_eq!(Intcode::decode(99).param_modes, [0, 0, 0]);
         assert_eq!(Intcode::decode(1002).param_modes, [0, 1, 1]);
-        assert_eq!(Intcode::decode(1002).op, Op::Mult);
+        assert_eq!(Intcode::decode(1002).op, Op::Multiply);
     }
 
     #[test]

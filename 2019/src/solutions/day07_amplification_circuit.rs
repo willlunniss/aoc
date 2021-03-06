@@ -6,7 +6,7 @@ fn run_chained_amps(program: &Vec<isize>, phases: &Vec<&usize>, feedback: bool) 
     let mut amps = Vec::new();
     for phase in phases {
         // Create a new Amplifier instance
-        let mut amp = Intcode::new(program);
+        let mut amp = Intcode::new(program.clone());
         // Configure with the phase
         amp.inputs().push_back(**phase as isize);
         // Add to our list of amps

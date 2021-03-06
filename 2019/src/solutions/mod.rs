@@ -6,3 +6,4 @@ pub mod day05_sunny_with_a_chance_of_rain;
 pub mod day06_universal_orbit_map;
 pub mod day07_amplification_circuit;
 pub mod day08_space_image_format;
+pub mod day09_sensor_boost;

@@ -1,4 +1,4 @@
-name: "2020"
+name: "Build and test"
 
 on:
   push:
@@ -12,15 +12,17 @@ env:
 jobs:
   build:
     
-    defaults:
-      run:
-        working-directory: ./2020
+    strategy:
+      matrix:
+        year: [2020, 2019]
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
+      env:
+        manifest: ${{ matrix.year }}/Cargo.toml
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --manifest-path=$manifest
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test --manifest-path=$manifest

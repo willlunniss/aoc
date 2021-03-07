@@ -9,3 +9,4 @@ pub mod day08_space_image_format;
 pub mod day09_sensor_boost;
 pub mod day10_monitoring_station;
 pub mod day11_space_police;
+pub mod day12_the_n_body_problem;

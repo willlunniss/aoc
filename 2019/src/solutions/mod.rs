@@ -8,3 +8,4 @@ pub mod day07_amplification_circuit;
 pub mod day08_space_image_format;
 pub mod day09_sensor_boost;
 pub mod day10_monitoring_station;
+pub mod day11_space_police;

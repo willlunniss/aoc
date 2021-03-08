@@ -23,11 +23,11 @@ fn gen(input: &str) -> HashMap<&str, (usize, Vec<(usize, &str)>)> {
 }
 
 /// Produces units of chemical, updating available with any spare by products and ore with what was needed to make it all
-fn produce<'a>(reactions: &'a HashMap<&'a str, (usize, Vec<(usize, &'a str)>)>, available: &mut HashMap<&'a str, usize>, ore: &mut usize, units: usize, chemical: &'a str) {
+fn produce<'a>(reactions: &'a HashMap<&'a str, (usize, Vec<(usize, &'a str)>)>, available: &mut HashMap<&'a str, usize>, produced: &mut HashMap<&'a str, usize>, units: usize, chemical: &'a str) {
     // We need units of chemical
-    // If it's ORE, then we have unlimited but need to track it
     if chemical == "ORE" {
-        *ore += units;
+        // ORE is special as it's the base chemical that is readily available - no reaction needed
+        produced.entry(chemical).and_modify(|x| *x += units).or_insert(units);
         return;
     }
     // Not ORE, need to produce it
@@ -43,14 +43,15 @@ fn produce<'a>(reactions: &'a HashMap<&'a str, (usize, Vec<(usize, &'a str)>)>, 
     // Work out how many times we need to run the reaction
     // (What we need - what we have) / how much we produce in one go, rounded up to nearest whole number
     let required_runs = f64::ceil((units - *spare) as f64 / *produces as f64) as usize;
-    // And what will be left over afterwards
-    let spare_after_runs = *spare + (required_runs * produces) - units;
+    let producing = required_runs * produces;
+    // Update what will be spare afterwards
+    *spare += producing - units;
+    // Update what we are producing
+    produced.entry(chemical).and_modify(|x| *x += producing).or_insert(producing);
     // Now make it by producing all of the chemicals needed to do a run
     for input in inputs {
-        produce(reactions, available, ore, input.0 * required_runs, input.1);
+        produce(reactions, available, produced, input.0 * required_runs, input.1);
     }
-    // Now we have made it, update the spare
-    available.insert(chemical, spare_after_runs);
 }
 
 #[aoc(day14, part1)]
@@ -58,30 +59,52 @@ fn part1(input: &str) -> usize {
     // Get the available reactions
     let reactions = gen(input);
     // Work out how much ORE we need to make 1 FUEL
-    let mut ore = 0;
     let mut available = HashMap::new();
-    produce(&reactions, &mut available, &mut ore, 1, &"FUEL".to_owned());
-    return ore;
+    let mut produced = HashMap::new();
+    let fuel = "FUEL".to_owned();
+    produce(&reactions, &mut available, &mut produced, 1, &fuel);
+    return *produced.get("ORE").unwrap();
 }
 
 #[aoc(day14, part2)]
 fn part2(input: &str) -> usize {
+    // Work out how much FUEL we can make with 1 trillion ORE
+    let ore_limit : usize = 1_000_000_000_000;
     // Get the available reactions
     let reactions = gen(input);
-    // Work out how much FUEL we can make with 1 trillion fuel (can keep using left over available chemicals)
+    // First make 1 FUEL
     let mut available = HashMap::new();
-    let mut ore = 0;
-    let mut can_make = 0;
+    let mut produced = HashMap::new();
     let fuel = "FUEL".to_owned();
-    // TODO: This is pretty slow, need to find a way to optimise
+    produce(&reactions, &mut available, &mut produced, 1, &fuel);
+    // See how much ORE we used out of our supply
+    let fuel_requires = *produced.get("ORE").unwrap();
+    
+    // Now reset things and make the minimum we think we can
+    // It won't use up all the ORE though due to intermediates having left overs that can be used
+    available.clear();
+    produced.clear();
+    let mut target = ore_limit / fuel_requires;
     loop {
-        produce(&reactions, &mut available, &mut ore, 1, &fuel);
-        if ore > 1_000_000_000_000 {
-            // Used up our supply
-            break;
+        // Make the target amount of FUEL
+        produce(&reactions, &mut available, &mut produced, target, &fuel);
+        // Find out how much ORE we have left (as we won't have actually used it all)
+        let remaining = ore_limit - *produced.get("ORE").unwrap();
+        if remaining < fuel_requires {
+            // Won't be able to make a whole additional FUEL from scratch but we might still be able to
+            // make one with the bits we have left over, so try to make just one more
+            produce(&reactions, &mut available, &mut produced, 1, &fuel);
+            // See if we stayed under the limit making that last FUEL
+            if *produced.get("ORE").unwrap() > ore_limit {
+                // Making that final FUEL put us over the limit, so can't count it
+                return *produced.get("FUEL").unwrap() - 1;
+            } else {
+                // Managed to make that final FUEL with out going over the limit
+                return *produced.get("FUEL").unwrap();
+            };
         }
-        // Made 1 FUEL without using up our supply, increment the counter
-        can_make += 1;
+        // We have enough ORE left to definitely make more FUEL, set the target to make the minimum we known we can
+        target = remaining / fuel_requires;
     }
-    return can_make;
+
 }

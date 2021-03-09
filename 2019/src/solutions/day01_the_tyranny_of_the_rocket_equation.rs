@@ -1,6 +1,6 @@
 /// Calculates the fuel required for a given mass
 fn required_fuel(mass: usize) -> usize {
-    return usize::max(mass /3, 2) - 2;
+    return usize::max(mass / 3, 2) - 2;
 }
 
 #[aoc_generator(day1)]

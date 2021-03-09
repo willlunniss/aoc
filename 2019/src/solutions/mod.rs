@@ -12,4 +12,5 @@ pub mod day11_space_police;
 pub mod day12_the_n_body_problem;
 pub mod day13_care_package;
 pub mod day14_space_stoichiometry;
+pub mod day15_oxygen_system;
 pub mod day16_flawed_frequency_transmission;

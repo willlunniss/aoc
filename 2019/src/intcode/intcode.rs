@@ -16,6 +16,7 @@ use digits_iterator::*;
 /// let result = computer.get_mem(0);
 /// assert_eq!(result, 30);
 /// ```
+#[derive(Clone)]
 pub struct Intcode {
     mem: Vec<isize>,
     ip: usize,

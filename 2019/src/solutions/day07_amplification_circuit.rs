@@ -1,5 +1,5 @@
-use itertools::Itertools;
 use crate::intcode::Intcode;
+use itertools::Itertools;
 
 fn run_chained_amps(program: &Vec<isize>, phases: &Vec<&usize>, feedback: bool) -> usize {
     // Create and configure the amps with their phase settings
@@ -44,11 +44,25 @@ fn gen(input: &str) -> Vec<isize> {
 #[aoc(day7, part1)]
 fn part1(input: &Vec<isize>) -> usize {
     // Test for all permutations of phases returning the one that generated the highest output
-    return [0, 1, 2, 3, 4].to_vec().iter().permutations(5).unique().map(|phases| run_chained_amps(input, &phases, false)).max().unwrap();
+    return [0, 1, 2, 3, 4]
+        .to_vec()
+        .iter()
+        .permutations(5)
+        .unique()
+        .map(|phases| run_chained_amps(input, &phases, false))
+        .max()
+        .unwrap();
 }
 
 #[aoc(day7, part2)]
 fn part2(input: &Vec<isize>) -> usize {
     // Test for all permutations of the new phases returning the one that generated the highest output in loop mode
-    return [5, 6, 7, 8, 9].to_vec().iter().permutations(5).unique().map(|phases| run_chained_amps(input, &phases, true)).max().unwrap()
+    return [5, 6, 7, 8, 9]
+        .to_vec()
+        .iter()
+        .permutations(5)
+        .unique()
+        .map(|phases| run_chained_amps(input, &phases, true))
+        .max()
+        .unwrap();
 }

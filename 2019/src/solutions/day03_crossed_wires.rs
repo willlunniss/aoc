@@ -19,8 +19,16 @@ impl Path {
             // For each waypoint, move from the current pos to it creating points along the way
             // We expect to only ever move in one axis per waypoint
             // Work out if we are moving +1/-1 or 0 in each axis
-            let x_step = if waypoint.x == 0 { 0 } else { waypoint.x / isize::abs(waypoint.x) } ;
-            let y_step = if waypoint.y == 0 { 0 } else { waypoint.y / isize::abs(waypoint.y) } ;
+            let x_step = if waypoint.x == 0 {
+                0
+            } else {
+                waypoint.x / isize::abs(waypoint.x)
+            };
+            let y_step = if waypoint.y == 0 {
+                0
+            } else {
+                waypoint.y / isize::abs(waypoint.y)
+            };
             for _ in 0..waypoint.manhattan_distance() {
                 // Move one step towards the waypoint creating points as we go
                 pos.x += x_step;

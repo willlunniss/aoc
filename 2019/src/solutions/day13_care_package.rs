@@ -60,7 +60,7 @@ impl BlocksGame {
                         paddle = *x;
                     } else if *tile_id == 4 {
                         ball = *x;
-                    } 
+                    }
                 }
             }
             if finished {
@@ -85,7 +85,12 @@ fn part1(input: &str) -> usize {
     // Start the game and count the block (2) tiles
     let mut game = BlocksGame::from(input);
     game.play();
-    return game.tiles.iter().flat_map(|row| row.iter().filter(|tile| **tile == 2)).collect::<Vec<_>>().len();
+    return game
+        .tiles
+        .iter()
+        .flat_map(|row| row.iter().filter(|tile| **tile == 2))
+        .collect::<Vec<_>>()
+        .len();
 }
 
 #[aoc(day13, part2)]

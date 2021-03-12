@@ -1,5 +1,5 @@
-use std::collections::VecDeque;
 use digits_iterator::*;
+use std::collections::VecDeque;
 
 /// AOC 2019 Intcode implementation
 ///
@@ -44,7 +44,7 @@ enum Op {
     LessThan,
     Equals,
     AdjustRelativeBase,
-    Halt
+    Halt,
 }
 
 impl Op {
@@ -62,7 +62,7 @@ impl Op {
             8 => Equals,
             9 => AdjustRelativeBase,
             99 => Halt,
-            _ => panic!("Unexpected opcode {}", opcode)
+            _ => panic!("Unexpected opcode {}", opcode),
         }
     }
 
@@ -97,14 +97,13 @@ impl Op {
     }
 }
 
-
 /// Instruction representation including dynamic configuration
 #[derive(Debug)]
 struct Instr {
     // The actual operation to be performed
     op: Op,
     // Modes of the parameters to use
-    param_modes: Vec<usize>
+    param_modes: Vec<usize>,
 }
 
 impl Intcode {
@@ -134,7 +133,10 @@ impl Intcode {
     /// Initialises a new Intcode computer from a comma separated string of integers
     pub fn from(program: &str) -> Intcode {
         return Intcode {
-            mem: program.split(',').map(|i| i.parse::<isize>().unwrap()).collect(),
+            mem: program
+                .split(',')
+                .map(|i| i.parse::<isize>().unwrap())
+                .collect(),
             ip: 0,
             inputs: VecDeque::new(),
             outputs: VecDeque::new(),
@@ -148,7 +150,11 @@ impl Intcode {
         // Create a new instance with memory of the required size set to 0
         let mut result = Intcode::new(vec![0; memory_size]);
         // Then load our program into it
-        for (id, val) in program.split(',').map(|i| i.parse::<isize>().unwrap()).enumerate() {
+        for (id, val) in program
+            .split(',')
+            .map(|i| i.parse::<isize>().unwrap())
+            .enumerate()
+        {
             result.mem[id] = val;
         }
         return result;
@@ -210,38 +216,51 @@ impl Intcode {
         // Extract the opcode and param modes
         let mut opcode = 0;
         let mut param_modes = vec![0; 3];
-        for (idx, digit) in encoded.digits().collect::<Vec<_>>().iter().rev().enumerate() {
+        for (idx, digit) in encoded
+            .digits()
+            .collect::<Vec<_>>()
+            .iter()
+            .rev()
+            .enumerate()
+        {
             match idx {
                 0 => opcode += digit,
                 1 => opcode += 10 * digit,
-                _ => param_modes[idx - 2] = *digit as usize
+                _ => param_modes[idx - 2] = *digit as usize,
             }
         }
         // Lookup the opcode
         let op = Op::new(opcode as usize);
-        return Instr { op: op, param_modes: param_modes };
+        return Instr {
+            op: op,
+            param_modes: param_modes,
+        };
     }
-    
+
     /// Gets the address of parameters for an instruction taking into account the different parameter modes
     fn param_addrs(&self, ip: usize, count: usize, modes: Vec<usize>) -> Vec<usize> {
-        return (0..count).map(|param| {
-            let addr = ip + 1 + param;
-            match modes[param] {
-                0 => {
-                    // Position mode - return the value at the address
-                    self.mem[addr] as usize
-                },
-                1 => {
-                    // Immediate mode - return the address directly
-                    addr
-                },
-                2 => {
-                    // Relative mode - return the relative base + the value at the address
-                    (self.relative_base + self.mem[addr]) as usize
+        return (0..count)
+            .map(|param| {
+                let addr = ip + 1 + param;
+                match modes[param] {
+                    0 => {
+                        // Position mode - return the value at the address
+                        self.mem[addr] as usize
+                    }
+                    1 => {
+                        // Immediate mode - return the address directly
+                        addr
+                    }
+                    2 => {
+                        // Relative mode - return the relative base + the value at the address
+                        (self.relative_base + self.mem[addr]) as usize
+                    }
+                    _ => {
+                        panic!("Unexpected parameter mode {}", modes[param])
+                    }
                 }
-                _ => { panic!("Unexpected parameter mode {}", modes[param])}
-            }
-        }).collect();
+            })
+            .collect();
     }
 
     /// Gets the next available input
@@ -308,18 +327,30 @@ impl Intcode {
 
     /// Sets the 3rd parameter to 1 if the 1st is less than the second, else sets to 0
     fn instr_7_less_than(&mut self, _: usize, param_addrs: Vec<usize>) -> Option<Result> {
-        self.mem[param_addrs[2]] = if self.mem[param_addrs[0]] < self.mem[param_addrs[1]] { 1 } else { 0 };
+        self.mem[param_addrs[2]] = if self.mem[param_addrs[0]] < self.mem[param_addrs[1]] {
+            1
+        } else {
+            0
+        };
         return None;
     }
 
     /// Sets the 3rd parameter to 1 if the 1st and second are equal, else sets to 0
     fn instr_8_equals(&mut self, _: usize, param_addrs: Vec<usize>) -> Option<Result> {
-        self.mem[param_addrs[2]] = if self.mem[param_addrs[0]] == self.mem[param_addrs[1]] { 1 } else { 0 };
+        self.mem[param_addrs[2]] = if self.mem[param_addrs[0]] == self.mem[param_addrs[1]] {
+            1
+        } else {
+            0
+        };
         return None;
     }
 
     /// Adjusts the relative base by the amount in the 1st parameter
-    fn instr_9_adjust_relative_base(&mut self, _: usize, param_addrs: Vec<usize>) -> Option<Result> {
+    fn instr_9_adjust_relative_base(
+        &mut self,
+        _: usize,
+        param_addrs: Vec<usize>,
+    ) -> Option<Result> {
         self.relative_base += self.mem[param_addrs[0]];
         return None;
     }
@@ -390,15 +421,18 @@ mod tests {
 
     #[test]
     fn test_params() {
-        let computer = Intcode::new([1002,4,3,4,33].to_vec());
+        let computer = Intcode::new([1002, 4, 3, 4, 33].to_vec());
         let instr = Intcode::decode(1002);
-        assert_eq!(computer.param_addrs(0, instr.op.params(), instr.param_modes), [4, 2, 4].to_vec());
+        assert_eq!(
+            computer.param_addrs(0, instr.op.params(), instr.param_modes),
+            [4, 2, 4].to_vec()
+        );
     }
 
     #[test]
     fn test_jump_pos_mode() {
         // Tests some samples from day 5
-        let program = [3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9].to_vec();
+        let program = [3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9].to_vec();
         let mut computer = Intcode::new(program.clone());
         computer.inputs().push_back(0);
         computer.run();
@@ -411,15 +445,25 @@ mod tests {
 
     #[test]
     fn test_advanced_day_9_self_replicating() {
-        let program = [109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99].to_vec();
+        let program = [
+            109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99,
+        ]
+        .to_vec();
         let mut computer = Intcode::new_with(program.clone(), 1024);
         computer.run();
-        assert_eq!(computer.outputs().iter().map(|val| *val).collect::<Vec<isize>>(), program);
+        assert_eq!(
+            computer
+                .outputs()
+                .iter()
+                .map(|val| *val)
+                .collect::<Vec<isize>>(),
+            program
+        );
     }
 
     #[test]
     fn test_advanced_day_9_self_large_numbers() {
-        let program = [104,1125899906842624,99].to_vec();
+        let program = [104, 1125899906842624, 99].to_vec();
         let mut computer = Intcode::new_with(program.clone(), 1024);
         computer.run();
         assert_eq!(computer.outputs().pop_front().unwrap(), 1125899906842624);

@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use itertools::Itertools;
+use std::collections::HashMap;
 
 /// Splits a reaction component into it's units and chemical
 fn parse_component(input: &str) -> (usize, &str) {
@@ -23,11 +23,20 @@ fn gen(input: &str) -> HashMap<&str, (usize, Vec<(usize, &str)>)> {
 }
 
 /// Produces units of chemical, updating available with any spare by products and ore with what was needed to make it all
-fn produce<'a>(reactions: &'a HashMap<&'a str, (usize, Vec<(usize, &'a str)>)>, available: &mut HashMap<&'a str, usize>, produced: &mut HashMap<&'a str, usize>, units: usize, chemical: &'a str) {
+fn produce<'a>(
+    reactions: &'a HashMap<&'a str, (usize, Vec<(usize, &'a str)>)>,
+    available: &mut HashMap<&'a str, usize>,
+    produced: &mut HashMap<&'a str, usize>,
+    units: usize,
+    chemical: &'a str,
+) {
     // We need units of chemical
     if chemical == "ORE" {
         // ORE is special as it's the base chemical that is readily available - no reaction needed
-        produced.entry(chemical).and_modify(|x| *x += units).or_insert(units);
+        produced
+            .entry(chemical)
+            .and_modify(|x| *x += units)
+            .or_insert(units);
         return;
     }
     // Not ORE, need to produce it
@@ -47,10 +56,19 @@ fn produce<'a>(reactions: &'a HashMap<&'a str, (usize, Vec<(usize, &'a str)>)>, 
     // Update what will be spare afterwards
     *spare += producing - units;
     // Update what we are producing
-    produced.entry(chemical).and_modify(|x| *x += producing).or_insert(producing);
+    produced
+        .entry(chemical)
+        .and_modify(|x| *x += producing)
+        .or_insert(producing);
     // Now make it by producing all of the chemicals needed to do a run
     for input in inputs {
-        produce(reactions, available, produced, input.0 * required_runs, input.1);
+        produce(
+            reactions,
+            available,
+            produced,
+            input.0 * required_runs,
+            input.1,
+        );
     }
 }
 
@@ -69,7 +87,7 @@ fn part1(input: &str) -> usize {
 #[aoc(day14, part2)]
 fn part2(input: &str) -> usize {
     // Work out how much FUEL we can make with 1 trillion ORE
-    let ore_limit : usize = 1_000_000_000_000;
+    let ore_limit: usize = 1_000_000_000_000;
     // Get the available reactions
     let reactions = gen(input);
     // First make 1 FUEL
@@ -79,7 +97,7 @@ fn part2(input: &str) -> usize {
     produce(&reactions, &mut available, &mut produced, 1, &fuel);
     // See how much ORE we used out of our supply
     let fuel_requires = *produced.get("ORE").unwrap();
-    
+
     // Now reset things and make the minimum we think we can
     // It won't use up all the ORE though due to intermediates having left overs that can be used
     available.clear();
@@ -106,5 +124,4 @@ fn part2(input: &str) -> usize {
         // We have enough ORE left to definitely make more FUEL, set the target to make the minimum we known we can
         target = remaining / fuel_requires;
     }
-
 }

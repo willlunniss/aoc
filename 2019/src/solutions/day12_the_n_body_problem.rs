@@ -1,5 +1,5 @@
-use std::{convert::Infallible, str::FromStr};
 use itertools::Itertools;
+use std::{convert::Infallible, str::FromStr};
 
 #[derive(Debug, Eq, PartialEq)]
 struct Moon {
@@ -10,10 +10,19 @@ struct Moon {
 impl Moon {
     /// Calculates the energy of the moon as the sum of the absolute values of it's position's parts multiplied by the absolute values of it's velocity's parts
     fn energy(&self) -> usize {
-        return self.position.iter().map(|val| isize::abs(*val) as usize).sum::<usize>() * self.velocity.iter().map(|val| isize::abs(*val) as usize).sum::<usize>();
+        return self
+            .position
+            .iter()
+            .map(|val| isize::abs(*val) as usize)
+            .sum::<usize>()
+            * self
+                .velocity
+                .iter()
+                .map(|val| isize::abs(*val) as usize)
+                .sum::<usize>();
     }
 
-    fn apply_velocity(&mut self) {        
+    fn apply_velocity(&mut self) {
         // For each axis
         for axis in 0..3 {
             self.position[axis] += self.velocity[axis];
@@ -33,14 +42,23 @@ impl FromStr for Moon {
                 '-' | '0'..='9' => value.push(c), // Part of a number, append to our current value
                 ',' | '>' => {
                     // End of a number, parse what we have in value into the complete number
-                    pos.push(value.into_iter().collect::<String>().parse::<isize>().unwrap());
+                    pos.push(
+                        value
+                            .into_iter()
+                            .collect::<String>()
+                            .parse::<isize>()
+                            .unwrap(),
+                    );
                     // Reset
                     value = Vec::new();
-                },
+                }
                 _ => {} // Ignored
             }
         }
-        return Ok(Moon {position: pos, velocity: vec![0; 3]});
+        return Ok(Moon {
+            position: pos,
+            velocity: vec![0; 3],
+        });
     }
 }
 
@@ -54,7 +72,7 @@ fn apply_gravity(moons: &mut Vec<Moon>) {
             if pos1 > pos2 {
                 moons[pair[0]].velocity[axis] -= 1;
                 moons[pair[1]].velocity[axis] += 1;
-            } else if pos1 < pos2  {
+            } else if pos1 < pos2 {
                 moons[pair[1]].velocity[axis] -= 1;
                 moons[pair[0]].velocity[axis] += 1;
             } // else equal - don't do anything
@@ -81,7 +99,24 @@ fn part1(input: &str) -> usize {
 
 #[aoc(day12, part2)]
 fn part2(input: &str) -> usize {
+    let initial_state = gen(input);
+    let mut moons = gen(input);
+    let mut step = 0;
     // Find how many steps it takes for us to get back to the initial state
-    // Can't just run through each step until we are back to square 1 as it would take too long    
-    return 0;
+    // FIXME: This will take forever, need to do it differently
+    loop {
+        step += 1;
+        // Apply gravity to all pairs of moons
+        apply_gravity(&mut moons);
+        // Now apply the velocity to all moons
+        moons.iter_mut().for_each(|moon| moon.apply_velocity());
+        // Check vs initial state
+        if moons == initial_state {
+            // Got back to initial state, return number of steps
+            return step;
+        }
+        if step > 10_000 {
+            return 0;
+        }
+    }
 }

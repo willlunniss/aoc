@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use itertools::Itertools;
+use std::collections::HashMap;
 
 /// Walks the path from object -> COM
 fn walk<'a>(orbit_map: &'a HashMap<&str, &str>, object: &'a str) -> Vec<&'a str> {
@@ -14,13 +14,19 @@ fn walk<'a>(orbit_map: &'a HashMap<&str, &str>, object: &'a str) -> Vec<&'a str>
 }
 
 fn gen(input: &str) -> HashMap<&str, &str> {
-    return input.lines().map(|line| line.splitn(2, ")").collect_tuple().unwrap()).map(|(parent, child)|(child, parent)).collect();
+    return input
+        .lines()
+        .map(|line| line.splitn(2, ")").collect_tuple().unwrap())
+        .map(|(parent, child)| (child, parent))
+        .collect();
 }
 
 #[aoc(day6, part1)]
 fn part1(input: &str) -> usize {
     let orbit_map = gen(input);
-    return orbit_map.keys().fold(0, | acc, object| acc + walk(&orbit_map, object).len());
+    return orbit_map
+        .keys()
+        .fold(0, |acc, object| acc + walk(&orbit_map, object).len());
 }
 
 #[aoc(day6, part2)]
@@ -31,7 +37,7 @@ fn part2(input: &str) -> usize {
     let san = "SAN".to_owned();
     let path1 = walk(&orbit_map, &you);
     let path2 = walk(&orbit_map, &san);
-    
+
     // Walk backwards through the paths from COM -> [YOU|SAN]
     // Until we find the divergence point, we can then add up the number of
     // remaining nodes

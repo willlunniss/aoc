@@ -14,7 +14,7 @@ impl EmergencyHullPainingRobot {
             controller: Intcode::from_with(program, 1024 * 1024),
             tiles: HashMap::new(),
             direction: 0,
-            pos: (0, 0)
+            pos: (0, 0),
         };
     }
 
@@ -47,8 +47,7 @@ impl EmergencyHullPainingRobot {
                 1 => self.pos = (self.pos.0 + 1, self.pos.1),
                 2 => self.pos = (self.pos.0, self.pos.1 - 1),
                 3 => self.pos = (self.pos.0 - 1, self.pos.1),
-                _ => panic!("Unexpected direction {}", self.direction)
-
+                _ => panic!("Unexpected direction {}", self.direction),
             }
         }
     }
@@ -58,7 +57,7 @@ impl EmergencyHullPainingRobot {
     }
 
     /// Returns a nested vector represented what has been painted
-    fn get_painted(&self) -> Vec<Vec<isize>> {        
+    fn get_painted(&self) -> Vec<Vec<isize>> {
         // 1st pass: Find the size of the grid needed
         let (mut min_x, mut max_x, mut min_y, mut max_y) = (0, 0, 0, 0);
         for pos in self.tiles.keys() {
@@ -106,7 +105,7 @@ fn part2(input: &str) -> String {
         for pixel in row.iter() {
             match pixel {
                 1 => print!("█"),
-                _ => print!(" ")
+                _ => print!(" "),
             }
         }
         println!();

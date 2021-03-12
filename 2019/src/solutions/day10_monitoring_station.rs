@@ -1,9 +1,12 @@
-use std::collections::HashSet;
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 /// Calculates the angle of p2 from p1 between 0->359 degrees (0 = North, 90 = East)
 fn angle(p1: (isize, isize), p2: (isize, isize)) -> f64 {
-    return -((p2.0 - p1.0) as f64).atan2((p2.1 - p1.1) as f64).to_degrees() + 180f64;
+    return -((p2.0 - p1.0) as f64)
+        .atan2((p2.1 - p1.1) as f64)
+        .to_degrees()
+        + 180f64;
 }
 
 /// Finds the asteroid that has the most other asteroids in los
@@ -15,9 +18,14 @@ fn find_best_base(asteroids: &Vec<(isize, isize)>) -> ((isize, isize), usize) {
     let mut best_base = (0, 0);
     let mut max_asteroids = 0;
     for base in asteroids {
-        let count = asteroids.iter().filter(|asteroid| *asteroid != base).map(|asteroid| {
-            (angle(*base, *asteroid) * 1_000f64) as usize // Store angle rounded to 3 decimal places as can't key off of a float
-        }).collect::<HashSet<_>>().len();
+        let count = asteroids
+            .iter()
+            .filter(|asteroid| *asteroid != base)
+            .map(|asteroid| {
+                (angle(*base, *asteroid) * 1_000f64) as usize // Store angle rounded to 3 decimal places as can't key off of a float
+            })
+            .collect::<HashSet<_>>()
+            .len();
         if count > max_asteroids {
             max_asteroids = count;
             best_base = *base;
@@ -28,7 +36,7 @@ fn find_best_base(asteroids: &Vec<(isize, isize)>) -> ((isize, isize), usize) {
 
 #[aoc_generator(day10)]
 fn gen(input: &str) -> Vec<(isize, isize)> {
-    let grid : Vec<Vec<char>> = input.lines().map(|line| line.chars().collect()).collect();
+    let grid: Vec<Vec<char>> = input.lines().map(|line| line.chars().collect()).collect();
     // Get the positions of all asteroids
     let mut asteroids = Vec::new();
     for (y, row) in grid.iter().enumerate() {
@@ -53,11 +61,14 @@ fn part2(input: &Vec<(isize, isize)>) -> isize {
     let (base, _) = find_best_base(input);
 
     // Store a list of the positions of all asteroids at each angle
-    let mut asteroids_by_angle : HashMap<usize, Vec<((isize, isize), usize)>> = HashMap::new();
+    let mut asteroids_by_angle: HashMap<usize, Vec<((isize, isize), usize)>> = HashMap::new();
     for asteroid in input.iter().filter(|asteroid| **asteroid != base) {
         let angle = (angle(base, *asteroid) * 1_000f64) as usize; // Store angle rounded to 3 decimal places as can't key off of a float
         let distance = (isize::abs(asteroid.0 - base.0) + isize::abs(asteroid.1 - base.1)) as usize;
-        asteroids_by_angle.entry(angle).or_default().push((*asteroid, distance));
+        asteroids_by_angle
+            .entry(angle)
+            .or_default()
+            .push((*asteroid, distance));
     }
 
     // Sort asteroids for each angle by distance from base (reversed so closest is at the end of the list and easy to pop)
@@ -66,10 +77,11 @@ fn part2(input: &Vec<(isize, isize)>) -> isize {
     }
 
     // Go through the angles (from 0->359) popping the closest asteroid for each angle until we have removed the 200th
-    let mut angles : Vec<usize> = asteroids_by_angle.keys().map(|x| *x).collect();
+    let mut angles: Vec<usize> = asteroids_by_angle.keys().map(|x| *x).collect();
     angles.sort();
     let mut fire = 0;
-    loop { // May need to do multiple passes
+    loop {
+        // May need to do multiple passes
         for angle in &angles {
             // For each angle see if there are any asteroids left
             if let Some(los) = asteroids_by_angle.get_mut(angle) {

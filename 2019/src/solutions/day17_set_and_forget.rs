@@ -189,11 +189,11 @@ impl ASCII {
 
     /// Takes a route and turns it into a number of common functions
     ///
-    /// Eg. R8,R8,R4,R4,L6,L2,R8,R8,L6,L2 ,R4,R4->
+    /// Eg. R,8,R,8,R,4,R,4,L,6,L,2,R,8,R,8,L,6,L,2,R,4,R,4->
     /// Main: A,B,C,A,C,B
-    /// Function A: R8,R8
-    /// Function B: R4,R4
-    /// Function C: L6,L2
+    /// Function A: R,8,R,8
+    /// Function B: R,4,R,4
+    /// Function C: L,6,L,2
     fn compile_route(source: &Vec<String>) -> Vec<String> {
         let mut functions = Vec::new();
         let mut found_valid = false;

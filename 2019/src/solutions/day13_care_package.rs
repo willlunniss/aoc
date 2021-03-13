@@ -8,8 +8,8 @@ struct BlocksGame {
 }
 
 impl BlocksGame {
-    fn from(program: &str) -> BlocksGame {
-        BlocksGame {
+    fn from(program: &str) -> Self {
+        Self {
             computer: Intcode::from_with(program, 1024 * 1024),
             tiles: vec![vec![0; 42]; 24], // Fix screen size to simplify logic,
             score: 0,

@@ -28,8 +28,8 @@ struct ASCII {
 }
 
 impl ASCII {
-    pub fn from(program: &str) -> ASCII {
-        ASCII {
+    pub fn from(program: &str) -> Self {
+        Self {
             controller: Intcode::from_with(program, 1024 * 1024),
         }
     }
@@ -38,9 +38,9 @@ impl ASCII {
     pub fn align_cameras(&mut self) -> isize {
         // Run the program and get the grid
         self.controller.run();
-        let grid = ASCII::decode_camera_output(&mut self.controller.outputs().iter());
+        let grid = Self::decode_camera_output(&mut self.controller.outputs().iter());
         // Find cross over points and return the sum of each alignment param (x*y)
-        return ASCII::find_crossover_points(&grid)
+        return Self::find_crossover_points(&grid)
             .iter()
             .map(|pos| pos.x * pos.y)
             .sum();
@@ -50,11 +50,11 @@ impl ASCII {
         // Run a copy of the program and get the grid
         let mut tmp = self.controller.clone();
         tmp.run();
-        let grid = ASCII::decode_camera_output(&mut tmp.outputs().iter());
+        let grid = Self::decode_camera_output(&mut tmp.outputs().iter());
 
-        let route = ASCII::build_route(&grid);
+        let route = Self::build_route(&grid);
 
-        let compiled = ASCII::compile_route(&route);
+        let compiled = Self::compile_route(&route);
 
         // Configure robot with directions
         self.controller.set_mem(0, 2);
@@ -128,10 +128,10 @@ impl ASCII {
 
     /// Builds a route that will let the robot traverse all the scaffolding
     fn build_route(grid: &VecGrid<char>) -> Vec<String> {
-        let (mut pos, mut direction) = ASCII::find_robot(grid).unwrap();
+        let (mut pos, mut direction) = Self::find_robot(grid).unwrap();
         let mut route = Vec::new();
         loop {
-            if let Some((dest, distance)) = ASCII::scaffold_length(grid, pos, direction) {
+            if let Some((dest, distance)) = Self::scaffold_length(grid, pos, direction) {
                 // There is scaffolding in front of us, travel to the end of it
                 route.push(distance.to_string());
                 pos = dest;
@@ -190,7 +190,7 @@ impl ASCII {
     /// Function A: R,8,R,8
     /// Function B: R,4,R,4
     /// Function C: L,6,L,2
-    fn compile_route(source: &Vec<String>) -> Vec<String> {
+    fn compile_route(source: &[String]) -> Vec<String> {
         let mut functions = Vec::new();
         let mut found_valid = false;
         // FIXME: This is a hack to try a range of size adjustments to matches
@@ -211,7 +211,7 @@ impl ASCII {
                     // Get the slice we are looking for
                     let target = &source[index..index + size + 2];
                     // See how many instances there are of it (+1 for this one)
-                    let matches = exists_in(&source[index..source.len()], &target);
+                    let matches = exists_in(&source[index..source.len()], target);
                     let current_matches = matches.len() as isize + 1;
                     if matches.len() > 1 && (current_matches as f64 / prev_matches as f64) >= 0.49 {
                         // Found some matches and doesn't drop too much
@@ -345,7 +345,8 @@ mod tests {
             "4", "R", "8", "R", "8", "R", "8", "L", "6", "L", "2",
         ];
         // Compile the route and then reconstruct it
-        let compiled = ASCII::compile_route(&route.iter().map(|r| r.to_string()).collect());
+        let compiled =
+            ASCII::compile_route(&route.iter().map(|r| (*r).to_string()).collect::<Vec<_>>()[0..]);
         let reconstructed = reconstruct_route(&compiled);
         // Check it matches the original route
         assert_eq!(route.to_vec(), reconstructed)
@@ -362,14 +363,15 @@ mod tests {
             "R", "10", "R", "4", "L", "4", "L", "4", "R", "8", "R", "10",
         ];
         // Compile the route and then reconstruct it
-        let compiled = ASCII::compile_route(&route.iter().map(|r| r.to_string()).collect());
+        let compiled =
+            ASCII::compile_route(&route.iter().map(|r| (*r).to_string()).collect::<Vec<_>>()[0..]);
         let reconstructed = reconstruct_route(&compiled);
         // Check it matches the original route
         assert_eq!(route.to_vec(), reconstructed)
     }
 
     /// Transforms a compiled route back to the original route for testing
-    fn reconstruct_route(compiled: &Vec<String>) -> Vec<&str> {
+    fn reconstruct_route(compiled: &[String]) -> Vec<&str> {
         let mut route = Vec::new();
         for part in compiled[0].split(',') {
             // Add each referenced function

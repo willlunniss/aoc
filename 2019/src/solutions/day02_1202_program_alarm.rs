@@ -18,7 +18,7 @@ fn part2(input: &str) -> isize {
             computer.set_mem(1, noun);
             computer.set_mem(2, verb);
             computer.run();
-            if computer.get_mem(0) == 19690720 {
+            if computer.get_mem(0) == 19_690_720 {
                 return (100 * noun) + verb;
             }
         }

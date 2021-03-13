@@ -1,14 +1,14 @@
 use crate::intcode::Intcode;
 use itertools::Itertools;
 
-fn run_chained_amps(program: &Vec<isize>, phases: &[&usize], feedback: bool) -> usize {
+fn run_chained_amps(program: &Vec<isize>, phases: &[&isize], feedback: bool) -> isize {
     // Create and configure the amps with their phase settings
     let mut amps = Vec::new();
     for phase in phases {
         // Create a new Amplifier instance
         let mut amp = Intcode::new(program.clone());
         // Configure with the phase
-        amp.inputs().push_back(**phase as isize);
+        amp.inputs().push_back(**phase);
         // Add to our list of amps
         amps.push(amp);
     }
@@ -17,7 +17,7 @@ fn run_chained_amps(program: &Vec<isize>, phases: &[&usize], feedback: bool) -> 
     loop {
         // Cycle through all amps
         let mut finished = true;
-        for amp in amps.iter_mut() {
+        for amp in &mut amps {
             // Give it the signal from the last amp (or 0 for the first)
             amp.inputs().push_back(signal);
             if !amp.run() {
@@ -33,7 +33,7 @@ fn run_chained_amps(program: &Vec<isize>, phases: &[&usize], feedback: bool) -> 
         }
     }
     // Return the signal value (output from last amp)
-    signal as usize
+    signal
 }
 
 #[aoc_generator(day7)]
@@ -42,7 +42,7 @@ fn gen(input: &str) -> Vec<isize> {
 }
 
 #[aoc(day7, part1)]
-fn part1(input: &Vec<isize>) -> usize {
+fn part1(input: &Vec<isize>) -> isize {
     // Test for all permutations of phases returning the one that generated the highest output
     return [0, 1, 2, 3, 4]
         .to_vec()
@@ -55,7 +55,7 @@ fn part1(input: &Vec<isize>) -> usize {
 }
 
 #[aoc(day7, part2)]
-fn part2(input: &Vec<isize>) -> usize {
+fn part2(input: &Vec<isize>) -> isize {
     // Test for all permutations of the new phases returning the one that generated the highest output in loop mode
     return [5, 6, 7, 8, 9]
         .to_vec()

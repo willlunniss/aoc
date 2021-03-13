@@ -54,17 +54,17 @@ impl FromStr for Point {
         let (direction, distance_str) = s.split_at(1);
         let distance = distance_str.parse::<isize>().unwrap();
         Ok(match direction {
-            "U" => Point { x: 0, y: distance },
-            "D" => Point { x: 0, y: -distance },
-            "L" => Point { x: -distance, y: 0 },
-            "R" => Point { x: distance, y: 0 },
+            "U" => Self { x: 0, y: distance },
+            "D" => Self { x: 0, y: -distance },
+            "L" => Self { x: -distance, y: 0 },
+            "R" => Self { x: distance, y: 0 },
             _ => panic!("Unexpected direction {}", direction),
         })
     }
 }
 
 impl Point {
-    fn manhattan_distance(&self) -> isize {
+    const fn manhattan_distance(&self) -> isize {
         isize::abs(self.x) + isize::abs(self.y)
     }
 }

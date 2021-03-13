@@ -6,8 +6,8 @@ struct PatternGenerator {
 }
 
 impl PatternGenerator {
-    fn new(base_pattern: &Vec<isize>, element: usize) -> PatternGenerator {
-        PatternGenerator {
+    fn new(base_pattern: &Vec<isize>, element: usize) -> Self {
+        Self {
             base_pattern: base_pattern.clone(),
             element,
         }
@@ -60,8 +60,8 @@ struct FFT {
 }
 
 impl FFT {
-    fn new(base_pattern: &Vec<isize>, signal: &Vec<isize>) -> FFT {
-        FFT {
+    fn new(base_pattern: &Vec<isize>, signal: &Vec<isize>) -> Self {
+        Self {
             base_pattern: base_pattern.clone(),
             signal: signal.clone(),
         }

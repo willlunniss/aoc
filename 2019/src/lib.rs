@@ -1,4 +1,5 @@
-#![warn(clippy::all)]
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
+#![allow(clippy::filter_map)] // .filter().map() seems cleaner than .filter_map()
 
 extern crate aoc_runner;
 

@@ -13,8 +13,8 @@ pub enum Direction {
 
 impl Direction {
     /// Rotates left
-    pub fn rotate_left(&self) -> Direction {
-        use Direction::*;
+    pub const fn rotate_left(self) -> Self {
+        use Direction::{Down, Left, Right, Up};
         match self {
             Up => Left,
             Right => Up,
@@ -24,8 +24,8 @@ impl Direction {
     }
 
     /// Rotates right
-    pub fn rotate_right(&self) -> Direction {
-        use Direction::*;
+    pub const fn rotate_right(self) -> Self {
+        use Direction::{Down, Left, Right, Up};
         match self {
             Up => Right,
             Right => Down,
@@ -43,30 +43,30 @@ pub struct Pos {
 }
 
 impl Pos {
-    pub fn new(x: usize, y: usize) -> Pos {
-        Pos {
+    pub const fn new(x: usize, y: usize) -> Self {
+        Self {
             x: x as isize,
             y: y as isize,
         }
     }
 
     /// Gets the next position if we headed in the supplied direction
-    pub fn next(&self, direction: Direction) -> Pos {
+    pub const fn next(&self, direction: Direction) -> Self {
         use Direction::*;
         match direction {
-            Up => Pos {
+            Up => Self {
                 x: self.x,
                 y: self.y - 1,
             },
-            Down => Pos {
+            Down => Self {
                 x: self.x,
                 y: self.y + 1,
             },
-            Left => Pos {
+            Left => Self {
                 x: self.x - 1,
                 y: self.y,
             },
-            Right => Pos {
+            Right => Self {
                 x: self.x + 1,
                 y: self.y,
             },
@@ -82,14 +82,14 @@ pub struct VecGrid<V> {
 
 impl<V: Clone + Copy> Default for VecGrid<V> {
     fn default() -> Self {
-        VecGrid::new()
+        Self::new()
     }
 }
 
 impl<V: Clone + Copy> VecGrid<V> {
-    /// Creates a new empty VecGrid
-    pub fn new() -> VecGrid<V> {
-        VecGrid { data: Vec::new() }
+    /// Creates a new empty `VecGrid`
+    pub fn new() -> Self {
+        Self { data: Vec::new() }
     }
 
     pub fn iter(&self) -> Iter<'_, Vec<V>> {
@@ -98,7 +98,7 @@ impl<V: Clone + Copy> VecGrid<V> {
 
     /// Gets the values of the 4 neighbours to the supplied position
     pub fn neighbours(&self, pos: Pos) -> Vec<Option<V>> {
-        use Direction::*;
+        use Direction::{Down, Left, Right, Up};
         return [Up, Right, Down, Left]
             .iter()
             .map(|d| self.get(pos.next(*d)))
@@ -150,14 +150,14 @@ pub struct MapGrid<V> {
 
 impl<V: Clone + Copy> Default for MapGrid<V> {
     fn default() -> Self {
-        MapGrid::new()
+        Self::new()
     }
 }
 
 impl<V: Clone + Copy> MapGrid<V> {
-    /// Creates a new empty MapGrid
-    pub fn new() -> MapGrid<V> {
-        MapGrid {
+    /// Creates a new empty `MapGrid`
+    pub fn new() -> Self {
+        Self {
             data: HashMap::new(),
         }
     }
@@ -171,7 +171,7 @@ impl<V: Clone + Copy> MapGrid<V> {
     pub fn get(&self, pos: Pos) -> Option<&V> {
         self.data.get(&pos)
     }
-    /// Converts a HashMap based grid to a nested vector
+    /// Converts a `HashMap` based grid to a nested vector
     ///
     /// Any cells within the bounds of those specified in map that don't have values
     /// by be set to default

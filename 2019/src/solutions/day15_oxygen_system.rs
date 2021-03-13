@@ -8,8 +8,8 @@ struct RepairDroid {
 }
 
 impl RepairDroid {
-    fn from(program: &str) -> RepairDroid {
-        RepairDroid {
+    fn from(program: &str) -> Self {
+        Self {
             controller: Intcode::from_with(program, 1024 * 1024),
             pos: (0, 0),
             tiles: HashMap::new(),
@@ -28,7 +28,7 @@ impl RepairDroid {
     }
 
     /// Returns the opposite direction
-    fn back(direction: usize) -> usize {
+    const fn back(direction: usize) -> usize {
         if direction % 2 == 0 {
             direction - 1
         } else {
@@ -41,20 +41,16 @@ impl RepairDroid {
         unexplored_directions: &mut HashMap<(isize, isize), Vec<usize>>,
         direction_stack: &mut Vec<usize>,
         pos: (isize, isize),
-    ) -> usize {
+    ) -> Option<usize> {
         let options = unexplored_directions.entry(pos).or_default();
         if !options.is_empty() {
             // We have an unexplored direction - try that!
-            return options.pop().unwrap();
+            return options.pop();
         }
         // We've tried all options at this location, need to backtrack
-        if let Some(direction) = direction_stack.pop() {
-            // direction is how we got here, so need turn it into the direction to go backwards
-            RepairDroid::back(direction)
-        } else {
-            // If there is nowhere to go then return 0 to indicate we have fully explored everything
-            0
-        }
+        // Direction is how we got here, so need turn it into the direction to go backwards
+        // Otherwise if the stack is empty None will be returned
+        direction_stack.pop().map(Self::back)
     }
 
     /// Works out what the next position will be if moving in the supplied direction
@@ -83,16 +79,14 @@ impl RepairDroid {
         // Run the controller in a loop until we get to the oxygen system if requested or fully explore the map
         loop {
             // Work out where to go next
-            let direction = RepairDroid::next_direction(
-                &mut unexplored_directions,
-                &mut direction_stack,
-                self.pos,
-            );
-            if direction == 0 {
+            let direction =
+                Self::next_direction(&mut unexplored_directions, &mut direction_stack, self.pos);
+            if direction.is_none() {
                 // We have come all the way back to the start, must have fully explored the map!
                 return max_path_length;
             }
-            let next = RepairDroid::next(self.pos, direction);
+            let direction = direction.unwrap();
+            let next = Self::next(self.pos, direction);
             // Try to move to it
             self.controller.inputs().push_back(direction as isize);
             self.controller.run();
@@ -112,7 +106,7 @@ impl RepairDroid {
                             max_path_length += 1;
                         }
                         // Then init with all directions except where we came from
-                        RepairDroid::others(RepairDroid::back(direction))
+                        Self::others(Self::back(direction))
                     });
                     if status == 2 && find_oxygen {
                         // Found the oxygen system!

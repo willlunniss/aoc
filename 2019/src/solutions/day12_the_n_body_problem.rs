@@ -10,17 +10,17 @@ struct Moon {
 
 impl Moon {
     /// Calculates the energy of the moon as the sum of the absolute values of it's position's parts multiplied by the absolute values of it's velocity's parts
-    fn energy(&self) -> usize {
+    fn energy(&self) -> isize {
         return self
             .position
             .iter()
-            .map(|val| isize::abs(*val) as usize)
-            .sum::<usize>()
+            .map(|val| isize::abs(*val))
+            .sum::<isize>()
             * self
                 .velocity
                 .iter()
-                .map(|val| isize::abs(*val) as usize)
-                .sum::<usize>();
+                .map(|val| isize::abs(*val))
+                .sum::<isize>();
     }
 
     fn apply_velocity(&mut self) {
@@ -56,7 +56,7 @@ impl FromStr for Moon {
                 _ => {} // Ignored
             }
         }
-        Ok(Moon {
+        Ok(Self {
             position: pos,
             velocity: vec![0; 3],
         })
@@ -90,20 +90,20 @@ fn gen(input: &str) -> Vec<Moon> {
 }
 
 #[aoc(day12, part1)]
-fn part1(input: &str) -> usize {
+fn part1(input: &str) -> isize {
     let mut moons = gen(input);
     for _step in 1..=1_000 {
         // Apply gravity to all pairs of moons
         apply_gravity(&mut moons);
         // Now apply the velocity to all moons
-        moons.iter_mut().for_each(|moon| moon.apply_velocity());
+        moons.iter_mut().for_each(Moon::apply_velocity);
     }
     // Result is total energy in the system
-    return moons.iter().map(|moon| moon.energy()).sum();
+    return moons.iter().map(Moon::energy).sum();
 }
 
 #[aoc(day12, part2)]
-fn part2(input: &str) -> usize {
+fn part2(input: &str) -> isize {
     let initial_state = gen(input);
     let mut moons = gen(input);
     let mut step = 0;
@@ -114,7 +114,7 @@ fn part2(input: &str) -> usize {
         // Apply gravity to all pairs of moons
         apply_gravity(&mut moons);
         // Now apply the velocity to all moons
-        moons.iter_mut().for_each(|moon| moon.apply_velocity());
+        moons.iter_mut().for_each(Moon::apply_velocity);
         // Check vs initial state
         if moons == initial_state {
             // Got back to initial state, return number of steps

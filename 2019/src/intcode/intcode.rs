@@ -1,4 +1,4 @@
-use digits_iterator::*;
+use digits_iterator::DigitsExtension;
 use std::collections::VecDeque;
 
 /// AOC 2019 Intcode implementation
@@ -49,7 +49,7 @@ enum Op {
 
 impl Op {
     /// Creates a new op from an opcode
-    fn new(opcode: usize) -> Op {
+    fn new(opcode: usize) -> Self {
         use Op::*;
         match opcode {
             1 => Add,
@@ -67,7 +67,7 @@ impl Op {
     }
 
     /// Gets the instruction implementation
-    fn instr_impl(&self) -> fn(&mut Intcode, ip: usize, param_addrs: Vec<usize>) -> Option<Result> {
+    fn instr_impl(&self) -> fn(&mut Intcode, param_addrs: &[usize]) -> Option<Result> {
         use Op::*;
         match self {
             Add => Intcode::instr_1_add,
@@ -84,14 +84,12 @@ impl Op {
     }
 
     /// Gets the number of parameters used
-    fn params(&self) -> usize {
+    const fn params(&self) -> usize {
         use Op::*;
         match self {
-            Add | Multiply => 3,
-            Input | Output => 1,
+            Add | Multiply | LessThan | Equals => 3,
             JumpIfTrue | JumpIfFalse => 2,
-            LessThan | Equals => 3,
-            AdjustRelativeBase => 1,
+            Input | Output | AdjustRelativeBase => 1,
             Halt => 0,
         }
     }
@@ -103,13 +101,13 @@ struct Instr {
     // The actual operation to be performed
     op: Op,
     // Modes of the parameters to use
-    param_modes: Vec<usize>,
+    param_modes: [u8; 3],
 }
 
 impl Intcode {
     /// Initialises a new Intcode computer with the supplied program
-    pub fn new(program: Vec<isize>) -> Intcode {
-        Intcode {
+    pub fn new(program: Vec<isize>) -> Self {
+        Self {
             mem: program,
             ip: 0,
             inputs: VecDeque::new(),
@@ -120,9 +118,9 @@ impl Intcode {
 
     /// Initialises a new Intcode computer with the supplied program with the specified memory size
     /// (anything beyond the length of the program will be initialised to 0)
-    pub fn new_with(program: Vec<isize>, memory_size: usize) -> Intcode {
+    pub fn new_with(program: &Vec<isize>, memory_size: usize) -> Self {
         // Create a new instance with memory of the required size set to 0
-        let mut result = Intcode::new(vec![0; memory_size]);
+        let mut result = Self::new(vec![0; memory_size]);
         // Then load our program into it
         for (id, val) in program.iter().enumerate() {
             result.mem[id] = *val;
@@ -131,8 +129,8 @@ impl Intcode {
     }
 
     /// Initialises a new Intcode computer from a comma separated string of integers
-    pub fn from(program: &str) -> Intcode {
-        Intcode {
+    pub fn from(program: &str) -> Self {
+        Self {
             mem: program
                 .split(',')
                 .map(|i| i.parse::<isize>().unwrap())
@@ -146,9 +144,9 @@ impl Intcode {
 
     /// Initialises a new Intcode computer from a comma separated string of integers
     /// with the specified memory size (anything beyond the length of the program will be initialised to 0)
-    pub fn from_with(program: &str, memory_size: usize) -> Intcode {
+    pub fn from_with(program: &str, memory_size: usize) -> Self {
         // Create a new instance with memory of the required size set to 0
-        let mut result = Intcode::new(vec![0; memory_size]);
+        let mut result = Self::new(vec![0; memory_size]);
         // Then load our program into it
         for (id, val) in program
             .split(',')
@@ -213,13 +211,13 @@ impl Intcode {
     /// Executes a single instruction at the specified IP
     fn execute(&mut self, ip: usize) -> Result {
         // Decode the instruction
-        let instr = Intcode::decode(self.mem[ip]);
+        let instr = Self::decode(self.mem[ip]);
         // Get the reference to the implementation
         let instr_impl = instr.op.instr_impl();
         // Get the parameters
-        let param_addrs = self.param_addrs(ip, instr.op.params(), instr.param_modes);
+        let param_addrs = self.param_addrs(ip, instr.op.params(), &instr.param_modes);
         // Execute it
-        let result = instr_impl(self, ip, param_addrs);
+        let result = instr_impl(self, &param_addrs);
         if result.is_none() {
             // Simple instructions with no result
             // Just advance the instruction pointer by 1 + num params
@@ -232,7 +230,7 @@ impl Intcode {
     fn decode(encoded: isize) -> Instr {
         // Extract the opcode and param modes
         let mut opcode = 0;
-        let mut param_modes = vec![0; 3];
+        let mut param_modes = [0, 0, 0];
         for (idx, digit) in encoded
             .digits()
             .collect::<Vec<_>>()
@@ -243,7 +241,7 @@ impl Intcode {
             match idx {
                 0 => opcode += digit,
                 1 => opcode += 10 * digit,
-                _ => param_modes[idx - 2] = *digit as usize,
+                _ => param_modes[idx - 2] = *digit as u8,
             }
         }
         // Lookup the opcode
@@ -252,7 +250,7 @@ impl Intcode {
     }
 
     /// Gets the address of parameters for an instruction taking into account the different parameter modes
-    fn param_addrs(&self, ip: usize, count: usize, modes: Vec<usize>) -> Vec<usize> {
+    fn param_addrs(&self, ip: usize, count: usize, modes: &[u8]) -> Vec<usize> {
         (0..count)
             .map(|param| {
                 let addr = ip + 1 + param;
@@ -288,21 +286,21 @@ impl Intcode {
     }
 
     /// Sets the 3rd parameter to the 1st plus the 2nd
-    fn instr_1_add(&mut self, _: usize, param_addrs: Vec<usize>) -> Option<Result> {
+    fn instr_1_add(&mut self, param_addrs: &[usize]) -> Option<Result> {
         self.mem[param_addrs[2]] = self.mem[param_addrs[0]] + self.mem[param_addrs[1]];
         None
     }
 
     /// Sets the 3rd parameter to the 1st multiplied by the 2nd
-    fn instr_2_multiply(&mut self, _: usize, param_addrs: Vec<usize>) -> Option<Result> {
+    fn instr_2_multiply(&mut self, param_addrs: &[usize]) -> Option<Result> {
         self.mem[param_addrs[2]] = self.mem[param_addrs[0]] * self.mem[param_addrs[1]];
         None
     }
 
     /// Fetches an input and stores it in the 1st parameter
-    /// If no input is available returns InputRequired so that one can
+    /// If no input is available returns `InputRequired so that one can
     /// be provided before resuming
-    fn instr_3_input(&mut self, _: usize, param_addrs: Vec<usize>) -> Option<Result> {
+    fn instr_3_input(&mut self, param_addrs: &[usize]) -> Option<Result> {
         if let Some(value) = self.input() {
             // Input value is available, write it to memory
             self.mem[param_addrs[0]] = value;
@@ -316,13 +314,13 @@ impl Intcode {
     }
 
     /// Outputs the 1st parameter
-    fn instr_4_output(&mut self, _: usize, param_addrs: Vec<usize>) -> Option<Result> {
+    fn instr_4_output(&mut self, param_addrs: &[usize]) -> Option<Result> {
         self.output(self.mem[param_addrs[0]]);
         None
     }
 
     /// Sets the IP to the value of the 2nd parameter if the 1st is not-equal to 0
-    fn instr_5_jump_if_true(&mut self, _: usize, param_addrs: Vec<usize>) -> Option<Result> {
+    fn instr_5_jump_if_true(&mut self, param_addrs: &[usize]) -> Option<Result> {
         if self.mem[param_addrs[0]] != 0 {
             Some(Result::SetIP(self.mem[param_addrs[1]] as usize))
         } else {
@@ -331,7 +329,7 @@ impl Intcode {
     }
 
     /// Sets the IP to the value of the 2nd parameter if the 1st is equal to 0
-    fn instr_6_jump_if_false(&mut self, _: usize, param_addrs: Vec<usize>) -> Option<Result> {
+    fn instr_6_jump_if_false(&mut self, param_addrs: &[usize]) -> Option<Result> {
         if self.mem[param_addrs[0]] == 0 {
             Some(Result::SetIP(self.mem[param_addrs[1]] as usize))
         } else {
@@ -340,7 +338,7 @@ impl Intcode {
     }
 
     /// Sets the 3rd parameter to 1 if the 1st is less than the second, else sets to 0
-    fn instr_7_less_than(&mut self, _: usize, param_addrs: Vec<usize>) -> Option<Result> {
+    fn instr_7_less_than(&mut self, param_addrs: &[usize]) -> Option<Result> {
         self.mem[param_addrs[2]] = if self.mem[param_addrs[0]] < self.mem[param_addrs[1]] {
             1
         } else {
@@ -350,7 +348,7 @@ impl Intcode {
     }
 
     /// Sets the 3rd parameter to 1 if the 1st and second are equal, else sets to 0
-    fn instr_8_equals(&mut self, _: usize, param_addrs: Vec<usize>) -> Option<Result> {
+    fn instr_8_equals(&mut self, param_addrs: &[usize]) -> Option<Result> {
         self.mem[param_addrs[2]] = if self.mem[param_addrs[0]] == self.mem[param_addrs[1]] {
             1
         } else {
@@ -360,17 +358,13 @@ impl Intcode {
     }
 
     /// Adjusts the relative base by the amount in the 1st parameter
-    fn instr_9_adjust_relative_base(
-        &mut self,
-        _: usize,
-        param_addrs: Vec<usize>,
-    ) -> Option<Result> {
+    fn instr_9_adjust_relative_base(&mut self, param_addrs: &[usize]) -> Option<Result> {
         self.relative_base += self.mem[param_addrs[0]];
         None
     }
 
     /// Unconditionally causes the program to exit
-    fn instr_99_halt(&mut self, _: usize, _: Vec<usize>) -> Option<Result> {
+    fn instr_99_halt(&mut self, _: &[usize]) -> Option<Result> {
         Some(Result::Exit)
     }
 }
@@ -438,7 +432,7 @@ mod tests {
         let computer = Intcode::new([1002, 4, 3, 4, 33].to_vec());
         let instr = Intcode::decode(1002);
         assert_eq!(
-            computer.param_addrs(0, instr.op.params(), instr.param_modes),
+            computer.param_addrs(0, instr.op.params(), &instr.param_modes),
             [4, 2, 4].to_vec()
         );
     }
@@ -463,7 +457,7 @@ mod tests {
             109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99,
         ]
         .to_vec();
-        let mut computer = Intcode::new_with(program.clone(), 1024);
+        let mut computer = Intcode::new_with(&program, 1024);
         computer.run();
         assert_eq!(
             computer.outputs().iter().copied().collect::<Vec<_>>(),
@@ -474,7 +468,7 @@ mod tests {
     #[test]
     fn test_advanced_day_9_self_large_numbers() {
         let program = [104, 1125899906842624, 99].to_vec();
-        let mut computer = Intcode::new_with(program, 1024);
+        let mut computer = Intcode::new_with(&program, 1024);
         computer.run();
         assert_eq!(computer.outputs().pop_front().unwrap(), 1125899906842624);
     }

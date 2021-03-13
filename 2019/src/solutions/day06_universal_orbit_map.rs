@@ -33,8 +33,8 @@ fn part1(input: &str) -> usize {
 fn part2(input: &str) -> usize {
     let orbit_map = gen(input);
     // Find the paths needed to get from YOU and SAN to COM
-    let path1 = walk(&orbit_map, &"YOU");
-    let path2 = walk(&orbit_map, &"SAN");
+    let path1 = walk(&orbit_map, "YOU");
+    let path2 = walk(&orbit_map, "SAN");
 
     // Walk backwards through the paths from COM -> [YOU|SAN]
     // Until we find the divergence point, we can then add up the number of

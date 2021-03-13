@@ -15,3 +15,4 @@ pub mod day14_space_stoichiometry;
 pub mod day15_oxygen_system;
 pub mod day16_flawed_frequency_transmission;
 pub mod day17_set_and_forget;
+pub mod day21_springdroid_adventure;

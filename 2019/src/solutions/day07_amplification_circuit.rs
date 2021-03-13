@@ -1,7 +1,7 @@
 use crate::intcode::Intcode;
 use itertools::Itertools;
 
-fn run_chained_amps(program: &Vec<isize>, phases: &Vec<&usize>, feedback: bool) -> usize {
+fn run_chained_amps(program: &Vec<isize>, phases: &[&usize], feedback: bool) -> usize {
     // Create and configure the amps with their phase settings
     let mut amps = Vec::new();
     for phase in phases {
@@ -33,7 +33,7 @@ fn run_chained_amps(program: &Vec<isize>, phases: &Vec<&usize>, feedback: bool) 
         }
     }
     // Return the signal value (output from last amp)
-    return signal as usize;
+    signal as usize
 }
 
 #[aoc_generator(day7)]

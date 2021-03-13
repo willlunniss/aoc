@@ -1,4 +1,5 @@
 use crate::intcode::Intcode;
+use std::cmp::Ordering;
 
 struct BlocksGame {
     computer: Intcode,
@@ -67,13 +68,12 @@ impl BlocksGame {
                 return;
             }
             // Update the joystick to make the paddle track the ball
-            let joystick = if ball < paddle {
-                -1
-            } else if ball > paddle {
-                1
-            } else {
-                0
+            let joystick = match ball.cmp(&paddle) {
+                Ordering::Greater => 1,
+                Ordering::Less => -1,
+                Ordering::Equal => 0,
             };
+
             // Provide the joystick position as input
             self.computer.inputs().push_back(joystick);
         }
@@ -85,12 +85,10 @@ fn part1(input: &str) -> usize {
     // Start the game and count the block (2) tiles
     let mut game = BlocksGame::from(input);
     game.play();
-    return game
-        .tiles
+    game.tiles
         .iter()
         .flat_map(|row| row.iter().filter(|tile| **tile == 2))
-        .collect::<Vec<_>>()
-        .len();
+        .count()
 }
 
 #[aoc(day13, part2)]
@@ -99,5 +97,5 @@ fn part2(input: &str) -> isize {
     let mut game = BlocksGame::from(input);
     game.add_quarters();
     game.play();
-    return game.score;
+    game.score
 }

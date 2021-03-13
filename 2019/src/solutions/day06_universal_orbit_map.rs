@@ -10,13 +10,13 @@ fn walk<'a>(orbit_map: &'a HashMap<&str, &str>, object: &'a str) -> Vec<&'a str>
         node = parent;
         path.push(node);
     }
-    return path;
+    path
 }
 
 fn gen(input: &str) -> HashMap<&str, &str> {
     return input
         .lines()
-        .map(|line| line.splitn(2, ")").collect_tuple().unwrap())
+        .map(|line| line.splitn(2, ')').collect_tuple().unwrap())
         .map(|(parent, child)| (child, parent))
         .collect();
 }
@@ -33,10 +33,8 @@ fn part1(input: &str) -> usize {
 fn part2(input: &str) -> usize {
     let orbit_map = gen(input);
     // Find the paths needed to get from YOU and SAN to COM
-    let you = "YOU".to_owned();
-    let san = "SAN".to_owned();
-    let path1 = walk(&orbit_map, &you);
-    let path2 = walk(&orbit_map, &san);
+    let path1 = walk(&orbit_map, &"YOU");
+    let path2 = walk(&orbit_map, &"SAN");
 
     // Walk backwards through the paths from COM -> [YOU|SAN]
     // Until we find the divergence point, we can then add up the number of
@@ -50,5 +48,5 @@ fn part2(input: &str) -> usize {
         shared_path_length += 1;
     }
     // Orbital transfers from YOU -> SAN is len of the two paths - 2x shared_path_length
-    return path1.len() + path2.len() - (2 * shared_path_length);
+    path1.len() + path2.len() - (2 * shared_path_length)
 }

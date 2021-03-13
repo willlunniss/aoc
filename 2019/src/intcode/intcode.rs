@@ -109,13 +109,13 @@ struct Instr {
 impl Intcode {
     /// Initialises a new Intcode computer with the supplied program
     pub fn new(program: Vec<isize>) -> Intcode {
-        return Intcode {
+        Intcode {
             mem: program,
             ip: 0,
             inputs: VecDeque::new(),
             outputs: VecDeque::new(),
             relative_base: 0,
-        };
+        }
     }
 
     /// Initialises a new Intcode computer with the supplied program with the specified memory size
@@ -127,12 +127,12 @@ impl Intcode {
         for (id, val) in program.iter().enumerate() {
             result.mem[id] = *val;
         }
-        return result;
+        result
     }
 
     /// Initialises a new Intcode computer from a comma separated string of integers
     pub fn from(program: &str) -> Intcode {
-        return Intcode {
+        Intcode {
             mem: program
                 .split(',')
                 .map(|i| i.parse::<isize>().unwrap())
@@ -141,7 +141,7 @@ impl Intcode {
             inputs: VecDeque::new(),
             outputs: VecDeque::new(),
             relative_base: 0,
-        };
+        }
     }
 
     /// Initialises a new Intcode computer from a comma separated string of integers
@@ -157,7 +157,7 @@ impl Intcode {
         {
             result.mem[id] = val;
         }
-        return result;
+        result
     }
 
     /// Sets the value at the supplied memory address
@@ -167,7 +167,7 @@ impl Intcode {
 
     /// Gets the value at the supplied memory address
     pub fn get_mem(&self, addr: usize) -> isize {
-        return self.mem[addr];
+        self.mem[addr]
     }
 
     /// Runs the loaded program until completion (returns true)
@@ -185,12 +185,29 @@ impl Intcode {
 
     /// Gets the input queue
     pub fn inputs(&mut self) -> &mut VecDeque<isize> {
-        return &mut self.inputs;
+        &mut self.inputs
+    }
+
+    /// Inputs the supplied line of text
+    ///
+    /// Inputs the line as ASCII chars and terminates with a new line
+    pub fn inputln(&mut self, line: &str) {
+        for c in line.chars() {
+            self.inputs.push_back(c as isize);
+        }
+        self.inputs.push_back(10); // New line
+    }
+
+    /// Prints outputs as ASCII chars
+    pub fn print_outputs_as_ascii(&mut self) {
+        self.outputs()
+            .drain(0..) // Consume all outputs and treat as chars
+            .for_each(|c| print!("{}", c as u8 as char));
     }
 
     /// Gets the output queue
     pub fn outputs(&mut self) -> &mut VecDeque<isize> {
-        return &mut self.outputs;
+        &mut self.outputs
     }
 
     /// Executes a single instruction at the specified IP
@@ -208,7 +225,7 @@ impl Intcode {
             // Just advance the instruction pointer by 1 + num params
             return Result::SetIP(ip + 1 + instr.op.params());
         }
-        return result.unwrap();
+        result.unwrap()
     }
 
     /// Decodes an instruction
@@ -231,15 +248,12 @@ impl Intcode {
         }
         // Lookup the opcode
         let op = Op::new(opcode as usize);
-        return Instr {
-            op: op,
-            param_modes: param_modes,
-        };
+        Instr { op, param_modes }
     }
 
     /// Gets the address of parameters for an instruction taking into account the different parameter modes
     fn param_addrs(&self, ip: usize, count: usize, modes: Vec<usize>) -> Vec<usize> {
-        return (0..count)
+        (0..count)
             .map(|param| {
                 let addr = ip + 1 + param;
                 match modes[param] {
@@ -260,12 +274,12 @@ impl Intcode {
                     }
                 }
             })
-            .collect();
+            .collect()
     }
 
     /// Gets the next available input
     fn input(&mut self) -> Option<isize> {
-        return self.inputs.pop_front();
+        self.inputs.pop_front()
     }
 
     /// Outputs the supplied value
@@ -276,13 +290,13 @@ impl Intcode {
     /// Sets the 3rd parameter to the 1st plus the 2nd
     fn instr_1_add(&mut self, _: usize, param_addrs: Vec<usize>) -> Option<Result> {
         self.mem[param_addrs[2]] = self.mem[param_addrs[0]] + self.mem[param_addrs[1]];
-        return None;
+        None
     }
 
     /// Sets the 3rd parameter to the 1st multiplied by the 2nd
     fn instr_2_multiply(&mut self, _: usize, param_addrs: Vec<usize>) -> Option<Result> {
         self.mem[param_addrs[2]] = self.mem[param_addrs[0]] * self.mem[param_addrs[1]];
-        return None;
+        None
     }
 
     /// Fetches an input and stores it in the 1st parameter
@@ -292,36 +306,36 @@ impl Intcode {
         if let Some(value) = self.input() {
             // Input value is available, write it to memory
             self.mem[param_addrs[0]] = value;
-            return None;
+            None
         } else {
             // No input available
             // The IP will not get updated so that next time run() is called
             // the program will be resumed and this instruction will be re-tried
-            return Some(Result::InputRequired);
+            Some(Result::InputRequired)
         }
     }
 
     /// Outputs the 1st parameter
     fn instr_4_output(&mut self, _: usize, param_addrs: Vec<usize>) -> Option<Result> {
         self.output(self.mem[param_addrs[0]]);
-        return None;
+        None
     }
 
     /// Sets the IP to the value of the 2nd parameter if the 1st is not-equal to 0
     fn instr_5_jump_if_true(&mut self, _: usize, param_addrs: Vec<usize>) -> Option<Result> {
         if self.mem[param_addrs[0]] != 0 {
-            return Some(Result::SetIP(self.mem[param_addrs[1]] as usize));
+            Some(Result::SetIP(self.mem[param_addrs[1]] as usize))
         } else {
-            return None;
+            None
         }
     }
 
     /// Sets the IP to the value of the 2nd parameter if the 1st is equal to 0
     fn instr_6_jump_if_false(&mut self, _: usize, param_addrs: Vec<usize>) -> Option<Result> {
         if self.mem[param_addrs[0]] == 0 {
-            return Some(Result::SetIP(self.mem[param_addrs[1]] as usize));
+            Some(Result::SetIP(self.mem[param_addrs[1]] as usize))
         } else {
-            return None;
+            None
         }
     }
 
@@ -332,7 +346,7 @@ impl Intcode {
         } else {
             0
         };
-        return None;
+        None
     }
 
     /// Sets the 3rd parameter to 1 if the 1st and second are equal, else sets to 0
@@ -342,7 +356,7 @@ impl Intcode {
         } else {
             0
         };
-        return None;
+        None
     }
 
     /// Adjusts the relative base by the amount in the 1st parameter
@@ -352,12 +366,12 @@ impl Intcode {
         param_addrs: Vec<usize>,
     ) -> Option<Result> {
         self.relative_base += self.mem[param_addrs[0]];
-        return None;
+        None
     }
 
     /// Unconditionally causes the program to exit
     fn instr_99_halt(&mut self, _: usize, _: Vec<usize>) -> Option<Result> {
-        return Some(Result::Exit);
+        Some(Result::Exit)
     }
 }
 
@@ -437,7 +451,7 @@ mod tests {
         computer.inputs().push_back(0);
         computer.run();
         assert_eq!(*computer.outputs().iter().last().unwrap(), 0);
-        let mut computer = Intcode::new(program.clone());
+        let mut computer = Intcode::new(program);
         computer.inputs().push_back(72);
         computer.run();
         assert_eq!(*computer.outputs().iter().last().unwrap(), 1);
@@ -452,11 +466,7 @@ mod tests {
         let mut computer = Intcode::new_with(program.clone(), 1024);
         computer.run();
         assert_eq!(
-            computer
-                .outputs()
-                .iter()
-                .map(|val| *val)
-                .collect::<Vec<isize>>(),
+            computer.outputs().iter().copied().collect::<Vec<_>>(),
             program
         );
     }
@@ -464,7 +474,7 @@ mod tests {
     #[test]
     fn test_advanced_day_9_self_large_numbers() {
         let program = [104, 1125899906842624, 99].to_vec();
-        let mut computer = Intcode::new_with(program.clone(), 1024);
+        let mut computer = Intcode::new_with(program, 1024);
         computer.run();
         assert_eq!(computer.outputs().pop_front().unwrap(), 1125899906842624);
     }

@@ -20,7 +20,7 @@ where
             offset += 1;
         }
     }
-    return locations;
+    locations
 }
 
 struct ASCII {
@@ -59,14 +59,10 @@ impl ASCII {
         // Configure robot with directions
         self.controller.set_mem(0, 2);
         for line in compiled {
-            for c in line.chars() {
-                self.controller.inputs().push_back(c as isize);
-            }
-            self.controller.inputs().push_back(10); // New line
+            self.controller.inputln(&line);
         }
         // Tell it not to show a continuous feed
-        self.controller.inputs().push_back('n' as isize);
-        self.controller.inputs().push_back(10);
+        self.controller.inputln("n");
         // Now run the robot
         self.controller.run();
 
@@ -91,7 +87,7 @@ impl ASCII {
                 row.push(*c as u8 as char);
             }
         }
-        return VecGrid { data: grid };
+        VecGrid { data: grid }
     }
 
     /// Finds all of the points where the scaffolding crosses over
@@ -111,7 +107,7 @@ impl ASCII {
                 }
             }
         }
-        return crossovers;
+        crossovers
     }
 
     /// Searches the grid for the robot
@@ -127,7 +123,7 @@ impl ASCII {
                 }
             }
         }
-        return None;
+        None
     }
 
     /// Builds a route that will let the robot traverse all the scaffolding
@@ -157,7 +153,7 @@ impl ASCII {
             // Can't turn left or right, must be the end
             break;
         }
-        return route;
+        route
     }
 
     /// Follows the scaffolding from the current pos in the direction specified
@@ -181,9 +177,9 @@ impl ASCII {
             }
         }
         if distance > 0 {
-            return Some((current, distance));
+            Some((current, distance))
         } else {
-            return None;
+            None
         }
     }
 
@@ -295,7 +291,7 @@ impl ASCII {
         for (_, (function, _)) in functions.iter().enumerate() {
             compiled.push(function.join(","));
         }
-        return compiled;
+        compiled
     }
 }
 
@@ -303,14 +299,14 @@ impl ASCII {
 fn part1(input: &str) -> isize {
     let mut computer = ASCII::from(input);
     // Return the result of aligning the cameras
-    return computer.align_cameras();
+    computer.align_cameras()
 }
 
 #[aoc(day17, part2)]
 fn part2(input: &str) -> isize {
     let mut computer = ASCII::from(input);
     // Walk scaffolding and return the amount of space dust collected
-    return computer.walk_scaffolding();
+    computer.walk_scaffolding()
 }
 
 #[cfg(test)]
@@ -384,6 +380,6 @@ mod tests {
                 _ => panic!(),
             });
         }
-        return route;
+        route
     }
 }

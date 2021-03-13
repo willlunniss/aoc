@@ -34,10 +34,10 @@ impl Path {
                 pos.x += x_step;
                 pos.y += y_step;
                 distance += 1;
-                points.push((pos.clone(), distance));
+                points.push((pos, distance));
             }
         }
-        return points;
+        points
     }
 }
 
@@ -53,19 +53,19 @@ impl FromStr for Point {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (direction, distance_str) = s.split_at(1);
         let distance = distance_str.parse::<isize>().unwrap();
-        return Ok(match direction {
+        Ok(match direction {
             "U" => Point { x: 0, y: distance },
             "D" => Point { x: 0, y: -distance },
             "L" => Point { x: -distance, y: 0 },
             "R" => Point { x: distance, y: 0 },
             _ => panic!("Unexpected direction {}", direction),
-        });
+        })
     }
 }
 
 impl Point {
     fn manhattan_distance(&self) -> isize {
-        return isize::abs(self.x) + isize::abs(self.y);
+        isize::abs(self.x) + isize::abs(self.y)
     }
 }
 
@@ -74,13 +74,13 @@ fn gen(input: &str) -> Vec<Path> {
     input
         .lines()
         .map(|line| Path {
-            waypoints: line.split(",").map(|p| p.parse().unwrap()).collect(),
+            waypoints: line.split(',').map(|p| p.parse().unwrap()).collect(),
         })
         .collect()
 }
 
 #[aoc(day3, part1)]
-fn part1(input: &Vec<Path>) -> isize {
+fn part1(input: &[Path]) -> isize {
     let (path1, path2) = input.iter().collect_tuple().unwrap();
     // Get the points along both paths in a set
     let points1: HashSet<Point> = path1.follow().into_iter().map(|(point, _)| point).collect();
@@ -97,7 +97,7 @@ fn part1(input: &Vec<Path>) -> isize {
 }
 
 #[aoc(day3, part2)]
-fn part2(input: &Vec<Path>) -> usize {
+fn part2(input: &[Path]) -> usize {
     let (path1, path2) = input.iter().collect_tuple().unwrap();
     // Get the points along both paths and associated distance as hashmap
     let points1: HashMap<Point, usize> = path1.follow().into_iter().collect();

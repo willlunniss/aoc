@@ -10,12 +10,12 @@ struct EmergencyHullPainingRobot {
 
 impl EmergencyHullPainingRobot {
     fn new(program: &str) -> EmergencyHullPainingRobot {
-        return EmergencyHullPainingRobot {
+        EmergencyHullPainingRobot {
             controller: Intcode::from_with(program, 1024 * 1024),
             tiles: HashMap::new(),
             direction: 0,
             pos: (0, 0),
-        };
+        }
     }
 
     /// Paints the hull
@@ -24,7 +24,7 @@ impl EmergencyHullPainingRobot {
         loop {
             // Access camera to provide input (assume 0/black if not yet painted)
             let tile = self.tiles.entry(self.pos).or_default();
-            self.controller.inputs().push_back(tile.clone());
+            self.controller.inputs().push_back(*tile);
             // Run the controller, it will process the input and give us some outputs
             if self.controller.run() {
                 // Complete
@@ -77,7 +77,7 @@ impl EmergencyHullPainingRobot {
         for (pos, colour) in &self.tiles {
             grid[(max_y - pos.1) as usize][(pos.0 - min_x) as usize] = *colour;
         }
-        return grid;
+        grid
     }
 }
 
@@ -87,7 +87,7 @@ fn part1(input: &str) -> usize {
     let mut robot = EmergencyHullPainingRobot::new(input);
     robot.paint();
     // Result is simply the number of tiles visited
-    return robot.tiles.len();
+    robot.tiles.len()
 }
 
 #[aoc(day11, part2)]
@@ -111,5 +111,5 @@ fn part2(input: &str) -> String {
         println!();
     }
     println!();
-    return "↑ Check the printed image ↑".to_owned();
+    "↑ Check the printed image ↑".to_owned()
 }

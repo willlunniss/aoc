@@ -16,7 +16,7 @@ fn validate1(password: usize) -> bool {
         }
         last = digit;
     }
-    return has_adjacent;
+    has_adjacent
 }
 
 /// Validates a password according to the rules in part 2
@@ -34,12 +34,7 @@ fn validate2(password: usize) -> bool {
     }
     // Password is valid if there are 1 or more instances of 2 adjacent numbers
     // (123444 does not count, but 111122 is OK)
-    return digit_count
-        .iter()
-        .filter(|count| **count == 2)
-        .collect::<Vec<_>>()
-        .len()
-        >= 1;
+    return digit_count.iter().any(|count| *count == 2);
 }
 
 #[aoc_generator(day4)]
@@ -53,25 +48,23 @@ fn gen(input: &str) -> Vec<usize> {
         .collect_tuple()
         .unwrap();
     // Create a new candidate for all possible values in the range
-    return (start..end).collect();
+    (start..end).collect()
 }
 
 #[aoc(day4, part1)]
-fn part1(input: &Vec<usize>) -> usize {
+fn part1(input: &[usize]) -> usize {
     return input
         .iter()
         .filter(|password| validate1(**password))
-        .collect::<Vec<_>>()
-        .len();
+        .count();
 }
 
 #[aoc(day4, part2)]
-fn part2(input: &Vec<usize>) -> usize {
+fn part2(input: &[usize]) -> usize {
     return input
         .iter()
         .filter(|password| validate2(**password))
-        .collect::<Vec<_>>()
-        .len();
+        .count();
 }
 
 #[cfg(test)]

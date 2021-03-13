@@ -6,7 +6,7 @@ fn part1(input: &str) -> isize {
     computer.set_mem(1, 12);
     computer.set_mem(2, 2);
     computer.run();
-    return computer.get_mem(0);
+    computer.get_mem(0)
 }
 
 #[aoc(day2, part2)]
@@ -23,5 +23,5 @@ fn part2(input: &str) -> isize {
             }
         }
     }
-    return 0;
+    0
 }

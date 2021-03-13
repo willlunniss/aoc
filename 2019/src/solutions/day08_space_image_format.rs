@@ -7,7 +7,7 @@ fn gen(input: &str) -> Vec<usize> {
 }
 
 #[aoc(day8, part1)]
-fn part1(input: &Vec<usize>) -> usize {
+fn part1(input: &[usize]) -> usize {
     let layer_size = 25 * 6;
     let mut lowest_0_count = layer_size; // Assume all pixels are 0 as the max
     let mut result = 0;
@@ -21,10 +21,10 @@ fn part1(input: &Vec<usize>) -> usize {
             result = count[1] * count[2];
         }
     }
-    return result;
+    result
 }
 
-fn build_image(input: &Vec<usize>, width: usize, height: usize) -> Vec<usize> {
+fn build_image(input: &[usize], width: usize, height: usize) -> Vec<usize> {
     // Initialise an all transparent image to start
     let mut image = vec![2; width * height];
     for id in 0..width * height {
@@ -41,11 +41,11 @@ fn build_image(input: &Vec<usize>, width: usize, height: usize) -> Vec<usize> {
             }
         }
     }
-    return image;
+    image
 }
 
 #[aoc(day8, part2)]
-fn part2(input: &Vec<usize>) -> String {
+fn part2(input: &[usize]) -> String {
     let width = 25;
     let height = 6;
     // Build the image
@@ -62,7 +62,7 @@ fn part2(input: &Vec<usize>) -> String {
         println!();
     }
     println!();
-    return "↑ Check the printed image ↑".to_owned();
+    "↑ Check the printed image ↑".to_owned()
 }
 
 #[cfg(test)]

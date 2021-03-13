@@ -1,15 +1,23 @@
 use itertools::Itertools;
 use std::collections::HashMap;
 
+struct Component<'a> {
+    quantity: usize,
+    chemical: &'a str,
+}
+
 /// Splits a reaction component into it's units and chemical
-fn parse_component(input: &str) -> (usize, &str) {
+fn parse_component(input: &str) -> Component {
     // 2 D => (2, D)
-    let (units, chemical) = input.splitn(2, " ").collect_tuple().unwrap();
-    return (units.parse().unwrap(), chemical);
+    let (units, chemical) = input.splitn(2, ' ').collect_tuple().unwrap();
+    Component {
+        quantity: units.parse().unwrap(),
+        chemical,
+    }
 }
 
 /// Generates the list of reactions from the input
-fn gen(input: &str) -> HashMap<&str, (usize, Vec<(usize, &str)>)> {
+fn gen(input: &str) -> HashMap<&str, (usize, Vec<Component>)> {
     let mut reactions = HashMap::new();
     for reaction in input.lines() {
         // Parse recipe e.g. 1 A, 2 B, 3 C => 2 D
@@ -17,14 +25,14 @@ fn gen(input: &str) -> HashMap<&str, (usize, Vec<(usize, &str)>)> {
         let produces = parse_component(output);
         let requires = inputs.split(", ").map(|x| parse_component(x)).collect();
         // Store D = (2, [(1, A), (2, B), (3, C)])
-        reactions.insert(produces.1, (produces.0, requires));
+        reactions.insert(produces.chemical, (produces.quantity, requires));
     }
-    return reactions;
+    reactions
 }
 
 /// Produces units of chemical, updating available with any spare by products and ore with what was needed to make it all
 fn produce<'a>(
-    reactions: &'a HashMap<&'a str, (usize, Vec<(usize, &'a str)>)>,
+    reactions: &'a HashMap<&'a str, (usize, Vec<Component>)>,
     available: &mut HashMap<&'a str, usize>,
     produced: &mut HashMap<&'a str, usize>,
     units: usize,
@@ -66,8 +74,8 @@ fn produce<'a>(
             reactions,
             available,
             produced,
-            input.0 * required_runs,
-            input.1,
+            input.quantity * required_runs,
+            input.chemical,
         );
     }
 }
@@ -81,7 +89,7 @@ fn part1(input: &str) -> usize {
     let mut produced = HashMap::new();
     let fuel = "FUEL".to_owned();
     produce(&reactions, &mut available, &mut produced, 1, &fuel);
-    return *produced.get("ORE").unwrap();
+    *produced.get("ORE").unwrap()
 }
 
 #[aoc(day14, part2)]

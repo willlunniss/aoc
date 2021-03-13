@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::fmt::Display;
-use std::ops::Deref;
 use std::slice::Iter;
 
 /// Four heading direction enum to aid moving around a grid
@@ -16,23 +15,23 @@ impl Direction {
     /// Rotates left
     pub fn rotate_left(&self) -> Direction {
         use Direction::*;
-        return match self {
+        match self {
             Up => Left,
             Right => Up,
             Down => Right,
             Left => Down,
-        };
+        }
     }
 
     /// Rotates right
     pub fn rotate_right(&self) -> Direction {
         use Direction::*;
-        return match self {
+        match self {
             Up => Right,
             Right => Down,
             Down => Left,
             Left => Up,
-        };
+        }
     }
 }
 
@@ -45,16 +44,16 @@ pub struct Pos {
 
 impl Pos {
     pub fn new(x: usize, y: usize) -> Pos {
-        return Pos {
+        Pos {
             x: x as isize,
             y: y as isize,
-        };
+        }
     }
 
     /// Gets the next position if we headed in the supplied direction
     pub fn next(&self, direction: Direction) -> Pos {
         use Direction::*;
-        return match direction {
+        match direction {
             Up => Pos {
                 x: self.x,
                 y: self.y - 1,
@@ -71,7 +70,7 @@ impl Pos {
                 x: self.x + 1,
                 y: self.y,
             },
-        };
+        }
     }
 }
 
@@ -81,7 +80,18 @@ pub struct VecGrid<V> {
     pub data: Vec<Vec<V>>,
 }
 
+impl<V: Clone + Copy> Default for VecGrid<V> {
+    fn default() -> Self {
+        VecGrid::new()
+    }
+}
+
 impl<V: Clone + Copy> VecGrid<V> {
+    /// Creates a new empty VecGrid
+    pub fn new() -> VecGrid<V> {
+        VecGrid { data: Vec::new() }
+    }
+
     pub fn iter(&self) -> Iter<'_, Vec<V>> {
         self.data.iter()
     }
@@ -98,9 +108,9 @@ impl<V: Clone + Copy> VecGrid<V> {
     /// Gets the element at the supplied position or None if it is outside of bounds
     pub fn get(&self, pos: Pos) -> Option<V> {
         if self.contains(pos) {
-            return Some(self.data[pos.y as usize][pos.x as usize]);
+            Some(self.data[pos.y as usize][pos.x as usize])
         } else {
-            return None; // Outside of bounds
+            None // Outside of bounds
         }
     }
 
@@ -111,10 +121,10 @@ impl<V: Clone + Copy> VecGrid<V> {
 
     /// Checks whether the supplied position exists within the grid
     pub fn contains(&self, pos: Pos) -> bool {
-        return pos.y >= 0
+        pos.y >= 0
             && pos.y < self.data.len() as isize - 1
             && pos.x >= 0
-            && pos.x < self.data[0].len() as isize;
+            && pos.x < self.data[0].len() as isize
     }
 
     /// Prints the grid to the console
@@ -138,10 +148,28 @@ pub struct MapGrid<V> {
     data: HashMap<Pos, V>,
 }
 
-impl<V: Deref + Clone + Copy> MapGrid<V> {
+impl<V: Clone + Copy> Default for MapGrid<V> {
+    fn default() -> Self {
+        MapGrid::new()
+    }
+}
+
+impl<V: Clone + Copy> MapGrid<V> {
+    /// Creates a new empty MapGrid
+    pub fn new() -> MapGrid<V> {
+        MapGrid {
+            data: HashMap::new(),
+        }
+    }
+
+    /// Inserts the element into the supplied position
+    pub fn insert(&mut self, pos: Pos, value: V) {
+        self.data.insert(pos, value);
+    }
+
     /// Gets the element at the supplied position
     pub fn get(&self, pos: Pos) -> Option<&V> {
-        return self.data.get(&pos);
+        self.data.get(&pos)
     }
     /// Converts a HashMap based grid to a nested vector
     ///
@@ -168,7 +196,7 @@ impl<V: Deref + Clone + Copy> MapGrid<V> {
         for (pos, value) in &self.data {
             grid[(max_y - pos.y) as usize][(pos.x - min_x) as usize] = *value;
         }
-        return grid;
+        grid
     }
 
     /// Prints the grid to the console

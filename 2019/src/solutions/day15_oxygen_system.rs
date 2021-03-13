@@ -50,10 +50,10 @@ impl RepairDroid {
         // We've tried all options at this location, need to backtrack
         if let Some(direction) = direction_stack.pop() {
             // direction is how we got here, so need turn it into the direction to go backwards
-            return RepairDroid::back(direction);
+            RepairDroid::back(direction)
         } else {
             // If there is nowhere to go then return 0 to indicate we have fully explored everything
-            return 0;
+            0
         }
     }
 
@@ -104,17 +104,16 @@ impl RepairDroid {
                 1 | 2 => {
                     // Moved OK, update position
                     self.pos = next;
-                    if !unexplored_directions.contains_key(&self.pos) {
-                        // We haven't been here before
-                        // Init unexplored for this position (with all positions except from where we came)
-                        unexplored_directions
-                            .insert(self.pos, RepairDroid::others(RepairDroid::back(direction)));
-                        // Record how we got here
+
+                    unexplored_directions.entry(self.pos).or_insert_with(|| {
+                        // We haven't been here before, record how we got here
                         direction_stack.push(direction);
                         if direction_stack.len() > max_path_length {
                             max_path_length += 1;
                         }
-                    }
+                        // Then init with all directions except where we came from
+                        RepairDroid::others(RepairDroid::back(direction))
+                    });
                     if status == 2 && find_oxygen {
                         // Found the oxygen system!
                         return direction_stack.len();
@@ -130,7 +129,7 @@ impl RepairDroid {
 fn part1(input: &str) -> usize {
     let mut droid = RepairDroid::from(input);
     // Find the oxygen system and then return the path length to it
-    return droid.explore(true);
+    droid.explore(true)
 }
 
 #[aoc(day15, part2)]
@@ -140,5 +139,5 @@ fn part2(input: &str) -> usize {
     droid.explore(true);
     // Then start exploring again (don't reset position) to discover the whole map returning the maximum
     // path length from the oxygen system
-    return droid.explore(false);
+    droid.explore(false)
 }

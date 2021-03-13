@@ -7,10 +7,10 @@ struct PatternGenerator {
 
 impl PatternGenerator {
     fn new(base_pattern: &Vec<isize>, element: usize) -> PatternGenerator {
-        return PatternGenerator {
+        PatternGenerator {
             base_pattern: base_pattern.clone(),
-            element: element,
-        };
+            element,
+        }
     }
 }
 
@@ -50,7 +50,7 @@ impl<'a> Iterator for PatternGeneratorIterator<'a> {
             self.index = 0;
             self.repeat = 0;
         }
-        return Some(self.generator.base_pattern[self.index]);
+        Some(self.generator.base_pattern[self.index])
     }
 }
 
@@ -71,21 +71,21 @@ impl FFT {
         let mut output = vec![0; self.signal.len()];
         for _phase in 1..=phases {
             // Run for the requested number of phases
-            for digit in 0..self.signal.len() {
+            for (index, value) in output.iter_mut().enumerate() {
                 // Calculate the result for this digit
                 // Multiply each digit by the corresponding pattern value and then add up all the results
                 let result: isize = self
                     .signal
                     .iter()
                     .zip(
-                        PatternGenerator::new(&self.base_pattern, digit)
+                        PatternGenerator::new(&self.base_pattern, index)
                             .into_iter()
                             .take(self.signal.len()),
                     )
                     .map(|(sig_digit, p_value)| sig_digit * p_value)
                     .sum();
                 // Then convert to absolute and take the last digit
-                output[digit] = isize::abs(result) % 10;
+                *value = isize::abs(result) % 10;
             }
             std::mem::swap(&mut self.signal, &mut output);
         }
@@ -114,7 +114,7 @@ fn backwards_sum_2nd_half(input: &Vec<isize>, phases: usize) -> Vec<isize> {
         }
         std::mem::swap(&mut input, &mut output);
     }
-    return input;
+    input
 }
 
 #[aoc_generator(day16)]

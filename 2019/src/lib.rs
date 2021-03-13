@@ -1,3 +1,5 @@
+#![warn(clippy::all)]
+
 extern crate aoc_runner;
 
 extern crate digits_iterator;

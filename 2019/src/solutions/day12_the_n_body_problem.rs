@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use std::cmp::Ordering;
 use std::{convert::Infallible, str::FromStr};
 
 #[derive(Debug, Eq, PartialEq)]
@@ -55,10 +56,10 @@ impl FromStr for Moon {
                 _ => {} // Ignored
             }
         }
-        return Ok(Moon {
+        Ok(Moon {
             position: pos,
             velocity: vec![0; 3],
-        });
+        })
     }
 }
 
@@ -69,13 +70,17 @@ fn apply_gravity(moons: &mut Vec<Moon>) {
         for axis in 0..3 {
             // Adjust velocity's to pull moons together e.g. if 0 > 1 then decrease 0's velocity and increase 1's
             let (pos1, pos2) = (moons[pair[0]].position[axis], moons[pair[1]].position[axis]);
-            if pos1 > pos2 {
-                moons[pair[0]].velocity[axis] -= 1;
-                moons[pair[1]].velocity[axis] += 1;
-            } else if pos1 < pos2 {
-                moons[pair[1]].velocity[axis] -= 1;
-                moons[pair[0]].velocity[axis] += 1;
-            } // else equal - don't do anything
+            match pos1.cmp(&pos2) {
+                Ordering::Greater => {
+                    moons[pair[0]].velocity[axis] -= 1;
+                    moons[pair[1]].velocity[axis] += 1;
+                }
+                Ordering::Less => {
+                    moons[pair[1]].velocity[axis] -= 1;
+                    moons[pair[0]].velocity[axis] += 1;
+                }
+                Ordering::Equal => {} // Don't do anything
+            }
         }
     }
 }

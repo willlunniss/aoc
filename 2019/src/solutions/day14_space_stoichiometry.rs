@@ -62,7 +62,8 @@ fn produce<'a>(
     let required_runs = f64::ceil((units - *spare) as f64 / *produces as f64) as usize;
     let producing = required_runs * produces;
     // Update what will be spare afterwards
-    *spare += producing - units;
+    *spare += producing;
+    *spare -= units;
     // Update what we are producing
     produced
         .entry(chemical)

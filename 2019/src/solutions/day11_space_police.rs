@@ -9,8 +9,8 @@ struct EmergencyHullPainingRobot {
 }
 
 impl EmergencyHullPainingRobot {
-    fn new(program: &str) -> EmergencyHullPainingRobot {
-        EmergencyHullPainingRobot {
+    fn new(program: &str) -> Self {
+        Self {
             controller: Intcode::from_with(program, 1024 * 1024),
             tiles: HashMap::new(),
             direction: 0,

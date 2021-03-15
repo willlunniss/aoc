@@ -52,7 +52,7 @@ impl Pos {
 
     /// Gets the next position if we headed in the supplied direction
     pub const fn next(&self, direction: Direction) -> Self {
-        use Direction::*;
+        use Direction::{Down, Left, Right, Up};
         match direction {
             Up => Self {
                 x: self.x,
@@ -99,15 +99,16 @@ impl<V: Clone + Copy> VecGrid<V> {
     /// Gets the values of the 4 neighbours to the supplied position
     pub fn neighbours(&self, pos: Pos) -> Vec<Option<V>> {
         use Direction::{Down, Left, Right, Up};
-        return [Up, Right, Down, Left]
+        [Up, Right, Down, Left]
             .iter()
             .map(|d| self.get(pos.next(*d)))
-            .collect();
+            .collect()
     }
 
     /// Gets the element at the supplied position or None if it is outside of bounds
     pub fn get(&self, pos: Pos) -> Option<V> {
         if self.contains(pos) {
+
             Some(self.data[pos.y as usize][pos.x as usize])
         } else {
             None // Outside of bounds
@@ -122,7 +123,7 @@ impl<V: Clone + Copy> VecGrid<V> {
     /// Checks whether the supplied position exists within the grid
     pub fn contains(&self, pos: Pos) -> bool {
         pos.y >= 0
-            && pos.y < self.data.len() as isize - 1
+            && pos.y < self.data.len() as isize
             && pos.x >= 0
             && pos.x < self.data[0].len() as isize
     }
@@ -138,6 +139,10 @@ impl<V: Clone + Copy> VecGrid<V> {
             }
             println!();
         }
+    }
+
+    pub fn values(&self) -> Vec<V> {
+        self.data.iter().flat_map(|row| row.iter().copied()).collect()
     }
 }
 

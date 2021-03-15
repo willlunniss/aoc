@@ -79,9 +79,11 @@ impl ASCII {
         let mut row = Vec::new();
         for c in ascii_outputs {
             if *c == 10 {
-                // New line char
-                grid.push(row);
-                row = Vec::new();
+                // New line char, append row if not empty (last line is empty)
+                if !row.is_empty() {
+                    grid.push(row);
+                    row = Vec::new();
+                }
             } else {
                 // Some other char, append to row
                 row.push(*c as u8 as char);
@@ -234,8 +236,8 @@ impl ASCII {
                     // Get the matches for the adjusted size
                     let matched = source[index..index + size].to_vec();
                     // Mark the matched parts so we don't try to process them again
-                    let indexes = exists_in(&source, &matched);
-                    for idx in &exists_in(&source, &matched) {
+                    let indexes = exists_in(source, &matched);
+                    for idx in &exists_in(source, &matched) {
                         for i in 0..size {
                             found[idx + i] = true;
                         }

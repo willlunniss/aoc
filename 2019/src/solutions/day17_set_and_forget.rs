@@ -89,24 +89,16 @@ impl ASCII {
                 row.push(*c as u8 as char);
             }
         }
-        VecGrid { data: grid }
+        VecGrid::from(grid)
     }
 
     /// Finds all of the points where the scaffolding crosses over
     fn find_crossover_points(grid: &VecGrid<char>) -> Vec<Pos> {
         let mut crossovers = Vec::new();
-        // Loop over the whole grid except for the out most rows/columns (to as can't cross over there)
-        for (y, row) in grid.iter().enumerate().skip(1).take(grid.data.len() - 3) {
-            for (x, c) in row.iter().enumerate().skip(1).take(row.len() - 3) {
-                // If this is scaffolding and there is some above, below, left and right then note it down
-                if *c == '#'
-                    && grid
-                        .neighbours(Pos::new(x, y))
-                        .iter()
-                        .all(|x| *x == Some('#'))
-                {
-                    crossovers.push(Pos::new(x, y));
-                }
+        // Loop over the grid checking cell and neighbours state
+        for (pos, value) in grid {
+            if *value == '#' && grid.neighbours(pos).iter().all(|x| *x == Some('#')) {
+                crossovers.push(pos);
             }
         }
         crossovers
@@ -114,15 +106,13 @@ impl ASCII {
 
     /// Searches the grid for the robot
     fn find_robot(grid: &VecGrid<char>) -> Option<(Pos, Direction)> {
-        for (y, row) in grid.data.iter().enumerate() {
-            for (x, c) in row.iter().enumerate() {
-                match c {
-                    '^' => return Some((Pos::new(x, y), Direction::Up)),
-                    'v' => return Some((Pos::new(x, y), Direction::Down)),
-                    '<' => return Some((Pos::new(x, y), Direction::Left)),
-                    '>' => return Some((Pos::new(x, y), Direction::Right)),
-                    _ => {}
-                }
+        for (pos, c) in grid {
+            match c {
+                '^' => return Some((pos, Direction::Up)),
+                'v' => return Some((pos, Direction::Down)),
+                '<' => return Some((pos, Direction::Left)),
+                '>' => return Some((pos, Direction::Right)),
+                _ => {}
             }
         }
         None

@@ -1,5 +1,5 @@
-use crate::utils::grid::VecGrid;
-use std::collections::HashSet;
+use crate::utils::grid::{Direction, Pos, VecGrid};
+use std::collections::{HashMap, HashSet};
 
 /// Calculates a layouts biodiversity rating
 fn rating(values: &[char]) -> usize {
@@ -48,7 +48,7 @@ fn part1(input: &VecGrid<char>) -> usize {
                 .iter()
                 .filter(|n| **n == Some('#'))
                 .count();
-            // and then work out next state
+            // and then work out the next state
             next.set(pos, next_state(*value, adjacent_bugs));
         }
         std::mem::swap(&mut input, &mut next);
@@ -57,7 +57,94 @@ fn part1(input: &VecGrid<char>) -> usize {
 
 #[aoc(day24, part2)]
 fn part2(input: &VecGrid<char>) -> usize {
-    0
+    // Center of each grid
+    let center = Pos::new(2, 2);
+    // Create a default (empty) grid for use when moving into new levels
+    let mut default = VecGrid::from(vec![vec!['.'; 5]; 5]);
+
+    // Mark the center tile in the default and out initial input
+    // as recursing
+    default.set(center, '?');
+    let mut input = input.clone();
+    input.set(center, '?');
+
+    // Store the current levels
+    let mut current: HashMap<isize, VecGrid<char>> = HashMap::new();
+    current.insert(0, input);
+    // And a place to store the next states
+    let mut next = current.clone();
+
+    for minutes in 0..200 {
+        // Assume we increase a level each minute (in practice we only do every 2 or so)
+        for level in -minutes - 1..=minutes + 1 {
+            // Get the grids that we will need to operate on to evaluate this level
+            let next = next.entry(level).or_insert_with(|| default.clone());
+            let up = current.get(&(level + 1));
+            let down = current.get(&(level - 1));
+            let grid = current.get(&level).unwrap_or(&default);
+            // Loop over this level's grid
+            for (pos, value) in grid {
+                if *value == '?' {
+                    continue; // Recursive level, skip over - will handle through next loop up
+                }
+                // Count all adjacent bugs, checking other levels as needed
+                let neighbours = grid.neighbours_ex(pos);
+                let mut adjacent_bugs = 0;
+                for (direction, _, neighbour) in neighbours {
+                    if let Some(n) = neighbour {
+                        // Have a neighbour within this grid
+                        if n == '#' {
+                            // Normal bug cell
+                            adjacent_bugs += 1;
+                        } else if n == '?' {
+                            // At the center, need to check down 1 level (at the 5 neighbours)
+                            if let Some(inner) = down {
+                                // And down is a level we have evaluated before (so may have bugs in it)
+                                let inner_neighbours: Vec<Pos> = match direction {
+                                    Direction::Up => {
+                                        let y = 4; // Check the bottom row of the inner
+                                        (0..5).into_iter().map(|x| Pos::new(x, y)).collect()
+                                    }
+                                    Direction::Down => {
+                                        let y = 0; // Check the upper row of the inner
+                                        (0..5).into_iter().map(|x| Pos::new(x, y)).collect()
+                                    }
+                                    Direction::Left => {
+                                        let x = 4; // Check the right side of the inner
+                                        (0..5).into_iter().map(|y| Pos::new(x, y)).collect()
+                                    }
+                                    Direction::Right => {
+                                        let x = 0; // Check the left side of the inner
+                                        (0..5).into_iter().map(|y| Pos::new(x, y)).collect()
+                                    }
+                                };
+                                // Add all inner adjacent bugs
+                                adjacent_bugs += inner_neighbours
+                                    .iter()
+                                    .map(|position| inner.get(*position))
+                                    .filter(|n| *n == Some('#'))
+                                    .count();
+                            }
+                        }
+                    } else if let Some(outer) = up {
+                        // At the edge and up is a level we have evaluated before (so may have bugs in it)
+                        // Check the outer grid by looking outwards from it's center
+                        if let Some('#') = outer.get(center.next(direction)) {
+                            adjacent_bugs += 1;
+                        }
+                    }
+                }
+                // and then work out the next state as before
+                next.set(pos, next_state(*value, adjacent_bugs));
+            }
+        }
+        std::mem::swap(&mut current, &mut next);
+    }
+    // Return total number of bugs after 200 minutes
+    current
+        .values()
+        .flat_map(|grid| grid.into_iter().filter(|(_, c)| **c == '#'))
+        .count()
 }
 
 #[cfg(test)]

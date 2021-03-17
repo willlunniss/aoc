@@ -102,10 +102,7 @@ impl<'a, V: Clone + Copy> Iterator for VecGridIterator<'a, V> {
     fn next(&mut self) -> Option<(Pos, &'a V)> {
         if self.grid.contains(self.pos) {
             // Get the value
-            let result = Some((
-                self.pos,
-                self.grid.get_ref_no_check(self.pos),
-            ));
+            let result = Some((self.pos, self.grid.get_ref_no_check(self.pos)));
             // Work out where next
             if self.pos.x < self.grid.width() as isize - 1 {
                 self.pos.x += 1;
@@ -151,6 +148,15 @@ impl<V: Clone + Copy> VecGrid<V> {
             .map(|d| self.get(pos.next(*d)))
             .collect()
     }
+
+    /// Gets the direction, pos and values of the 4 neighbours to the supplied position
+    pub fn neighbours_ex(&self, pos: Pos) -> Vec<(Direction, Pos, Option<V>)> {
+        use Direction::{Down, Left, Right, Up};
+        [Up, Right, Down, Left]
+            .iter()
+            .map(|d| (*d, pos, self.get(pos.next(*d))))
+            .collect()
+    }
 }
 
 impl<V> VecGrid<V> {
@@ -160,7 +166,7 @@ impl<V> VecGrid<V> {
     }
 
     /// Creates a new `VecGrid` from an existing nested vector
-    pub fn from( data: Vec<Vec<V>>) -> Self {
+    pub fn from(data: Vec<Vec<V>>) -> Self {
         Self { data }
     }
 
@@ -181,10 +187,7 @@ impl<V> VecGrid<V> {
 
     /// Checks whether the supplied position exists within the grid
     pub fn contains(&self, pos: Pos) -> bool {
-        pos.y >= 0
-            && pos.y < self.height() as isize
-            && pos.x >= 0
-            && pos.x < self.width() as isize
+        pos.y >= 0 && pos.y < self.height() as isize && pos.x >= 0 && pos.x < self.width() as isize
     }
 
     /// Prints the grid to the console
@@ -199,7 +202,7 @@ impl<V> VecGrid<V> {
             println!();
         }
     }
-    
+
     /// Gets as a reference to the value at the supplied position without
     /// performing any bounds checking before hand
     fn get_ref_no_check(&self, pos: Pos) -> &V {

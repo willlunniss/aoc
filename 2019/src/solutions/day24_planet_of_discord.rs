@@ -57,31 +57,32 @@ fn part1(input: &VecGrid<char>) -> usize {
 
 #[aoc(day24, part2)]
 fn part2(input: &VecGrid<char>) -> usize {
-    // Center of each grid
-    let center = Pos::new(2, 2);
     // Create a default (empty) grid for use when moving into new levels
     let mut default = VecGrid::from(vec![vec!['.'; 5]; 5]);
 
-    // Mark the center tile in the default and out initial input
-    // as recursing
+    // Mark the center tile in the default and our initial input as recursing
+    let center = Pos::new(2, 2);
     default.set(center, '?');
     let mut input = input.clone();
     input.set(center, '?');
 
     // Store the current levels
-    let mut current: HashMap<isize, VecGrid<char>> = HashMap::new();
+    // Lower levels are inside and higher levels are outside
+    let mut current = HashMap::new();
     current.insert(0, input);
     // And a place to store the next states
-    let mut next = current.clone();
+    let mut next = HashMap::new();
 
-    for minutes in 0..200 {
-        // Assume we increase a level each minute (in practice we only do every 2 or so)
-        for level in -minutes - 1..=minutes + 1 {
-            // Get the grids that we will need to operate on to evaluate this level
-            let next = next.entry(level).or_insert_with(|| default.clone());
+    for minutes in 1..=200 {
+        // We will immediately expand and can then expand into a new level every 2 minutes (two steps out from the center)
+        let growth = 1 + (minutes / 2);
+        for level in -growth..=growth {
+            // Get the grids that we will need to check to evaluate this level
             let up = current.get(&(level + 1));
             let down = current.get(&(level - 1));
             let grid = current.get(&level).unwrap_or(&default);
+            // Get (or create if needed) somewhere to store the next state for this level
+            let result = next.entry(level).or_insert_with(|| default.clone());
             // Loop over this level's grid
             for (pos, value) in grid {
                 if *value == '?' {
@@ -135,7 +136,7 @@ fn part2(input: &VecGrid<char>) -> usize {
                     }
                 }
                 // and then work out the next state as before
-                next.set(pos, next_state(*value, adjacent_bugs));
+                result.set(pos, next_state(*value, adjacent_bugs));
             }
         }
         std::mem::swap(&mut current, &mut next);

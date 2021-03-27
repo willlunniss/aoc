@@ -1,8 +1,9 @@
 use itertools::Itertools;
+use num::integer::lcm;
 use std::cmp::Ordering;
 use std::{convert::Infallible, str::FromStr};
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 struct Moon {
     position: Vec<isize>,
     velocity: Vec<isize>,
@@ -23,9 +24,9 @@ impl Moon {
                 .sum::<isize>();
     }
 
-    fn apply_velocity(&mut self) {
+    fn apply_velocity(&mut self, axes: &Vec<usize>) {
         // For each axis
-        for axis in 0..3 {
+        for &axis in axes {
             self.position[axis] += self.velocity[axis];
         }
     }
@@ -63,12 +64,12 @@ impl FromStr for Moon {
     }
 }
 
-fn apply_gravity(moons: &mut Vec<Moon>) {
+fn apply_gravity(moons: &mut Vec<Moon>, axes: &Vec<usize>) {
     // Generate all of the different pairs
     for pair in (0..moons.len()).combinations(2) {
-        // Then process each axis
-        for axis in 0..3 {
-            // Adjust velocity's to pull moons together e.g. if 0 > 1 then decrease 0's velocity and increase 1's
+        // Then process specified axes
+        for &axis in axes {
+            // Adjust velocity to pull moons together e.g. if 0 > 1 then decrease 0's velocity and increase 1's
             let (pos1, pos2) = (moons[pair[0]].position[axis], moons[pair[1]].position[axis]);
             match pos1.cmp(&pos2) {
                 Ordering::Greater => {
@@ -92,11 +93,12 @@ fn gen(input: &str) -> Vec<Moon> {
 #[aoc(day12, part1)]
 fn part1(input: &str) -> isize {
     let mut moons = gen(input);
+    let axes = [0, 1, 2].to_vec();
     for _step in 1..=1_000 {
         // Apply gravity to all pairs of moons
-        apply_gravity(&mut moons);
+        apply_gravity(&mut moons, &axes);
         // Now apply the velocity to all moons
-        moons.iter_mut().for_each(Moon::apply_velocity);
+        moons.iter_mut().for_each(|moon| moon.apply_velocity(&axes));
     }
     // Result is total energy in the system
     return moons.iter().map(Moon::energy).sum();
@@ -105,23 +107,29 @@ fn part1(input: &str) -> isize {
 #[aoc(day12, part2)]
 fn part2(input: &str) -> isize {
     let initial_state = gen(input);
-    let mut moons = gen(input);
-    let mut step = 0;
-    // Find how many steps it takes for us to get back to the initial state
-    // FIXME: This will take forever, need to do it differently
-    loop {
-        step += 1;
-        // Apply gravity to all pairs of moons
-        apply_gravity(&mut moons);
-        // Now apply the velocity to all moons
-        moons.iter_mut().for_each(Moon::apply_velocity);
-        // Check vs initial state
-        if moons == initial_state {
-            // Got back to initial state, return number of steps
-            return step;
+    let moons = gen(input);
+    let mut periods = Vec::new();
+    // Calculate the period for each axis
+    for axis in 0..3 {
+        // Find how many steps it takes for us to get back to the initial state for each axis
+        let axes = [axis].to_vec();
+        let mut step = 0;
+        let mut moons = moons.clone();
+        loop {
+            step += 1;
+            // Apply gravity to all pairs of moons
+            apply_gravity(&mut moons, &axes);
+            // Now apply the velocity to all moons
+            moons.iter_mut().for_each(|moon| moon.apply_velocity(&axes));
+            // Check vs initial state
+            if moons == initial_state {
+                // Got back to initial state
+                break;
+            }
         }
-        if step > 10_000 {
-            return 0;
-        }
+        // Save the period for this axis as the number of step
+        periods.push(step);
     }
+    // Final system period is the least common multiple of all axes periods
+    lcm(periods[0], lcm(periods[1], periods[2]))
 }

@@ -203,6 +203,14 @@ impl Intcode {
             .for_each(|c| print!("{}", c as u8 as char));
     }
 
+    /// Returns outputs as ASCII chars
+    pub fn outputs_as_ascii(&mut self) -> String {
+        self.outputs()
+            .drain(0..) // Consume all outputs and treat as chars
+            .map(|c| c as u8 as char)
+            .collect()
+    }
+
     /// Gets the output queue
     pub fn outputs(&mut self) -> &mut VecDeque<isize> {
         &mut self.outputs

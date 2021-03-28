@@ -20,3 +20,4 @@ pub mod day21_springdroid_adventure;
 pub mod day22_slam_shuffle;
 pub mod day23_category_six;
 pub mod day24_planet_of_discord;
+pub mod day25_cryostasis;

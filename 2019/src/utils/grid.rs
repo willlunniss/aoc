@@ -154,7 +154,10 @@ impl<V: Clone + Copy> VecGrid<V> {
         use Direction::{Down, Left, Right, Up};
         [Up, Right, Down, Left]
             .iter()
-            .map(|d| (*d, pos, self.get(pos.next(*d))))
+            .map(|d| {
+                let next = pos.next(*d);
+                (*d, next, self.get(next))
+            })
             .collect()
     }
 }

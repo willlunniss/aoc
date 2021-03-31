@@ -16,6 +16,7 @@ pub mod day15_oxygen_system;
 pub mod day16_flawed_frequency_transmission;
 pub mod day17_set_and_forget;
 pub mod day19_tractor_beam;
+pub mod day20_donut_maze;
 pub mod day21_springdroid_adventure;
 pub mod day22_slam_shuffle;
 pub mod day23_category_six;

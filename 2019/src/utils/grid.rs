@@ -32,6 +32,33 @@ impl Direction {
             Left => Up,
         }
     }
+
+    /// Returns all other directions
+    pub const fn others(self) -> [Self; 3] {
+        use Direction::{Down, Left, Right, Up};
+        match self {
+            Up => [Right, Down, Left],
+            Right => [Up, Down, Left],
+            Down => [Up, Right, Left],
+            Left => [Up, Right, Down],
+        }
+    }
+
+    /// Returns the opposite direction
+    pub const fn back(self) -> Self {
+        use Direction::{Down, Left, Right, Up};
+        match self {
+            Up => Down,
+            Right => Left,
+            Down => Up,
+            Left => Right,
+        }
+    }
+
+    pub const fn all() -> [Self; 4] {
+        use Direction::{Down, Left, Right, Up};
+        [Up, Right, Down, Left]
+    }
 }
 
 /// (x, y) position for used to reference values on a grid
@@ -216,17 +243,18 @@ impl<V> VecGrid<V> {
 /// Grid that uses a `HashMap` to store data
 ///
 /// Especially useful where you don't know the full size in advance
+#[derive(Clone, Debug)]
 pub struct MapGrid<V> {
     data: HashMap<Pos, V>,
 }
 
-impl<V: Clone + Copy> Default for MapGrid<V> {
+impl<V: Clone> Default for MapGrid<V> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<V: Clone + Copy> MapGrid<V> {
+impl<V: Clone> MapGrid<V> {
     /// Creates a new empty `MapGrid`
     pub fn new() -> Self {
         Self {
@@ -240,9 +268,18 @@ impl<V: Clone + Copy> MapGrid<V> {
     }
 
     /// Gets the element at the supplied position
-    pub fn get(&self, pos: Pos) -> Option<&V> {
-        self.data.get(&pos)
+    pub fn get(&self, pos: &Pos) -> Option<&V> {
+        self.data.get(pos)
     }
+
+    pub fn get_mut(&mut self, pos: &Pos) -> Option<&mut V> {
+        self.data.get_mut(pos)
+    }
+
+    pub fn entry(&mut self, key: Pos) -> std::collections::hash_map::Entry<Pos, V> {
+        self.data.entry(key)
+    }
+
     /// Converts a `HashMap` based grid to a nested vector
     ///
     /// Any cells within the bounds of those specified in map that don't have values
@@ -266,7 +303,7 @@ impl<V: Clone + Copy> MapGrid<V> {
             vec![vec![default; 1 + (max_x - min_x) as usize]; 1 + (max_y - min_y) as usize];
         // 2nd pass: Build the grid
         for (pos, value) in &self.data {
-            grid[(max_y - pos.y) as usize][(pos.x - min_x) as usize] = *value;
+            grid[(pos.y - min_y) as usize][(pos.x - min_x) as usize] = value.clone();
         }
         grid
     }

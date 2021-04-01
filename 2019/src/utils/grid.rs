@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fmt::Display;
+use std::ops::Add;
 
 /// Four heading direction enum to aid moving around a grid
 #[derive(Debug, Copy, Clone)]
@@ -100,6 +101,17 @@ impl Pos {
     }
 }
 
+impl Add<(isize, isize)> for Pos {
+    type Output = Self;
+
+    fn add(self, other: (isize, isize)) -> Self {
+        Self {
+            x: self.x + other.0,
+            y: self.y + other.1,
+        }
+    }
+}
+
 /// Grid that uses nested vectors to store data
 #[derive(Clone)]
 pub struct VecGrid<V> {
@@ -158,6 +170,10 @@ impl<V: Clone + Copy> VecGrid<V> {
         } else {
             None // Outside of bounds
         }
+    }
+
+    pub fn insert(&mut self, pos: Pos, value: V) {
+        self.data[pos.y as usize][pos.x as usize] = value;
     }
 
     pub fn values(&self) -> Vec<V> {

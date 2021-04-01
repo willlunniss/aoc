@@ -8,7 +8,6 @@ enum Kind {
     Start,
     Wall,
     Path,
-    Empty,
 }
 
 impl std::fmt::Display for Kind {
@@ -19,7 +18,6 @@ impl std::fmt::Display for Kind {
             Self::Path => write!(f, "."),
             Self::Wall => write!(f, "#"),
             Self::Start => write!(f, "@"),
-            _ => write!(f, " "),
         }
     }
 }
@@ -80,18 +78,10 @@ impl Node {
             edges: HashMap::new(),
         }
     }
-
-    fn none() -> Self {
-        Self {
-            kind: Kind::Empty,
-            pos: Pos::new(0, 0),
-            edges: HashMap::new(),
-        }
-    }
 }
 
-/// Performs a BFS from the start point outwards returning a graph of all nodes stored in a map
-fn explore(input: &VecGrid<char>, start: Pos) -> MapGrid<Node> {
+/// Performs a BFS from the start points outwards building graphs of all nodes stored in a map
+fn explore(input: &VecGrid<char>, starts: &[Pos]) -> MapGrid<Node> {
     // Resulting map
     let mut map: MapGrid<Node> = MapGrid::new();
     // Where to search next
@@ -100,10 +90,12 @@ fn explore(input: &VecGrid<char>, start: Pos) -> MapGrid<Node> {
     let mut explored = HashSet::new();
 
     // Handle start position first
-    let kind = Kind::from(input.get(start).unwrap());
-    map.insert(start, Node::new(start, kind));
-    queue.push_back((start, kind, start, 0));
-    explored.insert((start, start));
+    for &start in starts {
+        let kind = Kind::from(input.get(start).unwrap());
+        map.insert(start, Node::new(start, kind));
+        queue.push_back((start, kind, start, 0));
+        explored.insert((start, start));
+    }
 
     // Keep searching until nothing left
     while !queue.is_empty() {
@@ -146,18 +138,26 @@ fn explore(input: &VecGrid<char>, start: Pos) -> MapGrid<Node> {
     map
 }
 
-/// Finds all reachable keys from the current position given the available keys
-/// 
+/// Finds all reachable keys from the current positions given the available keys
+///
 /// A key is reachable if we can get to it without having to pass through either a key
 /// that we don't yet have or a door that we haven't yet unlocked
-fn reachable(map: &MapGrid<Node>, start: &Pos, keys: usize) -> HashMap<Pos, (usize, usize)> {
+fn reachable(
+    map: &MapGrid<Node>,
+    starts: &[Pos],
+    keys: usize,
+) -> HashMap<Pos, (usize, usize, Pos)> {
     let mut nodes = HashMap::new();
     let mut visited = HashSet::new();
     let mut queue = VecDeque::new();
-    queue.push_back((map.get(start).unwrap(), 0));
-    visited.insert(start);
+    for start in starts {
+        // Queue up all start positions
+        queue.push_back((map.get(start).unwrap(), 0, start));
+        visited.insert(start);
+    }
     while !queue.is_empty() {
-        let (node, distance) = queue.pop_front().unwrap();
+        // Get a node from the queue and go through it's edges
+        let (node, distance, start) = queue.pop_front().unwrap();
         for (next_pos, next_distance) in &node.edges {
             if visited.insert(next_pos) {
                 let next = map.get(next_pos).unwrap();
@@ -172,43 +172,51 @@ fn reachable(map: &MapGrid<Node>, start: &Pos, keys: usize) -> HashMap<Pos, (usi
                     Kind::Key(key) => {
                         if let Some(key) = is_new_key(keys, key) {
                             // println!("Can reach new key {:?}", next);
-                            nodes.insert(*next_pos, (distance + next_distance, key));
+                            nodes.insert(*next_pos, (distance + next_distance, key, *start));
                             continue;
                         }
                     }
                     _ => {}
                 }
                 // Else at a key we have or a door that's unlocked, so check to see where we can get to from here
-                queue.push_back((next, distance + next_distance));
+                queue.push_back((next, distance + next_distance, start));
             }
         }
     }
     nodes
 }
 
-/// Calculates the shortest path from the start node to pick up all keys
+/// Calculates the shortest path to pick up all keys from the start nodes
 fn shortest_path(
-    cache: &mut HashMap<(Pos, usize), usize>,
+    cache: &mut HashMap<(Vec<Pos>, usize), usize>,
     map: &MapGrid<Node>,
-    pos: &Pos,
+    positions: Vec<Pos>,
     keys: usize,
 ) -> usize {
-    if let Some(min) = cache.get(&(*pos, keys)) {
-        // Already calculated for this position with these keys, return directly
+    if let Some(min) = cache.get(&(positions.clone(), keys)) {
+        // Already calculated for these positions and keys, return directly
         return *min;
     }
-    // Get a list of reachable nodes from this position with these keys
-    let nodes = reachable(map, pos, keys);
+    // Get a list of reachable nodes from the current positions based on the keys we hold
+    let nodes = reachable(map, &positions, keys);
     // Select the shortest path from here to collect all keys
     // This is done by recursively building up the shortest path from each node that we can get to
     // with the current keys until all are picked up (no where new that we can reach)
     let min = nodes
         .iter()
-        .map(|(next, (dist, new_key))| dist + shortest_path(cache, map, next, keys | new_key))
+        .map(|(&next, (dist, new_key, from))| {
+            // Calculate the next set of positions replacing where we came from with the next position
+            let next_positions = positions
+                .iter()
+                .map(|&p| if p == *from { next } else { p })
+                .collect::<Vec<_>>();
+            // Calculate the shortest path from the next set of positions
+            dist + shortest_path(cache, map, next_positions, keys | new_key)
+        })
         .min()
         .unwrap_or(0);
     // Store the result in the cache
-    cache.insert((*pos, keys), min);
+    cache.insert((positions, keys), min);
     // and then finally return it
     min
 }
@@ -225,17 +233,40 @@ fn part1(input: &VecGrid<char>) -> usize {
         .into_iter()
         .find_map(|(pos, value)| if *value == '@' { Some(pos) } else { None })
         .unwrap();
-    // Explore the map and build a tree of routes
-    // Assumption: There are no loops in the map and the multiple route options at the start are of equal length
-    let map = explore(input, start);
+    // Explore the map from the start position and build a graph of nodes stored in a map
+    let map = explore(input, &[start]);
 
     // Calculate the shortest path to pick up all keys from our start position
-    shortest_path(&mut HashMap::new(), &map, &start, 0)
+    shortest_path(&mut HashMap::new(), &map, [start].to_vec(), 0)
 }
 
 #[aoc(day18, part2)]
 fn part2(input: &VecGrid<char>) -> usize {
-    0
+    // Find the start position
+    let start = input
+        .into_iter()
+        .find_map(|(pos, value)| if *value == '@' { Some(pos) } else { None })
+        .unwrap();
+    // Transform the starting area to create 4 separate sections
+    let mut input = input.clone();
+    // Turn the start and it's 4 neighbours to be walls
+    input.insert(start, '#');
+    for pos in Direction::all().iter().map(|d| start.next(*d)) {
+        input.insert(pos, '#');
+    }
+    // Turn the 4 diagonal neighbours to be starts
+    let starts = [(1, 1), (1, -1), (-1, -1), (-1, 1)]
+        .iter()
+        .map(|&p| start + p)
+        .collect::<Vec<Pos>>();
+    for &new_start in &starts {
+        input.insert(new_start, '@');
+    }
+    // Explore the map from the different start positions and build graphs of nodes stored in a single map
+    let map = explore(&input, &starts);
+
+    // Calculate the shortest path to pick up all keys from our start positions
+    shortest_path(&mut HashMap::new(), &map, starts, 0)
 }
 
 #[cfg(test)]

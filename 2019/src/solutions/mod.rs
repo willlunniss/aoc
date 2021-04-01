@@ -15,6 +15,7 @@ pub mod day14_space_stoichiometry;
 pub mod day15_oxygen_system;
 pub mod day16_flawed_frequency_transmission;
 pub mod day17_set_and_forget;
+pub mod day18_many_worlds_interpretation;
 pub mod day19_tractor_beam;
 pub mod day20_donut_maze;
 pub mod day21_springdroid_adventure;

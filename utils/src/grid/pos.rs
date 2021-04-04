@@ -8,6 +8,24 @@ pub struct Pos {
     pub y: isize,
 }
 
+impl From<(isize, isize)> for Pos {
+    fn from(item: (isize, isize)) -> Self {
+        Self {
+            x: item.0,
+            y: item.1,
+        }
+    }
+}
+
+impl From<(usize, usize)> for Pos {
+    fn from(item: (usize, usize)) -> Self {
+        Self {
+            x: item.0 as isize,
+            y: item.1 as isize,
+        }
+    }
+}
+
 impl Pos {
     pub const fn new(x: usize, y: usize) -> Self {
         Self {

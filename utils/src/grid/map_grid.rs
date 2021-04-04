@@ -23,10 +23,26 @@ impl<V: Clone> MapGrid<V> {
         }
     }
 
+    /// Creates a new `MapGrid` from an iterator
     pub fn from_iter(iter: impl IntoIterator<Item = (Pos, V)>) -> Self {
         Self {
             data: HashMap::from_iter(iter),
         }
+    }
+
+    /// An iterator visiting all key-value pairs in arbitrary order.
+    pub fn iter(&self) -> std::collections::hash_map::Iter<'_, Pos, V> {
+        self.data.iter()
+    }
+
+    /// An iterator visiting all keys in arbitrary order.
+    pub fn keys(&self) -> std::collections::hash_map::Keys<Pos, V> {
+        self.data.keys()
+    }
+
+    /// An iterator visiting all values in arbitrary order.
+    pub fn values(&self) -> std::collections::hash_map::Values<Pos, V> {
+        self.data.values()
     }
 
     /// Inserts the element into the supplied position
@@ -34,15 +50,17 @@ impl<V: Clone> MapGrid<V> {
         self.data.insert(pos, value);
     }
 
-    /// Gets the element at the supplied position
+    /// Returns a reference to the value at the position
     pub fn get(&self, pos: &Pos) -> Option<&V> {
         self.data.get(pos)
     }
 
+    /// Returns a mutable reference to the value at the position
     pub fn get_mut(&mut self, pos: &Pos) -> Option<&mut V> {
         self.data.get_mut(pos)
     }
 
+    /// Gets the given position's corresponding entry in the map for in-place manipulation
     pub fn entry(&mut self, key: Pos) -> std::collections::hash_map::Entry<Pos, V> {
         self.data.entry(key)
     }

@@ -1,5 +1,5 @@
-use crate::utils::grid::{Direction, MapGrid, Pos, VecGrid};
 use std::collections::{HashMap, HashSet, VecDeque};
+use utils::grid::{Direction, MapGrid, Pos, VecGrid};
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 enum Kind {

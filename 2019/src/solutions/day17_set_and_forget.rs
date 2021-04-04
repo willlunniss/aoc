@@ -1,6 +1,6 @@
 use crate::intcode::Intcode;
-use crate::utils::grid::{Direction, Pos, VecGrid};
 use std::collections::BTreeMap;
+use utils::grid::{Direction, Pos, VecGrid};
 
 /// Finds all indexes in source where target exists
 fn exists_in<T>(source: &[T], target: &[T]) -> Vec<usize>

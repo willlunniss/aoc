@@ -1,6 +1,6 @@
-use crate::utils::grid::Pos;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use utils::grid::Pos;
 
 /// Calculates the angle of p2 from p1 between 0->359 degrees (0 = North, 90 = East)
 fn angle(p1: Pos, p2: Pos) -> f64 {

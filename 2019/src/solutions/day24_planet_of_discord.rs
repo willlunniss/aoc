@@ -1,5 +1,5 @@
-use crate::utils::grid::{Direction, Pos, VecGrid};
 use std::collections::{HashMap, HashSet};
+use utils::grid::{Direction, Pos, VecGrid};
 
 /// Calculates a layouts biodiversity rating
 fn rating(values: &[char]) -> usize {

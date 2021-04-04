@@ -1,5 +1,5 @@
-use crate::utils::grid::{Direction, Pos, VecGrid};
 use std::collections::{HashMap, HashSet, VecDeque};
+use utils::grid::{Direction, Pos, VecGrid};
 
 fn discover_portal(map: &VecGrid<char>, pos: Pos, value: char) -> Option<(Pos, String, bool)> {
     for (d1, d2) in &[

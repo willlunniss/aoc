@@ -6,3 +6,4 @@ pub mod day05_alchemical_reduction;
 pub mod day06_chronal_coordinates;
 pub mod day07_the_sum_of_its_parts;
 pub mod day08_memory_maneuver;
+pub mod day09_marble_mania;

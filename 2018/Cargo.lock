@@ -7,6 +7,7 @@ dependencies = [
  "aoc-runner",
  "aoc-runner-derive",
  "chrono",
+ "digits_iterator",
  "itertools",
  "lazy_static",
  "utils",
@@ -59,6 +60,12 @@ dependencies = [
  "time",
  "winapi",
 ]
+
+[[package]]
+name = "digits_iterator"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "af83450b771231745d43edf36dc9b7813ab83be5e8cbea344ccced1a09dfebcd"
 
 [[package]]
 name = "either"

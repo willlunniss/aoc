@@ -13,9 +13,13 @@ fn power_level(x: usize, y: usize, serial_number: usize) -> isize {
 }
 
 /// Finds the grid of the specified size which has the maximum total power
-/// 
+///
 /// Returns a tuple of power and x, y positions of that grid
-fn maximise_power(levels: &mut HashMap<(usize, usize), isize>, serial_number: usize, size: usize) -> (isize, (usize, usize)) {
+fn maximise_power(
+    levels: &mut HashMap<(usize, usize), isize>,
+    serial_number: usize,
+    size: usize,
+) -> (isize, (usize, usize)) {
     let mut max = isize::MIN;
     let mut pos = (0, 0);
     for y_base in 1..=300 - size {
@@ -59,7 +63,7 @@ fn part1(input: &usize) -> String {
 #[aoc(day11, part2)]
 fn part2(input: &usize) -> String {
     let mut levels: HashMap<(usize, usize), isize> = HashMap::new();
-    let mut best = (0, 1, (1,1));
+    let mut best = (0, 1, (1, 1));
     // Find the grid of size between 1 and 300 that has maximum power
     // FIXME: This is too slow, must be a better way
     for size in 1..=300 {
@@ -67,13 +71,13 @@ fn part2(input: &usize) -> String {
         if power > best.0 {
             // New best
             best = (power, size, pos);
-        } else if power < (best.0/2) {
+        } else if power < (best.0 / 2) {
             // Now less that half our best, including any more cells will just make it worse
             // so no point to continue searching
             break;
         }
     }
-    format!("{},{},{}", best.2.0, best.2.1, best.1)
+    format!("{},{},{}", best.2 .0, best.2 .1, best.1)
 }
 
 #[cfg(test)]

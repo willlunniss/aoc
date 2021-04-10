@@ -41,7 +41,8 @@ impl FromStr for Point {
 
 /// Aligns the points and returns the number of seconds it would take to align along with the aligned points
 fn align(points: &Vec<Point>) -> (usize, Vec<Point>) {
-    // Keep advancing until points 'align' which we can detect as one of the axis max/min inverting e.g. when y max is at a minimum
+    // Keep advancing until points 'align' which is when the maximum distance between points
+    // is minimised. We can detect this by checking e.g. y max
     let mut prev_y_max = isize::MAX;
     let mut current = points.clone();
     let mut seconds = 0;

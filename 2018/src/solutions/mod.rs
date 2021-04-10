@@ -9,3 +9,4 @@ pub mod day08_memory_maneuver;
 pub mod day09_marble_mania;
 pub mod day10_the_stars_align;
 pub mod day11_chronal_charge;
+pub mod day13_mine_cart_madness;

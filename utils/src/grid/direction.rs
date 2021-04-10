@@ -1,5 +1,5 @@
 /// Four heading direction enum to aid moving around a grid
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Direction {
     Up,
     Down,

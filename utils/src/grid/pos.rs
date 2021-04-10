@@ -1,5 +1,6 @@
 use crate::grid::Direction;
 use std::ops::Add;
+use std::cmp::Ordering;
 
 /// (x, y) position for referencing values in a `MapGrid` or `VecGrid`
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -22,6 +23,22 @@ impl From<(usize, usize)> for Pos {
         Self {
             x: item.0 as isize,
             y: item.1 as isize,
+        }
+    }
+}
+
+impl PartialOrd for Pos {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Pos {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.y == other.y {
+            self.x.cmp(&other.x)
+        } else {
+            self.y.cmp(&other.y)
         }
     }
 }

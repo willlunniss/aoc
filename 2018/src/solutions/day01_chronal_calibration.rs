@@ -2,7 +2,10 @@ use std::collections::HashSet;
 
 #[aoc_generator(day1)]
 fn gen(input: &str) -> Vec<isize> {
-    input.lines().map(|line| line.parse::<isize>().unwrap()).collect()
+    input
+        .lines()
+        .map(|line| line.parse::<isize>().unwrap())
+        .collect()
 }
 
 #[aoc(day1, part1)]

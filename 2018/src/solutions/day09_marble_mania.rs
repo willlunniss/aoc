@@ -34,13 +34,13 @@ fn play_marble_game(players: usize, marbles: usize) -> usize {
             current = after;
         } else {
             // Add a marble 1 after the current
-            // Ignoring our how the placed array works, we want to perform the following transform 
+            // Ignoring our how the placed array works, we want to perform the following transform
             // From:
             //          C  B  A
             // 0  4  2 (5) 1  3
             // To:
             //                C
-            // 0  4  2  5  1 (6) 3 
+            // 0  4  2  5  1 (6) 3
             let before = placed[current];
             let after = placed[before];
             // Add marble between before and after

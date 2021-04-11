@@ -18,7 +18,7 @@ fn part1(input: &usize) -> String {
             .map(|index| recipes[*index])
             .collect();
         recipes.extend(current.iter().sum::<u8>().digits());
-        // Advance the index by 1 + value of current recipes (wrapping round if needed)
+        // Advance the index by 1 + value of current recipes (wrapping around if needed)
         current_indexes = current_indexes
             .iter()
             .zip(current)
@@ -38,6 +38,7 @@ fn part2(input: &usize) -> usize {
     let elves = 2;
     let mut recipes: Vec<u8> = [3, 7].to_vec();
     let mut current_indexes: Vec<usize> = (0..elves).collect();
+    // Store what we are searching for in reverse
     let search: Vec<u8> = input.digits().rev().collect();
     let search_len = search.len();
     loop {
@@ -51,7 +52,7 @@ fn part2(input: &usize) -> usize {
             recipes.push(new);
             if new == search[0] {
                 // Just added a new recipe that matches the end of what we are search for
-                // Check to see if the last search.len() match what we want
+                // Check backwards through the recipes to see if the last search.len() match what we want
                 if recipes
                     .iter()
                     .rev()

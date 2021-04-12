@@ -35,10 +35,11 @@ impl PartialOrd for Pos {
 
 impl Ord for Pos {
     fn cmp(&self, other: &Self) -> Ordering {
-        if self.y == other.y {
+        let row = self.y.cmp(&other.y);
+        if row == Ordering::Equal {
             self.x.cmp(&other.x)
         } else {
-            self.y.cmp(&other.y)
+            row
         }
     }
 }
@@ -72,6 +73,14 @@ impl Pos {
                 y: self.y,
             },
         }
+    }
+
+     /// Gets position of the 4 neighbours
+     pub fn neighbours(&self) -> impl Iterator<Item=Pos> + '_ {
+        use Direction::{Down, Left, Right, Up};
+        [Up, Right, Down, Left]
+            .iter()
+            .map(move |d| self.next(*d))
     }
 }
 

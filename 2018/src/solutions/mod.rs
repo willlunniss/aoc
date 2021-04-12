@@ -12,3 +12,4 @@ pub mod day11_chronal_charge;
 pub mod day12_subterranean_sustainability;
 pub mod day13_mine_cart_madness;
 pub mod day14_chocolate_charts;
+pub mod day15_beverage_bandits;

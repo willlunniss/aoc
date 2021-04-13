@@ -1,5 +1,5 @@
 use std::cmp::Ordering;
-use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+use std::collections::{BTreeMap, HashSet, VecDeque};
 use utils::grid::{Pos, VecGrid};
 
 #[derive(Debug, Eq, PartialEq)]
@@ -41,29 +41,31 @@ impl Unit {
 
 /// Chooses where to move to
 ///
-/// Returns the nearest reachable position (may take multiple steps to get to)
-///
-/// Takes a set of `in_range` positions and chooses the nearest reachable, position
+/// Takes a set of target positions and chooses the nearest reachable position to `nearest_from`
 /// If there is a tie, picks the first in reading order
-fn chose_move(map: &VecGrid<char>, start: Pos, in_range: &HashSet<Pos>) -> Option<Pos> {
-    let mut targets = in_range.clone();
+fn chose_move(map: &VecGrid<char>, nearest_from: Pos, targets: &HashSet<Pos>) -> Option<Pos> {
+    let mut targets = targets.clone();
     let mut visited = HashSet::new();
-    let mut reachable = Vec::new();
+    let mut nearest_reachable = Vec::new();
     let mut queue = VecDeque::new();
-    visited.insert(start);
-    queue.push_back((start, 0));
-    // Perform a BFS from start to find all in_range positions
+    visited.insert(nearest_from);
+    queue.push_back((nearest_from, 0));
+    let mut nearest_distance = usize::MAX;
+    // Perform a BFS from start to find the nearest reachable positions from our targets
     while !queue.is_empty() {
         let (pos, distance) = queue.pop_front().unwrap();
-        if targets.contains(&pos) {
-            // Got to a place we want to!
-            reachable.push((pos, distance));
+        if targets.contains(&pos) && distance <= nearest_distance {
+            // Got to a place we want to without increasing distance
+            nearest_reachable.push(pos);
             // Remove it from targets
             targets.remove(&pos);
             if targets.is_empty() {
                 // Found all targets, stop search
                 break;
             }
+            nearest_distance = distance;
+        }
+        if distance >= nearest_distance {
             // Haven't found them all yet but no point searching further from here as we won't find anything nearer
             continue;
         }
@@ -74,61 +76,13 @@ fn chose_move(map: &VecGrid<char>, start: Pos, in_range: &HashSet<Pos>) -> Optio
             }
         }
     }
-    if reachable.is_empty() {
+    if nearest_reachable.is_empty() {
         // Can't reach any targets
         return None;
     }
-    // Find the minimum distance to a reachable pos
-    let (_, min_dist) = reachable
-        .iter()
-        .min_by_key(|(_, distance)| distance)
-        .unwrap();
-
-    // Then cut down to just those of that distance and get the min by pos (to get the first in reading order)
-    reachable
-        .iter()
-        .filter_map(|(pos, distance)| {
-            if distance == min_dist {
-                Some(*pos)
-            } else {
-                None
-            }
-        })
-        .min_by_key(|pos| *pos)
-}
-
-/// Returns the position to move one step from `from` towards `to` taking the shorted path and resolving
-/// ties using reading order
-fn move_towards(map: &VecGrid<char>, from: Pos, to: Pos) -> Pos {
-    let mut queue = VecDeque::new();
-    let mut distances = HashMap::new();
-    queue.push_back((to, 0));
-    distances.insert(to, 0);
-    while !queue.is_empty() {
-        let (pos, distance) = queue.pop_front().unwrap();
-        // Add open neighbours to queue
-        for (_, neigh, cell) in map.neighbours_ex(pos) {
-            if Some('.') == cell && !distances.contains_key(&neigh) {
-                distances.insert(neigh, distance + 1);
-                queue.push_back((neigh, distance + 1));
-            }
-        }
-    }
-    // We can only move one step at a time, so find the distances to the target from each of our neighbours
-    // Want to pick the one with the minimum distance, and if there is a tie which ever position is
-    // first in reading order
-    from.neighbours()
-        .filter_map(|neigh| distances.get(&neigh).map(|dist| (neigh, dist)))
-        .min_by(|(pos1, dist1), (pos2, dist2)| {
-            let dist_cmp = dist1.cmp(dist2);
-            if dist_cmp == Ordering::Equal {
-                pos1.cmp(pos2)
-            } else {
-                dist_cmp
-            }
-        })
-        .map(|(pos, _)| pos)
-        .unwrap()
+    // We only have positions that are nearest to us
+    // Get the one with the minimal position (to get the first in reading order)
+    nearest_reachable.iter().min_by_key(|pos| *pos).copied()
 }
 
 /// Simulates a fight until only one side is left
@@ -182,8 +136,20 @@ fn fight(input: &VecGrid<char>, elf_attack: usize, abort_on_elf_death: bool) -> 
                         // We have some targets with spaces next to them, see if we can actually move towards any of them
                         if let Some(chosen) = chose_move(&map, unit_pos, &in_range) {
                             // Have a valid target to move towards, move towards it
-                            let new_pos = move_towards(&map, unit_pos, chosen);
-                            //println!("Moved from {:?} to {:?} towards {:?}", unit_pos, new_pos, chosen);
+                            // Get all the places we can move to with one step
+                            let open_neighbours = map
+                                .neighbours_ex(unit_pos)
+                                .iter()
+                                .filter_map(|(_, neigh, value)| {
+                                    if *value == Some('.') {
+                                        Some(*neigh)
+                                    } else {
+                                        None
+                                    }
+                                })
+                                .collect::<HashSet<Pos>>();
+                            // Pick the one that gets us closest to the chosen target
+                            let new_pos = chose_move(&map, chosen, &open_neighbours).unwrap();
                             // Update map and update unit pos
                             map.insert(unit_pos, '.');
                             map.insert(new_pos, unit.creature.char());

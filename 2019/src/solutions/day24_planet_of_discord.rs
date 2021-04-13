@@ -2,11 +2,11 @@ use std::collections::{HashMap, HashSet};
 use utils::grid::{Direction, Pos, VecGrid};
 
 /// Calculates a layouts biodiversity rating
-fn rating(values: &[char]) -> usize {
+fn rating(iter: impl Iterator<Item = char>) -> usize {
     let mut points = 1;
     let mut rating = 0;
-    for value in values {
-        if *value == '#' {
+    for value in iter {
+        if value == '#' {
             rating += points;
         }
         points *= 2;
@@ -33,21 +33,17 @@ fn gen(input: &str) -> VecGrid<char> {
 fn part1(input: &VecGrid<char>) -> usize {
     let mut input = input.clone();
     let mut next = input.clone();
-    let mut layouts: HashSet<Vec<char>> = HashSet::new();
+    let mut layouts = HashSet::new();
     loop {
-        let values = input.values();
+        let values = input.values().collect::<String>();
         if layouts.contains(&values) {
             // If we have seen this layout before return the rating
-            return rating(&values);
+            return rating(values.chars());
         }
         layouts.insert(values);
         for (pos, value) in &input {
             // For each cell count adjacent bugs
-            let adjacent_bugs = input
-                .neighbours(pos)
-                .iter()
-                .filter(|n| **n == Some('#'))
-                .count();
+            let adjacent_bugs = input.neighbours(pos).filter(|n| *n == Some('#')).count();
             // and then work out the next state
             next.set(pos, next_state(*value, adjacent_bugs));
         }
@@ -157,7 +153,10 @@ mod tests {
         let values = [
             '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#', '.',
             '.', '.', '.', '.', '#', '.', '.', '.',
-        ];
-        assert_eq!(rating(&values), 2_129_920);
+        ]
+        .to_vec()
+        .iter()
+        .collect::<String>();
+        assert_eq!(rating(values.chars()), 2_129_920);
     }
 }

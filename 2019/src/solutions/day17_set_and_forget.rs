@@ -97,7 +97,7 @@ impl ASCII {
         let mut crossovers = Vec::new();
         // Loop over the grid checking cell and neighbours state
         for (pos, value) in grid {
-            if *value == '#' && grid.neighbours(pos).iter().all(|x| *x == Some('#')) {
+            if *value == '#' && grid.neighbours(pos).all(|x| x == Some('#')) {
                 crossovers.push(pos);
             }
         }

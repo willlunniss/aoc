@@ -123,7 +123,7 @@ fn explore(input: &VecGrid<char>, starts: &[Pos]) -> MapGrid<Node> {
             }
         }
         // Search from here
-        for next in Direction::all().iter().map(|d| pos.next(*d)) {
+        for next in Direction::all().map(|d| pos.next(d)) {
             if explored.insert((next, parent)) {
                 // Find out what we have here
                 let kind = Kind::from(input.get(next).unwrap());
@@ -251,7 +251,7 @@ fn part2(input: &VecGrid<char>) -> usize {
     let mut input = input.clone();
     // Turn the start and it's 4 neighbours to be walls
     input.insert(start, '#');
-    for pos in Direction::all().iter().map(|d| start.next(*d)) {
+    for pos in Direction::all().map(|d| start.next(d)) {
         input.insert(pos, '#');
     }
     // Turn the 4 diagonal neighbours to be starts

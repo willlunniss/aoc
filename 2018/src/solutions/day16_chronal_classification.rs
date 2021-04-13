@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::convert::TryInto;
-use strum::{IntoEnumIterator};
-use strum_macros::{EnumIter};
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, EnumIter)]
@@ -26,8 +26,8 @@ enum Op {
 
 impl Op {
     /// Executes an instruction returning the calculated result (that should be stored in register c)
-    const fn execute(&self, a: usize, b: usize, registers: &[usize; 4]) -> usize {
-        match &self {
+    const fn execute(self, a: usize, b: usize, registers: &[usize; 4]) -> usize {
+        match self {
             Self::addr => registers[a] + registers[b],
             Self::addi => registers[a] + b,
             Self::mulr => registers[a] * registers[b],

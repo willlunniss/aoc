@@ -1,6 +1,6 @@
 use crate::grid::Direction;
-use std::ops::Add;
 use std::cmp::Ordering;
+use std::ops::Add;
 
 /// (x, y) position for referencing values in a `MapGrid` or `VecGrid`
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -75,12 +75,9 @@ impl Pos {
         }
     }
 
-     /// Gets position of the 4 neighbours
-     pub fn neighbours(&self) -> impl Iterator<Item=Pos> + '_ {
-        use Direction::{Down, Left, Right, Up};
-        [Up, Right, Down, Left]
-            .iter()
-            .map(move |d| self.next(*d))
+    /// Gets position of the 4 neighbours
+    pub fn neighbours(&self) -> impl Iterator<Item = Pos> + '_ {
+        Direction::all().map(move |d| self.next(d))
     }
 }
 

@@ -1,6 +1,7 @@
 use crate::grid::direction::Direction;
 use crate::grid::pos::Pos;
 use std::fmt::Display;
+use strum::IntoEnumIterator;
 
 /// Grid that uses nested vectors to store data of a known and fixed size
 #[derive(Clone)]
@@ -66,32 +67,24 @@ impl<V: Clone + Copy> VecGrid<V> {
         self.data[pos.y as usize][pos.x as usize] = value;
     }
 
-    pub fn values(&self) -> Vec<V> {
-        self.data
-            .iter()
-            .flat_map(|row| row.iter().copied())
-            .collect()
+    pub fn values(&self) -> impl Iterator<Item = &V> + '_ {
+        self.data.iter().flat_map(|row| row.iter())
     }
 
     /// Gets the values of the 4 neighbours to the supplied position
-    pub fn neighbours(&self, pos: Pos) -> Vec<Option<V>> {
-        use Direction::{Down, Left, Right, Up};
-        [Up, Right, Down, Left]
-            .iter()
-            .map(|d| self.get(pos.next(*d)))
-            .collect()
+    pub fn neighbours(&self, pos: Pos) -> impl Iterator<Item = Option<V>> + '_ {
+        Direction::iter().map(move |d| self.get(pos.next(d)))
     }
 
     /// Gets the direction, pos and values of the 4 neighbours to the supplied position
-    pub fn neighbours_ex(&self, pos: Pos) -> Vec<(Direction, Pos, Option<V>)> {
-        use Direction::{Down, Left, Right, Up};
-        [Up, Right, Down, Left]
-            .iter()
-            .map(|d| {
-                let next = pos.next(*d);
-                (*d, next, self.get(next))
-            })
-            .collect()
+    pub fn neighbours_ex(
+        &self,
+        pos: Pos,
+    ) -> impl Iterator<Item = (Direction, Pos, Option<V>)> + '_ {
+        Direction::iter().map(move |d| {
+            let next = pos.next(d);
+            (d, next, self.get(next))
+        })
     }
 }
 

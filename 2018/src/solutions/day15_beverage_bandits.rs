@@ -139,10 +139,9 @@ fn fight(input: &VecGrid<char>, elf_attack: usize, abort_on_elf_death: bool) -> 
                             // Get all the places we can move to with one step
                             let open_neighbours = map
                                 .neighbours_ex(unit_pos)
-                                .iter()
                                 .filter_map(|(_, neigh, value)| {
-                                    if *value == Some('.') {
-                                        Some(*neigh)
+                                    if value == Some('.') {
+                                        Some(neigh)
                                     } else {
                                         None
                                     }

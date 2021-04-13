@@ -1,5 +1,8 @@
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
+
 /// Four heading direction enum to aid moving around a grid
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, EnumIter)]
 pub enum Direction {
     Up,
     Down,
@@ -52,8 +55,7 @@ impl Direction {
         }
     }
 
-    pub const fn all() -> [Self; 4] {
-        use Direction::{Down, Left, Right, Up};
-        [Up, Right, Down, Left]
+    pub fn all() -> DirectionIter {
+        Direction::iter()
     }
 }

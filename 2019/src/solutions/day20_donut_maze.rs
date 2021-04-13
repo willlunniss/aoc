@@ -57,18 +57,18 @@ fn solve_maze(map: &VecGrid<char>, recursive: bool) -> usize {
         // Get the next position to explore
         let (pos, distance, level) = queue.pop_front().unwrap();
         explored.insert((level, pos));
-        for (_, next, value) in &map.neighbours_ex(pos) {
+        for (_, next, value) in map.neighbours_ex(pos) {
             // Get all neighbours
-            if explored.contains(&(level, *next)) {
+            if explored.contains(&(level, next)) {
                 continue; // Already explored (so can't be a shorter route)
             }
             let value = value.unwrap();
             if value == '.' {
                 // Normal passage, queue up
-                queue.push_back((*next, distance + 1, level));
+                queue.push_back((next, distance + 1, level));
                 continue;
             }
-            if let Some(portal) = portals.get(next) {
+            if let Some(portal) = portals.get(&next) {
                 // Walking through a portal, teleport to other end
                 if portal == "ZZ" {
                     // Exit is only valid on level 0, otherwise treat as a wall
@@ -87,7 +87,7 @@ fn solve_maze(map: &VecGrid<char>, recursive: bool) -> usize {
                     .get(portal)
                     .unwrap()
                     .iter()
-                    .find(|p| p.0 != *next)
+                    .find(|p| p.0 != next)
                     .unwrap();
                 // Work out what level we will go to after going through the portal
                 let new_level = if !recursive {

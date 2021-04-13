@@ -12,7 +12,7 @@ fn part1(input: &Vec<usize>) -> usize {
     sorted.sort(); // Sort smallest to largest
     sorted.push(sorted.last().unwrap() + 3); // Add built in adapter is always +3 more than last
     let mut differences = vec![0; 4]; // Expect no more than +3 difference
-    for i in 1 .. sorted.len() {
+    for i in 1..sorted.len() {
         // For each adapter, record the difference between it and the previous
         differences[sorted[i] - sorted[i - 1]] += 1;
     }
@@ -27,7 +27,10 @@ fn combinations(contiguous_len: &usize) -> usize {
         3 => 2,
         4 => 4,
         5 => 7,
-        _ => panic!("Don't know how many combinations there are for {}", contiguous_len),
+        _ => panic!(
+            "Don't know how many combinations there are for {}",
+            contiguous_len
+        ),
     }
 }
 
@@ -37,9 +40,9 @@ fn part2(input: &Vec<usize>) -> usize {
     sorted.push(0); // Add outlet which is 0
     sorted.sort(); // Sort smallest to largest
     sorted.push(sorted.last().unwrap() + 3); // Add built in adapter is always +3 more than last
-    let mut groups : HashMap<usize, usize> = HashMap::new();
+    let mut groups: HashMap<usize, usize> = HashMap::new();
     let mut contiguous_len = 1;
-    for i in 1 .. sorted.len() {
+    for i in 1..sorted.len() {
         // We are interested in contiguous (diff of 1 between each) groups of 3 or more adapters
         // as they have options to remove some adapters for different combinations
         if sorted[i] - sorted[i - 1] == 1 {

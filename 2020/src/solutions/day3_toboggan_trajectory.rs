@@ -9,8 +9,8 @@ fn traverse_slope(input: &str, right: usize, down: usize) -> i64 {
     n: .#..#...#.#
     */
     // Work out how far over we move on each row
-    let step : f64 = right as f64 / down as f64;
-    let mut x : f64 = 0f64;
+    let step: f64 = right as f64 / down as f64;
+    let mut x: f64 = 0f64;
     let mut trees = 0;
     for row in input.lines() {
         let width = row.len();
@@ -33,7 +33,7 @@ fn part1(input: &str) -> i64 {
 fn part2(input: &str) -> i64 {
     // Traverse these 5 slopes and calculate the multiple of the number of
     // trees encountered on each slope
-    let slopes: [(usize, usize); 5] = [(1,1), (3,1), (5,1), (7,1), (1,2)];
+    let slopes: [(usize, usize); 5] = [(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)];
     let mut result = 1;
     for slope in slopes.iter() {
         let (right, down) = slope;

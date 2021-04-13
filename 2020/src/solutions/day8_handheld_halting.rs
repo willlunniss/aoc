@@ -36,22 +36,22 @@ fn execute_instr(program: &Vec<Instr>, state: &mut State) {
             state.acc += instr.value;
             // Advance PC by one
             state.pc += 1;
-        },
+        }
         Op::Jmp => {
             // Jump by updating the PC by the instruction value
             state.pc = (state.pc as isize + instr.value) as usize;
-        },
+        }
         Op::Nop => {
             // Do nothing, just advance the PC by one
             state.pc += 1;
-        },
+        }
     }
 }
 
 /// Executes the supplied program until it ends or hits and infinite loop
 /// Returns the final program state
-fn execute(program: &Vec<Instr>) -> State {    
-    let mut state = State{pc: 0, acc: 0};
+fn execute(program: &Vec<Instr>) -> State {
+    let mut state = State { pc: 0, acc: 0 };
     let mut executed_instrs = vec![0; program.len()];
     // Run until we hit a loop (try to execute the same instruction again)
     // or reach the end of the program
@@ -74,11 +74,21 @@ fn part2(input: &Vec<Instr>) -> isize {
     let mut program = input.to_vec();
     for idx in 0..program.len() {
         // Loop through everything instruction and see if it's one we can swap (nop/jmp)
-        let instr = program[idx];        
+        let instr = program[idx];
         match instr.op {
-            Op::Jmp => program[idx] = Instr{op: Op::Nop, value: instr.value},
-            Op::Nop => program[idx] = Instr{op: Op::Jmp, value: instr.value},
-            _ => continue // Can't swap this one, move on to the next instr
+            Op::Jmp => {
+                program[idx] = Instr {
+                    op: Op::Nop,
+                    value: instr.value,
+                }
+            }
+            Op::Nop => {
+                program[idx] = Instr {
+                    op: Op::Jmp,
+                    value: instr.value,
+                }
+            }
+            _ => continue, // Can't swap this one, move on to the next instr
         }
         // Now execute the modified program
         let state = execute(&program);
@@ -91,5 +101,5 @@ fn part2(input: &Vec<Instr>) -> isize {
         program[idx] = instr;
     }
     // Something went wrong, nothing worked :(
-    return -1;    
+    return -1;
 }

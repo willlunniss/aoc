@@ -1,4 +1,4 @@
-fn decode(boarding_pass: &str) -> (usize, usize, usize) {    
+fn decode(boarding_pass: &str) -> (usize, usize, usize) {
     let mut row_min = 0;
     let mut row_max = 127;
     let mut seat_min = 0;
@@ -18,10 +18,9 @@ fn decode(boarding_pass: &str) -> (usize, usize, usize) {
     return (seat_id, seat, row);
 }
 
-
 #[aoc_generator(day5)]
 pub fn gen(input: &str) -> Vec<usize> {
-    let mut seat_ids : Vec<usize> = Vec::new();    
+    let mut seat_ids: Vec<usize> = Vec::new();
     for boarding_pass in input.lines() {
         let (seat_id, _, _) = decode(boarding_pass);
         seat_ids.push(seat_id);

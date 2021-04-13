@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-use std::str::FromStr;
-use std::convert::Infallible;
 use lazy_static::lazy_static;
+use std::collections::HashMap;
+use std::convert::Infallible;
+use std::str::FromStr;
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum Direction {
@@ -14,16 +14,23 @@ pub enum Direction {
 }
 
 pub struct DirectionList {
-    directions: Vec<Direction>
+    directions: Vec<Direction>,
 }
 
 impl DirectionList {
     pub fn new(directions: Vec<Direction>) -> DirectionList {
-        return DirectionList { directions: directions};
+        return DirectionList {
+            directions: directions,
+        };
     }
 
     pub fn resolve(&self) -> CubeCoordinate {
-        CubeCoordinate::resolve(self.directions.iter().map(|d| CubeCoordinate::new(d)).collect())
+        CubeCoordinate::resolve(
+            self.directions
+                .iter()
+                .map(|d| CubeCoordinate::new(d))
+                .collect(),
+        )
     }
 }
 
@@ -37,24 +44,24 @@ impl FromStr for DirectionList {
             match Some(c) {
                 Some('e') => directions.push(E),
                 Some('w') => directions.push(W),
-                Some('s') => {
-                    match iter.next().unwrap() {
-                        'e' => directions.push(SE),
-                        'w' => directions.push(SW),
-                        _ => panic!("Unexpected sequence")
-                    }
+                Some('s') => match iter.next().unwrap() {
+                    'e' => directions.push(SE),
+                    'w' => directions.push(SW),
+                    _ => panic!("Unexpected sequence"),
                 },
-                Some('n') => {
-                    match iter.next().unwrap() {
-                        'e' => directions.push(NE),
-                        'w' => directions.push(NW),
-                        _ => panic!("Unexpected sequence")
-                    }
+                Some('n') => match iter.next().unwrap() {
+                    'e' => directions.push(NE),
+                    'w' => directions.push(NW),
+                    _ => panic!("Unexpected sequence"),
+                },
+                _ => {
+                    break;
                 }
-                _ => { break; },
             }
         }
-        return Ok(DirectionList{directions: directions});
+        return Ok(DirectionList {
+            directions: directions,
+        });
     }
 }
 
@@ -64,12 +71,22 @@ impl FromStr for DirectionList {
 pub struct CubeCoordinate {
     x: isize,
     y: isize,
-    z: isize
+    z: isize,
 }
 
 lazy_static! {
-    static ref NEIGHBOURS: Vec<CubeCoordinate> = [Direction::E,Direction::SE,Direction::SW,Direction::W,Direction::NW,Direction::NE]
-        .to_vec().iter().map(|d| CubeCoordinate::new(d)).collect();
+    static ref NEIGHBOURS: Vec<CubeCoordinate> = [
+        Direction::E,
+        Direction::SE,
+        Direction::SW,
+        Direction::W,
+        Direction::NW,
+        Direction::NE
+    ]
+    .to_vec()
+    .iter()
+    .map(|d| CubeCoordinate::new(d))
+    .collect();
 }
 
 impl CubeCoordinate {
@@ -77,26 +94,39 @@ impl CubeCoordinate {
     pub fn new(direction: &Direction) -> CubeCoordinate {
         use Direction::*;
         match direction {
-            E => CubeCoordinate{x: 1, y: -1, z: 0},
-            SE => CubeCoordinate{x: 0, y: -1, z: 1},
-            SW => CubeCoordinate{x: -1, y: 0, z: 1},
-            W => CubeCoordinate{x: -1, y: 1, z: 0},
-            NW => CubeCoordinate{x: 0, y: 1, z: -1},
-            NE => CubeCoordinate{x: 1, y: 0, z: -1},
+            E => CubeCoordinate { x: 1, y: -1, z: 0 },
+            SE => CubeCoordinate { x: 0, y: -1, z: 1 },
+            SW => CubeCoordinate { x: -1, y: 0, z: 1 },
+            W => CubeCoordinate { x: -1, y: 1, z: 0 },
+            NW => CubeCoordinate { x: 0, y: 1, z: -1 },
+            NE => CubeCoordinate { x: 1, y: 0, z: -1 },
         }
     }
 
     pub fn neighbours(&self) -> Vec<CubeCoordinate> {
-        return NEIGHBOURS.iter().map(|n| CubeCoordinate{x: self.x + n.x, y: self.y + n.y, z: self.z + n.z}).collect();
+        return NEIGHBOURS
+            .iter()
+            .map(|n| CubeCoordinate {
+                x: self.x + n.x,
+                y: self.y + n.y,
+                z: self.z + n.z,
+            })
+            .collect();
     }
 
     pub fn origin() -> CubeCoordinate {
-        CubeCoordinate{x: 0, y: 0, z: 0}
+        CubeCoordinate { x: 0, y: 0, z: 0 }
     }
 
     /// Resolves a list of coordinates into a single one
     pub fn resolve(coordinates: Vec<CubeCoordinate>) -> CubeCoordinate {
-        coordinates.iter().fold(CubeCoordinate::origin(), | acc, c| CubeCoordinate{x: acc.x + c.x, y: acc.y + c.y, z: acc.z + c.z})
+        coordinates
+            .iter()
+            .fold(CubeCoordinate::origin(), |acc, c| CubeCoordinate {
+                x: acc.x + c.x,
+                y: acc.y + c.y,
+                z: acc.z + c.z,
+            })
     }
 }
 
@@ -119,12 +149,15 @@ pub fn next_state(tiles: &HashMap<CubeCoordinate, bool>, tile: &CubeCoordinate) 
 
 #[aoc_generator(day24)]
 pub fn gen(input: &str) -> Vec<CubeCoordinate> {
-    return input.lines().map(|s| s.parse::<DirectionList>().unwrap().resolve()).collect();
+    return input
+        .lines()
+        .map(|s| s.parse::<DirectionList>().unwrap().resolve())
+        .collect();
 }
 
 #[aoc(day24, part1)]
 fn part1(input: &Vec<CubeCoordinate>) -> usize {
-    let mut tiles : HashMap<CubeCoordinate, bool> = HashMap::new();
+    let mut tiles: HashMap<CubeCoordinate, bool> = HashMap::new();
     for tile in input {
         // For each referenced tile, get it's state (defaulting to not flipped)
         let flipped = tiles.entry(tile.clone()).or_default();
@@ -132,12 +165,16 @@ fn part1(input: &Vec<CubeCoordinate>) -> usize {
         *flipped ^= true;
     }
     // Count tiles which end in the flipped state
-    return tiles.values().filter(|flipped| **flipped).collect::<Vec<_>>().len();
+    return tiles
+        .values()
+        .filter(|flipped| **flipped)
+        .collect::<Vec<_>>()
+        .len();
 }
 
 #[aoc(day24, part2)]
-fn part2(input: &Vec<CubeCoordinate>) -> usize {    
-    let mut tiles : HashMap<CubeCoordinate, bool> = HashMap::new();
+fn part2(input: &Vec<CubeCoordinate>) -> usize {
+    let mut tiles: HashMap<CubeCoordinate, bool> = HashMap::new();
     for tile in input {
         // For each referenced tile, get it's state (defaulting to not flipped)
         let flipped = tiles.entry(tile.clone()).or_default();
@@ -146,7 +183,7 @@ fn part2(input: &Vec<CubeCoordinate>) -> usize {
     }
     // Now do 100 passes flipping the tiles according to the rules
     for _ in 1..=100 {
-        let mut next : HashMap<CubeCoordinate, bool> = HashMap::new();
+        let mut next: HashMap<CubeCoordinate, bool> = HashMap::new();
         // First check states for all existing tiles
         for tile in tiles.keys() {
             next.insert(tile.clone(), next_state(&tiles, &tile));
@@ -163,7 +200,11 @@ fn part2(input: &Vec<CubeCoordinate>) -> usize {
         std::mem::swap(&mut next, &mut tiles);
     }
     // Count tiles which end in the flipped state
-    return tiles.values().filter(|flipped| **flipped).collect::<Vec<_>>().len();
+    return tiles
+        .values()
+        .filter(|flipped| **flipped)
+        .collect::<Vec<_>>()
+        .len();
 }
 
 #[cfg(test)]
@@ -173,7 +214,13 @@ mod tests {
     #[test]
     fn test_directions_to_coordinate() {
         use Direction::*;
-        assert_eq!(DirectionList::new([E, SE, W].to_vec()).resolve(), CubeCoordinate::new(&SE));
-        assert_eq!(DirectionList::new([NW, W, SW, E, E].to_vec()).resolve(), CubeCoordinate::origin());
+        assert_eq!(
+            DirectionList::new([E, SE, W].to_vec()).resolve(),
+            CubeCoordinate::new(&SE)
+        );
+        assert_eq!(
+            DirectionList::new([NW, W, SW, E, E].to_vec()).resolve(),
+            CubeCoordinate::origin()
+        );
     }
 }

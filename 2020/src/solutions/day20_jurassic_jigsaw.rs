@@ -1,6 +1,6 @@
 use std::collections::HashMap;
-use std::str::FromStr;
 use std::convert::Infallible;
+use std::str::FromStr;
 
 #[derive(Debug, Clone)]
 pub struct Tile {
@@ -13,11 +13,16 @@ pub struct Tile {
 impl Tile {
     /// Checks if a Tile is a corner (has 2/4 connected edges)
     pub fn is_corner(&self) -> bool {
-        self.links.iter().filter(|link| link.is_some()).collect::<Vec<_>>().len() == 2
+        self.links
+            .iter()
+            .filter(|link| link.is_some())
+            .collect::<Vec<_>>()
+            .len()
+            == 2
     }
 }
 
-impl FromStr for Tile {    
+impl FromStr for Tile {
     type Err = Infallible;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         // Extract the ID from the first line
@@ -32,7 +37,7 @@ impl FromStr for Tile {
         //   L    TOP   R
         // ↑ E          I 1
         // 3 F          G ↓
-        //   T          H 
+        //   T          H
         //      BOTTOM  T
         //       ← 2
 
@@ -52,9 +57,19 @@ impl FromStr for Tile {
 
         // And then finally read in the actual image data (by discarding edges)
         let tile_size = 8;
-        let data = s.lines().skip(1+1).take(tile_size).map(|line| line.chars().skip(1).take(tile_size).collect::<Vec<char>>()).collect();
+        let data = s
+            .lines()
+            .skip(1 + 1)
+            .take(tile_size)
+            .map(|line| line.chars().skip(1).take(tile_size).collect::<Vec<char>>())
+            .collect();
 
-        return Ok(Tile { id: id, data: data, edges: edges, links: vec![None; 4] });
+        return Ok(Tile {
+            id: id,
+            data: data,
+            edges: edges,
+            links: vec![None; 4],
+        });
     }
 }
 
@@ -62,7 +77,7 @@ impl FromStr for Tile {
 pub struct TileLayout {
     id: usize,
     orientation: usize,
-    flipped: bool
+    flipped: bool,
 }
 
 impl TileLayout {
@@ -72,7 +87,7 @@ impl TileLayout {
             1 => 3,
             2 => 2,
             3 => 1,
-            _ => panic!("Unexpected orientation")
+            _ => panic!("Unexpected orientation"),
         }
     }
 }
@@ -105,16 +120,28 @@ fn link_edges(tiles: &mut HashMap<usize, Tile>) {
     for tile in tiles.values() {
         for (edge_index, edge) in tile.edges.iter().enumerate() {
             // Get the Vector for each edge, or a default empty one, and add the tile
-            edges.entry(edge.to_string()).or_default().push((tile.id, edge_index, false));
-            edges.entry(edge.chars().rev().collect::<String>()).or_default().push((tile.id, edge_index, true));
+            edges
+                .entry(edge.to_string())
+                .or_default()
+                .push((tile.id, edge_index, false));
+            edges
+                .entry(edge.chars().rev().collect::<String>())
+                .or_default()
+                .push((tile.id, edge_index, true));
         }
     }
 
     // We can now build up the image by joining the tiles with matching edges
     for data in edges.values() {
-        if data.len() == 1 { continue; } // Single edge (i.e. edge of image) - skip
-        // Now we have ignored single edges assert that this is 2 matches for this edge
-        assert_eq!(data.len(), 2, "Found more than 2 instances of the same edge in the input data");
+        if data.len() == 1 {
+            continue;
+        } // Single edge (i.e. edge of image) - skip
+          // Now we have ignored single edges assert that this is 2 matches for this edge
+        assert_eq!(
+            data.len(),
+            2,
+            "Found more than 2 instances of the same edge in the input data"
+        );
 
         let (tile_id1, edge1, reversed1) = data[0];
         let (tile_id2, edge2, reversed2) = data[1];
@@ -130,9 +157,15 @@ fn link_edges(tiles: &mut HashMap<usize, Tile>) {
         } else if linked1 && linked2 {
             continue; // Ignore as already linked (will be the inverse pair)
         } else if linked1 {
-            panic!("{}:{} is already linked, cannot link {}:{}({}) <-> {}:{}({})", tile_id1, edge1, tile_id1, edge1, reversed1, tile_id1, edge2, reversed2);
+            panic!(
+                "{}:{} is already linked, cannot link {}:{}({}) <-> {}:{}({})",
+                tile_id1, edge1, tile_id1, edge1, reversed1, tile_id1, edge2, reversed2
+            );
         } else if linked2 {
-            panic!("{}:{} is already linked, cannot link {}:{}({}) <-> {}:{}({})", tile_id2, edge2, tile_id1, edge1, reversed1, tile_id2, edge2, reversed2);
+            panic!(
+                "{}:{} is already linked, cannot link {}:{}({}) <-> {}:{}({})",
+                tile_id2, edge2, tile_id1, edge1, reversed1, tile_id2, edge2, reversed2
+            );
         }
     }
 }
@@ -152,12 +185,21 @@ pub fn layout_grid(tiles: &HashMap<usize, Tile>) -> Vec<Vec<TileLayout>> {
     let mut flipped = false;
     let mut row = 0;
 
-    let corners = tiles.iter().filter(|(_, tile)| tile.is_corner()).collect::<HashMap<_,_>>();
-    let mut top_left = corners.iter().filter(|(_, tile)| tile.links[0].is_none() && tile.links[3].is_none()).collect::<HashMap<_,_>>();
+    let corners = tiles
+        .iter()
+        .filter(|(_, tile)| tile.is_corner())
+        .collect::<HashMap<_, _>>();
+    let mut top_left = corners
+        .iter()
+        .filter(|(_, tile)| tile.links[0].is_none() && tile.links[3].is_none())
+        .collect::<HashMap<_, _>>();
     if top_left.is_empty() {
         // Can't find the one we want
         // Try again assuming it is flipped
-        top_left = corners.iter().filter(|(_, tile)| tile.links[0].is_none() && tile.links[1].is_none()).collect::<HashMap<_,_>>();
+        top_left = corners
+            .iter()
+            .filter(|(_, tile)| tile.links[0].is_none() && tile.links[1].is_none())
+            .collect::<HashMap<_, _>>();
         flipped ^= true;
         right = (right + 2) % 4;
         left = (left + 2) % 4;
@@ -175,7 +217,11 @@ pub fn layout_grid(tiles: &HashMap<usize, Tile>) -> Vec<Vec<TileLayout>> {
         loop {
             // Save the tile details to the grid
             //println!("Located {} {:?} {} {}{}{}{}", tile.id, tile.links, flipped, up, right, down, left);
-            grid[row][coll] = Some(TileLayout {id: tile.id, orientation: up, flipped: flipped});
+            grid[row][coll] = Some(TileLayout {
+                id: tile.id,
+                orientation: up,
+                flipped: flipped,
+            });
             if row == 0 {
                 assert_eq!(tile.links[up], None);
             } else {
@@ -199,7 +245,7 @@ pub fn layout_grid(tiles: &HashMap<usize, Tile>) -> Vec<Vec<TileLayout>> {
                 // Yes we did, invert flipped state
                 flipped ^= true;
             }
-            up = (if flipped {right} else {left} + 1) % 4;
+            up = (if flipped { right } else { left } + 1) % 4;
             down = (up + 2) % 4;
         }
         // Reset to start of the row
@@ -225,19 +271,22 @@ pub fn layout_grid(tiles: &HashMap<usize, Tile>) -> Vec<Vec<TileLayout>> {
             flipped ^= true;
         }
         // Next right is a bit more complicated due to tiles potentially being reversed
-        right = (if flipped {down} else {up} + 1) % 4;
+        right = (if flipped { down } else { up } + 1) % 4;
         left = (right + 2) % 4;
         //println!("Moved down to {} {:?} {} {}{}{}{}", tile.id, tile.links, flipped, up, right, down, left);
         assert_eq!(tile.links[left], None);
     }
-    return grid.iter().map(|row| row.iter().map(|cell| cell.unwrap().clone()).collect()).collect();
+    return grid
+        .iter()
+        .map(|row| row.iter().map(|cell| cell.unwrap().clone()).collect())
+        .collect();
 }
 
 /// Uses tile layout information to assembles the tiles into a complete image
 fn build_image(tiles: &HashMap<usize, Tile>, layout: &Vec<Vec<TileLayout>>) -> Vec<Vec<char>> {
     let tile_size = tiles.get(&layout[0][0].id).unwrap().data.len();
-    let image_size = layout.len() *  tile_size;
-    let mut image : Vec<Vec<char>> = vec![vec!['?'; image_size]; image_size];
+    let image_size = layout.len() * tile_size;
+    let mut image: Vec<Vec<char>> = vec![vec!['?'; image_size]; image_size];
 
     for (y, row) in layout.iter().enumerate() {
         for (x, tl) in row.iter().enumerate() {
@@ -265,7 +314,7 @@ fn build_image(tiles: &HashMap<usize, Tile>, layout: &Vec<Vec<TileLayout>>) -> V
     return image;
 }
 
-fn build_sea_monster_markers() -> Vec<(usize, usize)> {    
+fn build_sea_monster_markers() -> Vec<(usize, usize)> {
     let monster = "                  # \n#    ##    ##    ###\n #  #  #  #  #  #   ".to_owned();
     // Turn the monster pattern into a series of marker coordinates to check
     let mut markers = Vec::new();
@@ -307,7 +356,11 @@ fn find_sea_monsters(image: &Vec<Vec<char>>, markers: &Vec<(usize, usize)>) -> V
 
 #[allow(dead_code)]
 /// Highlights sea monsters in an image by setting them to O for debugging
-fn highlight_sea_monsters(image: &mut Vec<Vec<char>>, markers: &Vec<(usize, usize)>, monsters: &Vec<(usize, usize)> ){
+fn highlight_sea_monsters(
+    image: &mut Vec<Vec<char>>,
+    markers: &Vec<(usize, usize)>,
+    monsters: &Vec<(usize, usize)>,
+) {
     for monster in monsters {
         for point in markers.iter() {
             image[monster.0 + point.0][monster.1 + point.1] = 'O';
@@ -320,7 +373,7 @@ fn highlight_sea_monsters(image: &mut Vec<Vec<char>>, markers: &Vec<(usize, usiz
 fn print_image(image: &Vec<Vec<char>>) {
     for (y, row) in image.iter().enumerate() {
         if y % 8 == 0 {
-            println!("{: <1$}", "", row.len() + (row.len()/8));
+            println!("{: <1$}", "", row.len() + (row.len() / 8));
         }
         for (x, cell) in row.iter().enumerate() {
             if x % 8 == 0 {
@@ -334,24 +387,37 @@ fn print_image(image: &Vec<Vec<char>>) {
 
 #[aoc_generator(day20)]
 pub fn gen(input: &str) -> Vec<Tile> {
-    input.split("\r\n\r\n").map(|tile| tile.parse().unwrap()).collect()
+    input
+        .split("\r\n\r\n")
+        .map(|tile| tile.parse().unwrap())
+        .collect()
 }
 
 #[aoc(day20, part1)]
 fn part1(input: &Vec<Tile>) -> usize {
-    let mut tiles : HashMap<usize, Tile> = input.iter().map(|tile| (tile.id, tile.clone())).collect();
+    let mut tiles: HashMap<usize, Tile> =
+        input.iter().map(|tile| (tile.id, tile.clone())).collect();
     // Link up all the edges of tiles
     link_edges(&mut tiles);
 
     // Find just the corners and return the multiple of their ids
-    let corners = tiles.iter().filter(|(_, tile)| tile.is_corner()).collect::<HashMap<_,_>>();
+    let corners = tiles
+        .iter()
+        .filter(|(_, tile)| tile.is_corner())
+        .collect::<HashMap<_, _>>();
     assert_eq!(corners.len(), 4, "Expected to have 4 corner tiles");
-    return corners.iter().map(|(id, _)| **id).collect::<Vec<usize>>().iter().fold(1, | acc, id| acc * id);
+    return corners
+        .iter()
+        .map(|(id, _)| **id)
+        .collect::<Vec<usize>>()
+        .iter()
+        .fold(1, |acc, id| acc * id);
 }
 
 #[aoc(day20, part2)]
 fn part2(input: &Vec<Tile>) -> usize {
-    let mut tiles : HashMap<usize, Tile> = input.iter().map(|tile| (tile.id, tile.clone())).collect();
+    let mut tiles: HashMap<usize, Tile> =
+        input.iter().map(|tile| (tile.id, tile.clone())).collect();
     // Link up all the edges of tiles
     link_edges(&mut tiles);
 
@@ -359,8 +425,12 @@ fn part2(input: &Vec<Tile>) -> usize {
     let layout = layout_grid(&tiles);
 
     // Use the data for each tile to build the completed image
-    let mut image  = build_image(&tiles, &layout);
-    let wave_tiles = image.iter().flat_map(|row| row.iter().filter(|c| **c == '#')).collect::<Vec<_>>().len();
+    let mut image = build_image(&tiles, &layout);
+    let wave_tiles = image
+        .iter()
+        .flat_map(|row| row.iter().filter(|c| **c == '#'))
+        .collect::<Vec<_>>()
+        .len();
 
     // Build the search pattern we need to find monsters
     let markers = build_sea_monster_markers();
@@ -388,14 +458,13 @@ fn part2(input: &Vec<Tile>) -> usize {
     return wave_tiles - (monsters.len() * markers.len());
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_tile_from_str() {
-        let tile : Tile = "Tile 2311:
+        let tile: Tile = "Tile 2311:
 ..##.#..#.
 ##..#.....
 #...##..#.
@@ -405,16 +474,19 @@ mod tests {
 .#.#.#..##
 ..#....#..
 ###...#.#.
-..###..###".parse().unwrap();
-        
+..###..###"
+            .parse()
+            .unwrap();
+
         assert_eq!(tile.id, 2311);
         assert_eq!(tile.edges[0], "..##.#..#.");
         assert_eq!(tile.edges[1], "...#.##..#");
         assert_eq!(tile.edges[2], "###..###..");
         assert_eq!(tile.edges[3], ".#..#####.");
 
-        assert_eq!(tile.data.concat().into_iter().collect::<String>(), "#..#.......##..####.#...#.##.####...#.###.#.#..#.#....#.##...#.#");
+        assert_eq!(
+            tile.data.concat().into_iter().collect::<String>(),
+            "#..#.......##..####.#...#.##.####...#.###.#.#..#.#....#.##...#.#"
+        );
     }
 }
-
-

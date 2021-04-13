@@ -27,7 +27,11 @@ pub fn find_loop_size(subject_number: usize, public_key: usize) -> usize {
 
 #[aoc_generator(day25)]
 pub fn gen(input: &str) -> (usize, usize) {
-    return input.lines().map(|s| s.parse::<usize>().unwrap()).collect_tuple().unwrap();
+    return input
+        .lines()
+        .map(|s| s.parse::<usize>().unwrap())
+        .collect_tuple()
+        .unwrap();
 }
 
 #[aoc(day25, part1)]

@@ -3,7 +3,10 @@ use std::collections::HashSet;
 #[aoc_generator(day1)]
 pub fn gen(input: &str) -> HashSet<i64> {
     // Parse each line into a number and store in a HashSet
-    input.lines().map(|x| x.parse::<i64>().unwrap()).collect::<HashSet<i64>>()
+    input
+        .lines()
+        .map(|x| x.parse::<i64>().unwrap())
+        .collect::<HashSet<i64>>()
 }
 
 #[aoc(day1, part1)]

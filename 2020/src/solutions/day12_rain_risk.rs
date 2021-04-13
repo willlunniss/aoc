@@ -1,6 +1,6 @@
 use parse_display::{Display, FromStr};
-use std::str::FromStr;
 use std::convert::Infallible;
+use std::str::FromStr;
 
 #[derive(Display, FromStr, PartialEq, Debug, Clone, Copy)]
 pub enum Action {
@@ -10,23 +10,26 @@ pub enum Action {
     W,
     L,
     R,
-    F
+    F,
 }
 
 #[derive(Display, PartialEq, Debug, Clone, Copy)]
 #[display("{action}{value}")]
 pub struct NavInstruction {
     action: Action,
-    value: isize
+    value: isize,
 }
 
-impl FromStr for NavInstruction {    
+impl FromStr for NavInstruction {
     type Err = Infallible;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         // Split into first char (action) and remaining (value)
         let (a, v) = s.split_at(1);
         // Then parse into the right types
-        return Ok(NavInstruction { action: a.parse().unwrap(), value: v.parse().unwrap()});
+        return Ok(NavInstruction {
+            action: a.parse().unwrap(),
+            value: v.parse().unwrap(),
+        });
     }
 }
 
@@ -71,15 +74,16 @@ pub fn move_ship(ship: &mut Ship, instr: &NavInstruction) {
         Action::W => ship.longitude -= instr.value,
         Action::L => ship.direction = (ship.direction - instr.value + 360) % 360,
         Action::R => ship.direction = (ship.direction + instr.value + 360) % 360,
-        Action::F => {
-            match ship.direction {
-                0 => ship.latitude += instr.value,
-                90 => ship.longitude += instr.value,
-                180 => ship.latitude -= instr.value,
-                270 => ship.longitude -= instr.value,
-                _ => panic!("Don't know how to handle moving at an angle of {}", ship.direction)
-            }
-        }
+        Action::F => match ship.direction {
+            0 => ship.latitude += instr.value,
+            90 => ship.longitude += instr.value,
+            180 => ship.latitude -= instr.value,
+            270 => ship.longitude -= instr.value,
+            _ => panic!(
+                "Don't know how to handle moving at an angle of {}",
+                ship.direction
+            ),
+        },
     }
 }
 
@@ -105,22 +109,33 @@ pub fn gen(input: &str) -> Vec<NavInstruction> {
 
 #[aoc(day12, part1)]
 fn part1(input: &Vec<NavInstruction>) -> isize {
-    let mut ship = Ship {latitude: 0, longitude:0, direction: 90};
+    let mut ship = Ship {
+        latitude: 0,
+        longitude: 0,
+        direction: 90,
+    };
     for instr in input {
         move_ship(&mut ship, &instr);
     }
-    
+
     return ship.manhattan_distance();
 }
 
 #[aoc(day12, part2)]
 fn part2(input: &Vec<NavInstruction>) -> isize {
-    let mut ship = Ship {latitude: 0, longitude:0, direction: 90};
-    let mut waypoint = Waypoint {latitude: 1, longitude: 10};
+    let mut ship = Ship {
+        latitude: 0,
+        longitude: 0,
+        direction: 90,
+    };
+    let mut waypoint = Waypoint {
+        latitude: 1,
+        longitude: 10,
+    };
     for instr in input {
         move_ship_and_waypoint(&mut ship, &mut waypoint, &instr);
     }
-    
+
     return ship.manhattan_distance();
 }
 
@@ -130,18 +145,26 @@ mod tests {
 
     #[test]
     fn test_waypoint_rotate() {
-        let mut waypoint = Waypoint{latitude: -5, longitude: 5};
+        let mut waypoint = Waypoint {
+            latitude: -5,
+            longitude: 5,
+        };
         waypoint.rotate(-90);
         assert_eq!(waypoint.latitude, 5);
         assert_eq!(waypoint.longitude, 5);
 
-        let mut waypoint = Waypoint{latitude: 4, longitude: 10};
+        let mut waypoint = Waypoint {
+            latitude: 4,
+            longitude: 10,
+        };
         waypoint.rotate(90);
         assert_eq!(waypoint.latitude, -10);
         assert_eq!(waypoint.longitude, 4);
 
-        
-        let mut waypoint = Waypoint{latitude: -5, longitude: 10};
+        let mut waypoint = Waypoint {
+            latitude: -5,
+            longitude: 10,
+        };
         waypoint.rotate(90);
         waypoint.rotate(90);
         waypoint.rotate(90);

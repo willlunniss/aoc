@@ -37,10 +37,9 @@ fn part1(input: &Vec<PasswordPolicy>) -> usize {
     The password policy indicates the lowest and highest number of times a given letter must appear for the password to be valid.
     For example, 1-3 a means that the password must contain a at least 1 time and at most 3 times.
     */
-    return input.iter()
-        .filter(|p| {
-            (p.val1..=p.val2).contains(&p.password.matches(p.policy_char).count())
-        })
+    return input
+        .iter()
+        .filter(|p| (p.val1..=p.val2).contains(&p.password.matches(p.policy_char).count()))
         .collect::<Vec<_>>()
         .len();
 }
@@ -53,9 +52,11 @@ fn part2(input: &Vec<PasswordPolicy>) -> usize {
     (Be careful; Toboggan Corporate Policies have no concept of "index zero"!) Exactly one of these positions must contain the given letter.
     Other occurrences of the letter are irrelevant for the purposes of policy enforcement.
     */
-    return input.iter()
+    return input
+        .iter()
         .filter(|p| {
-            (p.password.chars().nth(p.val1-1).unwrap() == p.policy_char) ^ (p.password.chars().nth(p.val2-1).unwrap() == p.policy_char) 
+            (p.password.chars().nth(p.val1 - 1).unwrap() == p.policy_char)
+                ^ (p.password.chars().nth(p.val2 - 1).unwrap() == p.policy_char)
         })
         .collect::<Vec<_>>()
         .len();

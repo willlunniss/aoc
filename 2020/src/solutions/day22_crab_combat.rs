@@ -1,7 +1,7 @@
-use std::str::FromStr;
-use std::convert::Infallible;
-use std::collections::VecDeque;
 use std::collections::HashSet;
+use std::collections::VecDeque;
+use std::convert::Infallible;
+use std::str::FromStr;
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Player {
@@ -13,7 +13,11 @@ impl FromStr for Player {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         return Ok(Player {
             // Read in the player's cards (skip the first line which is the Player ID)
-            deck: s.lines().skip(1).map(|card| card.parse::<usize>().unwrap()).collect::<VecDeque<usize>>(),
+            deck: s
+                .lines()
+                .skip(1)
+                .map(|card| card.parse::<usize>().unwrap())
+                .collect::<VecDeque<usize>>(),
         });
     }
 }
@@ -21,20 +25,28 @@ impl FromStr for Player {
 impl Player {
     /// Creates a new deck using the first size cards from the current one
     pub fn copy_deck(&self, size: usize) -> VecDeque<usize> {
-        self.deck.iter().take(size).map(|card| *card).collect::<VecDeque<usize>>()
+        self.deck
+            .iter()
+            .take(size)
+            .map(|card| *card)
+            .collect::<VecDeque<usize>>()
     }
 
     /// Creates a representation of the current deck that can be used to
     /// check we aren't playing the same decks again and again
     pub fn deck_img(&self) -> String {
         // TODO: Use something better than a String?
-        self.deck.iter().map(|c| c.to_string()).collect::<Vec<String>>().concat()
+        self.deck
+            .iter()
+            .map(|c| c.to_string())
+            .collect::<Vec<String>>()
+            .concat()
     }
 }
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Game {
-    players: Vec<Player>
+    players: Vec<Player>,
 }
 
 impl Game {
@@ -42,9 +54,14 @@ impl Game {
     pub fn new_sub_game(&self, deck_sizes: [usize; 2]) -> Game {
         Game {
             players: [
-                Player{ deck: self.players[0].copy_deck(deck_sizes[0]) },
-                Player{ deck: self.players[1].copy_deck(deck_sizes[1]) },
-            ].to_vec()
+                Player {
+                    deck: self.players[0].copy_deck(deck_sizes[0]),
+                },
+                Player {
+                    deck: self.players[1].copy_deck(deck_sizes[1]),
+                },
+            ]
+            .to_vec(),
         }
     }
 
@@ -78,14 +95,19 @@ impl Game {
 
             // Draw cards and work out how to play the round
             let (card1, card2) = self.draw();
-            let winner = if self.players[0].deck.len() >= card1 && self.players[1].deck.len() >= card2 {
-                // Start a new sub game
-                let mut sub_game = self.new_sub_game([card1, card2]);
-                sub_game.play_recursive()
-            } else {
-                // Play a normal round - highest card wins
-                if card1 > card2 { 0 } else { 1 }
-            };
+            let winner =
+                if self.players[0].deck.len() >= card1 && self.players[1].deck.len() >= card2 {
+                    // Start a new sub game
+                    let mut sub_game = self.new_sub_game([card1, card2]);
+                    sub_game.play_recursive()
+                } else {
+                    // Play a normal round - highest card wins
+                    if card1 > card2 {
+                        0
+                    } else {
+                        1
+                    }
+                };
             // Add the winner and then the losers cards to the winners deck
             if winner == 0 {
                 self.complete_round(0, [card1, card2]);
@@ -110,23 +132,39 @@ impl Game {
     /// Returns the score of the winning player
     pub fn winning_score(&self) -> usize {
         // Reverse the cards and then multiply by 1..N and sum up
-        return self.players[self.winner().unwrap()].deck.iter().rev().zip(1..).map(|(card, score)| *card * score).sum();
+        return self.players[self.winner().unwrap()]
+            .deck
+            .iter()
+            .rev()
+            .zip(1..)
+            .map(|(card, score)| *card * score)
+            .sum();
     }
 
     /// Draws the next round of cards
     pub fn draw(&mut self) -> (usize, usize) {
-        (self.players[0].deck.pop_front().unwrap(), self.players[1].deck.pop_front().unwrap())
+        (
+            self.players[0].deck.pop_front().unwrap(),
+            self.players[1].deck.pop_front().unwrap(),
+        )
     }
 
     /// Completes a round by adding the cards to the end of the winning players deck
     pub fn complete_round(&mut self, winner: usize, cards: [usize; 2]) {
-        cards.iter().for_each(|card| self.players[winner].deck.push_back(*card));
+        cards
+            .iter()
+            .for_each(|card| self.players[winner].deck.push_back(*card));
     }
 }
 
 #[aoc_generator(day22)]
 pub fn gen(input: &str) -> Game {
-    return Game{ players: input.split("\r\n\r\n").map(|player| player.parse().unwrap()).collect::<Vec<Player>>() };
+    return Game {
+        players: input
+            .split("\r\n\r\n")
+            .map(|player| player.parse().unwrap())
+            .collect::<Vec<Player>>(),
+    };
 }
 
 #[aoc(day22, part1)]

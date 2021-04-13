@@ -1,32 +1,43 @@
 use itertools::Itertools;
-use std::ops::RangeInclusive;
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::str::FromStr;
 use std::convert::Infallible;
+use std::ops::RangeInclusive;
+use std::str::FromStr;
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Range {
     lower: RangeInclusive<usize>,
-    upper: RangeInclusive<usize>
+    upper: RangeInclusive<usize>,
 }
 
-impl Range {    
+impl Range {
     fn parse_sub_range(s: &str) -> RangeInclusive<usize> {
-        let (start, end) = s.splitn(2, "-").map(|x| x.parse::<usize>().unwrap()).collect_tuple().unwrap();
+        let (start, end) = s
+            .splitn(2, "-")
+            .map(|x| x.parse::<usize>().unwrap())
+            .collect_tuple()
+            .unwrap();
         return RangeInclusive::new(start, end);
     }
 
     fn contains(&self, value: usize) -> bool {
-        return self.lower.contains(&value) || self.upper.contains(&value)
+        return self.lower.contains(&value) || self.upper.contains(&value);
     }
 }
 
-impl FromStr for Range {    
+impl FromStr for Range {
     type Err = Infallible;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {        
-        let (lower, upper) = s.split(" or ").map(|x| Range::parse_sub_range(x)).collect_tuple().unwrap();
-        return Ok(Range{lower: lower, upper: upper});
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (lower, upper) = s
+            .split(" or ")
+            .map(|x| Range::parse_sub_range(x))
+            .collect_tuple()
+            .unwrap();
+        return Ok(Range {
+            lower: lower,
+            upper: upper,
+        });
     }
 }
 
@@ -34,7 +45,7 @@ impl FromStr for Range {
 pub struct TicketData {
     rules: HashMap<String, Range>,
     ticket: Vec<usize>,
-    nearby_tickets: Vec<Vec<usize>>
+    nearby_tickets: Vec<Vec<usize>>,
 }
 
 impl TicketData {
@@ -54,7 +65,7 @@ enum TicketDataSection {
     TicketHeader,
     Ticket,
     NearbyTicketsHeader,
-    NearbyTickets
+    NearbyTickets,
 }
 
 impl TicketDataSection {
@@ -65,7 +76,7 @@ impl TicketDataSection {
             TicketHeader => Ticket,
             Ticket => NearbyTicketsHeader,
             NearbyTicketsHeader => NearbyTickets,
-            NearbyTickets => panic!("Cannot advance {:?}", self)
+            NearbyTickets => panic!("Cannot advance {:?}", self),
         }
     }
 }
@@ -88,23 +99,35 @@ pub fn gen(input: &str) -> TicketData {
             Rules => {
                 let (name, ranges) = line.splitn(2, ": ").collect_tuple().unwrap();
                 rules.insert(name.to_string(), ranges.parse().unwrap());
-            },
-            TicketHeader => { section.advance(); continue }, // Skip the header
-            Ticket => { ticket = line.split(',').map(|x| x.parse().unwrap()).collect() },
-            NearbyTicketsHeader => { section.advance(); continue }, // Skip the header
-            NearbyTickets => { nearby_tickets.push(line.split(',').map(|x| x.parse().unwrap()).collect()) }
+            }
+            TicketHeader => {
+                section.advance();
+                continue;
+            } // Skip the header
+            Ticket => ticket = line.split(',').map(|x| x.parse().unwrap()).collect(),
+            NearbyTicketsHeader => {
+                section.advance();
+                continue;
+            } // Skip the header
+            NearbyTickets => {
+                nearby_tickets.push(line.split(',').map(|x| x.parse().unwrap()).collect())
+            }
         }
     }
-    return TicketData { rules: rules, ticket: ticket, nearby_tickets: nearby_tickets};
+    return TicketData {
+        rules: rules,
+        ticket: ticket,
+        nearby_tickets: nearby_tickets,
+    };
 }
 
 #[aoc(day16, part1)]
 fn part1(input: &TicketData) -> usize {
     // Find all invalid values
-    let mut invalid : Vec<usize> = Vec::new();
+    let mut invalid: Vec<usize> = Vec::new();
     for ticket in input.nearby_tickets.iter() {
         for value in ticket.iter() {
-            if !&input.matches_any_rule(*value) {                
+            if !&input.matches_any_rule(*value) {
                 invalid.push(*value);
             }
         }
@@ -115,11 +138,11 @@ fn part1(input: &TicketData) -> usize {
 #[aoc(day16, part2)]
 fn part2(input: &TicketData) -> usize {
     // First discard out all invalid tickets
-    let mut valid : Vec<Vec<usize>> = Vec::new();
+    let mut valid: Vec<Vec<usize>> = Vec::new();
     for ticket in input.nearby_tickets.iter() {
         let mut invalid = false;
         for value in ticket.iter() {
-            if !input.matches_any_rule(*value) {                
+            if !input.matches_any_rule(*value) {
                 invalid = true;
             }
         }
@@ -137,10 +160,10 @@ fn part2(input: &TicketData) -> usize {
             &possibilities[index].retain(|_, range| range.contains(*value));
         }
     }
-    
+
     // Now repeatedly pass over the options until each filed only has one possibility
     // (Find the fields with only one option and remove that option from others, and repeat...)
-    let mut resolved_field_names : Vec<String> = vec!["?".to_string(); input.ticket.len()];
+    let mut resolved_field_names: Vec<String> = vec!["?".to_string(); input.ticket.len()];
     loop {
         let mut single_options = HashSet::new();
         for (index, possible_fields) in possibilities.iter().enumerate() {
@@ -157,7 +180,7 @@ fn part2(input: &TicketData) -> usize {
         } else {
             // Remove the possible fields from ones with > 1
             for rule in single_options {
-                for index in 0 .. input.ticket.len() {
+                for index in 0..input.ticket.len() {
                     &possibilities[index].retain(|name, _| *name != rule);
                 }
             }

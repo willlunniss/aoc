@@ -20,25 +20,33 @@ impl Grid {
 
     /// Gets the state of a point
     pub fn get(&self, point: Point) -> State {
-        self.points[(point.w + self.offset) as usize][(point.z + self.offset) as usize][(point.y + self.offset) as usize][(point.x + self.offset) as usize]
+        self.points[(point.w + self.offset) as usize][(point.z + self.offset) as usize]
+            [(point.y + self.offset) as usize][(point.x + self.offset) as usize]
     }
 
     /// Set a point to s state
     pub fn set(&mut self, point: Point, state: State) {
-        self.points[(point.w + self.offset) as usize][(point.z + self.offset) as usize][(point.y + self.offset) as usize][(point.x + self.offset) as usize] = state;
+        self.points[(point.w + self.offset) as usize][(point.z + self.offset) as usize]
+            [(point.y + self.offset) as usize][(point.x + self.offset) as usize] = state;
     }
 
     /// Counts the active points
     pub fn active(&self) -> usize {
-        self.points.iter().flatten().flatten().flatten().filter(|&x| *x == State::Active).count()
+        self.points
+            .iter()
+            .flatten()
+            .flatten()
+            .flatten()
+            .filter(|&x| *x == State::Active)
+            .count()
     }
 
     /// Counts the active neighbours in 3D space
     pub fn active_neighbours3(&self, point: Point) -> usize {
         let mut count = 0;
-        for z in point.z-1..=point.z+1 {
-            for y in point.y-1..=point.y+1 {
-                for x in point.x-1..=point.x+1 {
+        for z in point.z - 1..=point.z + 1 {
+            for y in point.y - 1..=point.y + 1 {
+                for x in point.x - 1..=point.x + 1 {
                     let neigh = Point::new3(x, y, z);
                     if point != neigh && self.get(neigh) == State::Active {
                         count += 1;
@@ -52,10 +60,10 @@ impl Grid {
     /// Counts the active neighbours in 4D space
     pub fn active_neighbours4(&self, point: Point) -> usize {
         let mut count = 0;
-        for w in point.w-1..=point.w+1 {
-            for z in point.z-1..=point.z+1 {
-                for y in point.y-1..=point.y+1 {
-                    for x in point.x-1..=point.x+1 {
+        for w in point.w - 1..=point.w + 1 {
+            for z in point.z - 1..=point.z + 1 {
+                for y in point.y - 1..=point.y + 1 {
+                    for x in point.x - 1..=point.x + 1 {
                         let neigh = Point::new4(x, y, z, w);
                         if point != neigh && self.get(neigh) == State::Active {
                             count += 1;
@@ -67,9 +75,8 @@ impl Grid {
         return count;
     }
 
-
     /// Get a list of all points contained within the grid in 3D space
-    /// 
+    ///
     /// Can then be used to explore the grid's contents
     pub fn explore3(&self) -> Vec<Point> {
         let mut points = Vec::new();
@@ -84,7 +91,7 @@ impl Grid {
     }
 
     /// Get a list of all points contained within the grid in 4D space
-    /// 
+    ///
     /// Can then be used to explore the grid's contents
     pub fn explore4(&self) -> Vec<Point> {
         let mut points = Vec::new();
@@ -104,13 +111,19 @@ impl Grid {
 impl fmt::Debug for Grid {
     #[allow(unused_must_use)]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for z in -self.offset .. self.offset {
+        for z in -self.offset..self.offset {
             // Print all Z planes that have active points (makes it easier to debug)
             // TODO: Add W plane debug
-            if self.points[self.offset as usize][(z + self.offset) as usize].iter().flatten().filter(|&x| *x == State::Active).count() > 0 {
+            if self.points[self.offset as usize][(z + self.offset) as usize]
+                .iter()
+                .flatten()
+                .filter(|&x| *x == State::Active)
+                .count()
+                > 0
+            {
                 writeln!(f, "z={}", z);
-                for y in -self.offset .. self.offset {
-                    for x in -self.offset .. self.offset {
+                for y in -self.offset..self.offset {
+                    for x in -self.offset..self.offset {
                         write!(f, "{:?}", &self.get(Point::new3(x, y, z)));
                     }
                     write!(f, "\n");
@@ -132,17 +145,32 @@ pub struct Point {
 impl Point {
     /// Create a new Point in 2D space
     pub fn new2(x: isize, y: isize) -> Point {
-        Point{w: 0, z: 0, y: y, x: x}
+        Point {
+            w: 0,
+            z: 0,
+            y: y,
+            x: x,
+        }
     }
 
     /// Create a new Point in 3D space
     pub fn new3(x: isize, y: isize, z: isize) -> Point {
-        Point{w: 0, z: z, y: y, x: x}
+        Point {
+            w: 0,
+            z: z,
+            y: y,
+            x: x,
+        }
     }
 
     /// Create a new Point in 4D space
     pub fn new4(x: isize, y: isize, z: isize, w: isize) -> Point {
-        Point{w: w, z: z, y: y, x: x}
+        Point {
+            w: w,
+            z: z,
+            y: y,
+            x: x,
+        }
     }
 }
 
@@ -154,10 +182,10 @@ pub enum State {
 
 impl fmt::Debug for State {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-       match *self {
-           State::Active => write!(f, "#"),
-           State::Inactive => write!(f, "."),
-       }
+        match *self {
+            State::Active => write!(f, "#"),
+            State::Inactive => write!(f, "."),
+        }
     }
 }
 
@@ -167,7 +195,7 @@ impl State {
         match c {
             '#' => State::Active,
             '.' => State::Inactive,
-            _ => panic!("Unexpected char '{}'", c)
+            _ => panic!("Unexpected char '{}'", c),
         }
     }
 
@@ -181,7 +209,7 @@ impl State {
                 } else {
                     State::Inactive
                 }
-            },
+            }
             State::Inactive => {
                 if active_neighbours == 3 {
                     State::Active
@@ -194,7 +222,7 @@ impl State {
 }
 
 #[aoc_generator(day17)]
-pub fn gen(input: &str) -> Grid {    
+pub fn gen(input: &str) -> Grid {
     // Assumption: The we get an NxN slice to start
     // Assumption: We won't simulate for more than 6 cycles and we won't grow
     // by more than 1 per cycle in EACH direction so can set overall size to N + 12
@@ -211,7 +239,6 @@ pub fn gen(input: &str) -> Grid {
 
     return grid;
 }
-
 
 #[aoc(day17, part1)]
 fn part1(input: &Grid) -> usize {

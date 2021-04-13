@@ -1,5 +1,5 @@
 #[derive(PartialEq, Debug, Clone, Copy)]
-pub enum Token {    
+pub enum Token {
     Num(usize),
     Add,
     Mult,
@@ -21,15 +21,24 @@ pub struct Node {
 
 impl Node {
     pub fn new(token: Token) -> Node {
-        Node { children: Vec::new(), entry: token }
+        Node {
+            children: Vec::new(),
+            entry: token,
+        }
     }
 
     pub fn new_sub(children: Vec<Node>) -> Node {
-        Node { children: children, entry: Token::Paren }
+        Node {
+            children: children,
+            entry: Token::Paren,
+        }
     }
 
     pub fn root(children: Vec<Node>) -> Node {
-        Node {children: children, entry: Token::Root }
+        Node {
+            children: children,
+            entry: Token::Root,
+        }
     }
 }
 
@@ -38,13 +47,13 @@ pub fn parse(iter: &mut std::str::Chars<'_>) -> Vec<Node> {
     let mut nodes = Vec::new();
     while let Some(c) = iter.next() {
         match c {
-            '0'..='9' => { nodes.push(Node::new(Token::Num(c.to_digit(10).unwrap() as usize))) },
-            '+' => { nodes.push(Node::new(Token::Add)) },
-            '*' => { nodes.push(Node::new(Token::Mult)) },
-            '(' => { nodes.push(Node::new_sub(parse(iter))) }
-            ')' => { return nodes },
-            ' ' => {},
-            _ => panic!("Unexpected char '{}'", c)
+            '0'..='9' => nodes.push(Node::new(Token::Num(c.to_digit(10).unwrap() as usize))),
+            '+' => nodes.push(Node::new(Token::Add)),
+            '*' => nodes.push(Node::new(Token::Mult)),
+            '(' => nodes.push(Node::new_sub(parse(iter))),
+            ')' => return nodes,
+            ' ' => {}
+            _ => panic!("Unexpected char '{}'", c),
         }
     }
     return nodes;
@@ -61,14 +70,16 @@ pub fn operate(op: &Operator, a: usize, b: usize) -> usize {
 /// Evaluates the equation left to right (recursing down into parens as needed)
 pub fn evaluate(node: &Node) -> usize {
     let mut result = 0;
-    let mut op : Operator = Operator::Add;
+    let mut op: Operator = Operator::Add;
     for child in &node.children {
         match child.entry {
-            Token::Num(value) => { result = operate(&op, result, value) },
-            Token::Add => { op = Operator::Add },
-            Token::Mult => { op = Operator::Mult },
-            Token::Paren => { result = operate(&op, result, evaluate(&child)) }
-            _ => { panic!("Unexpected child {:?}", child.entry) }
+            Token::Num(value) => result = operate(&op, result, value),
+            Token::Add => op = Operator::Add,
+            Token::Mult => op = Operator::Mult,
+            Token::Paren => result = operate(&op, result, evaluate(&child)),
+            _ => {
+                panic!("Unexpected child {:?}", child.entry)
+            }
         }
     }
     return result;
@@ -78,22 +89,34 @@ pub fn evaluate(node: &Node) -> usize {
 /// precedence by wrapping them in parens
 pub fn promote_add(node: &Node) -> Node {
     let mut it = node.children.iter().peekable();
-    let mut new = Node { children: Vec::new(), entry: node.entry.clone() };
+    let mut new = Node {
+        children: Vec::new(),
+        entry: node.entry.clone(),
+    };
     // If the node has children process them
     while let Some(child) = it.next() {
         if let Some(next) = it.peek() {
             if next.entry == Token::Add {
                 // Transform Num + ... into (Num + ...) by creating a new Paren
                 // with Num in it (next iteration will deal with + ...)
-                new.children.push(Node::new_sub([promote_add(&child.clone())].to_vec()));
+                new.children
+                    .push(Node::new_sub([promote_add(&child.clone())].to_vec()));
                 continue;
             }
         }
         if child.entry == Token::Add {
             // If this is an Add we know that there is already a new Paren for us to add onto
             // + is always followed by Num or Paren so add the it.next() as well
-            new.children.last_mut().unwrap().children.push(child.clone());
-            new.children.last_mut().unwrap().children.push(promote_add(&it.next().unwrap().clone()));
+            new.children
+                .last_mut()
+                .unwrap()
+                .children
+                .push(child.clone());
+            new.children
+                .last_mut()
+                .unwrap()
+                .children
+                .push(promote_add(&it.next().unwrap().clone()));
         } else {
             new.children.push(promote_add(&child.clone()));
         }
@@ -103,7 +126,10 @@ pub fn promote_add(node: &Node) -> Node {
 
 #[aoc_generator(day18)]
 pub fn gen(input: &str) -> Vec<Node> {
-    return input.lines().map(|line| Node::root(parse(&mut line.chars()))).collect();
+    return input
+        .lines()
+        .map(|line| Node::root(parse(&mut line.chars())))
+        .collect();
 }
 
 #[aoc(day18, part1)]

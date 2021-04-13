@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use itertools::Itertools;
 use regex::Regex;
+use std::collections::HashMap;
 
 fn resolve(rules: &HashMap<&str, &str>, key: &str) -> String {
     // TODO: This is very inefficient. Cache resolved rules and/or don't do all the final String allocation until all rules are resolved
@@ -13,13 +13,23 @@ fn resolve(rules: &HashMap<&str, &str>, key: &str) -> String {
         return rule.to_string();
     } else {
         // Referencing rule, resolve it
-        if rule.contains(" | ") { // Contains two alternatives parts
+        if rule.contains(" | ") {
+            // Contains two alternatives parts
             let (part1, part2) = rule.splitn(2, " | ").collect_tuple().unwrap();
-            let resolved1 : String = part1.split(" ").map(|sub_rule| resolve(&rules, sub_rule)).collect();
-            let resolved2 : String  = part2.split(" ").map(|sub_rule| resolve(&rules, sub_rule)).collect();
+            let resolved1: String = part1
+                .split(" ")
+                .map(|sub_rule| resolve(&rules, sub_rule))
+                .collect();
+            let resolved2: String = part2
+                .split(" ")
+                .map(|sub_rule| resolve(&rules, sub_rule))
+                .collect();
             return ["(", &resolved1, "|", &resolved2, ")"].concat();
         } else {
-            return rule.split(" ").map(|sub_rule| resolve(&rules, sub_rule)).collect();
+            return rule
+                .split(" ")
+                .map(|sub_rule| resolve(&rules, sub_rule))
+                .collect();
         }
     }
 }
@@ -49,7 +59,10 @@ pub fn gen(input: &str) -> (HashMap<&str, &str>, Vec<&str>) {
     // Split into rules and messages
     let (rules_str, messages_str) = input.splitn(2, "\r\n\r\n").collect_tuple().unwrap();
     // Load rules into a HashMap
-    let rules = rules_str.lines().map(|rule| rule.splitn(2, ": ").collect_tuple().unwrap()).collect::<HashMap<&str, &str>>();
+    let rules = rules_str
+        .lines()
+        .map(|rule| rule.splitn(2, ": ").collect_tuple().unwrap())
+        .collect::<HashMap<&str, &str>>();
     return (rules, messages_str.lines().collect());
 }
 
@@ -58,7 +71,11 @@ fn part1(input: &str) -> usize {
     let (rules, messages) = gen(&input);
     // Use Regex to count how many messages match rule 0
     let re = Regex::new(&["^", &resolve(&rules, "0"), "$"].concat()).unwrap();
-    return messages.iter().filter(|message| re.is_match(message)).collect::<Vec<_>>().len();
+    return messages
+        .iter()
+        .filter(|message| re.is_match(message))
+        .collect::<Vec<_>>()
+        .len();
 }
 
 #[aoc(day19, part2)]
@@ -73,5 +90,9 @@ fn part2(input: &str) -> usize {
     rules.insert("11", patched11);
     // Use Regex to count how many messages match the new rule 0
     let re = Regex::new(&["^", &resolve(&rules, "0"), "$"].concat()).unwrap();
-    return messages.iter().filter(|message| re.is_match(message)).collect::<Vec<_>>().len();
+    return messages
+        .iter()
+        .filter(|message| re.is_match(message))
+        .collect::<Vec<_>>()
+        .len();
 }

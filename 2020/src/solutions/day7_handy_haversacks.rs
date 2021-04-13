@@ -10,7 +10,7 @@ fn resolve_containers(
 ) {
     let containers = mappings.get(bag).unwrap();
     for container in containers.iter() {
-        solutions.insert(container.to_string());
+        solutions.insert((*container).to_string());
         if mappings.contains_key(container) {
             resolve_containers(mappings, container, solutions);
         }
@@ -45,7 +45,7 @@ fn part1(input: &str) -> usize {
     let bag = "shiny gold";
     let mut solutions: HashSet<String> = HashSet::new();
     resolve_containers(&mappings, bag, &mut solutions);
-    return solutions.len();
+    solutions.len()
 }
 
 /// Recursively counts the number of bags contained within the specified bag
@@ -62,7 +62,7 @@ fn count_bags(contents: &HashMap<&str, HashSet<(&str, usize)>>, bag: &str) -> us
             count += quantity;
         }
     }
-    return count;
+    count
 }
 
 #[aoc(day7, part2)]
@@ -95,5 +95,5 @@ fn part2(input: &str) -> usize {
         }
     }
     let bag = "shiny gold";
-    return count_bags(&contents, bag);
+    count_bags(&contents, bag)
 }

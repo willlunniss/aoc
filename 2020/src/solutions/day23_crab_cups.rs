@@ -1,5 +1,5 @@
 #[derive(PartialEq, Debug, Clone)]
-pub struct CrabCups {
+struct CrabCups {
     // An array of cups where the values are the values of the next cup along
     cup_indexes: Vec<usize>,
     // The value of the current cup
@@ -19,7 +19,7 @@ impl<'a> IntoIterator for &'a CrabCups {
     }
 }
 
-pub struct CrabCupsIterator<'a> {
+struct CrabCupsIterator<'a> {
     crab_cups: &'a CrabCups,
     cup: usize,
 }
@@ -41,16 +41,16 @@ impl<'a> Iterator for CrabCupsIterator<'a> {
             // About to loop back around, set to cup 0 (which doesn't exist) to indicate we should stop
             self.cup = 0;
         }
-        return Some(result);
+        Some(result)
     }
 }
 
 impl CrabCups {
-    /// Create a new CrabCups game
+    /// Create a new `CrabCups` game
     ///
     /// input: Starting cup numbers
-    /// pad_to_size: Total number of cups at play (will add sequentially from highest number in the input)
-    pub fn new(input: &Vec<usize>, pad_to_size: usize) -> CrabCups {
+    /// `pad_to_size`: Total number of cups at play (will add sequentially from highest number in the input)
+    fn new(input: &Vec<usize>, pad_to_size: usize) -> Self {
         // Build a Vec where each index represents a specific cup value and the data in that index is the value of the next cup
         // Cup 0 doesn't exist but we include it to make indexing easier
         // We represent it like this as it makes the act of moving picked cups to a new destination
@@ -79,19 +79,19 @@ impl CrabCups {
             indexes.push(input[0]);
         }
         // Create the new instance, with the current cup pointing at the first from the input
-        return CrabCups {
+        Self {
             cup_indexes: indexes,
             current: input[0],
-        };
+        }
     }
 
     /// Sets the current cup
-    pub fn set_current(&mut self, cup: usize) {
+    fn set_current(&mut self, cup: usize) {
         self.current = cup;
     }
 
     /// Plays the game for the specified number of moves
-    pub fn play(&mut self, moves: usize) {
+    fn play(&mut self, moves: usize) {
         let max_cup = self.cup_indexes.len() - 1;
         for _game_move in 1..=moves {
             // We are interested in the 4 cups after the current
@@ -130,7 +130,7 @@ impl CrabCups {
 }
 
 #[aoc_generator(day23)]
-pub fn gen(input: &str) -> Vec<usize> {
+fn gen(input: &str) -> Vec<usize> {
     input
         .lines()
         .next()
@@ -152,12 +152,11 @@ fn part1(input: &Vec<usize>) -> String {
     game.set_current(1);
 
     // Then skip it and collect the other cups' labels into a single string
-    return game
-        .into_iter()
+    game.into_iter()
         .skip(1)
         .map(|c| c.to_string())
         .collect::<Vec<String>>()
-        .concat();
+        .concat()
 }
 
 #[aoc(day23, part2)]
@@ -172,5 +171,5 @@ fn part2(input: &Vec<usize>) -> usize {
     game.set_current(1);
 
     // Then skip it and take the next two cups after cup 1 and multiply their values
-    return game.into_iter().skip(1).take(2).product();
+    game.into_iter().skip(1).take(2).product()
 }

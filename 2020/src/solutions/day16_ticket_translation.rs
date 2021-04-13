@@ -6,7 +6,7 @@ use std::ops::RangeInclusive;
 use std::str::FromStr;
 
 #[derive(PartialEq, Debug, Clone)]
-pub struct Range {
+struct Range {
     lower: RangeInclusive<usize>,
     upper: RangeInclusive<usize>,
 }
@@ -14,15 +14,15 @@ pub struct Range {
 impl Range {
     fn parse_sub_range(s: &str) -> RangeInclusive<usize> {
         let (start, end) = s
-            .splitn(2, "-")
+            .splitn(2, '-')
             .map(|x| x.parse::<usize>().unwrap())
             .collect_tuple()
             .unwrap();
-        return RangeInclusive::new(start, end);
+        RangeInclusive::new(start, end)
     }
 
     fn contains(&self, value: usize) -> bool {
-        return self.lower.contains(&value) || self.upper.contains(&value);
+        self.lower.contains(&value) || self.upper.contains(&value)
     }
 }
 
@@ -31,13 +31,10 @@ impl FromStr for Range {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (lower, upper) = s
             .split(" or ")
-            .map(|x| Range::parse_sub_range(x))
+            .map(|x| Self::parse_sub_range(x))
             .collect_tuple()
             .unwrap();
-        return Ok(Range {
-            lower: lower,
-            upper: upper,
-        });
+        Ok(Self { lower, upper })
     }
 }
 
@@ -49,13 +46,13 @@ pub struct TicketData {
 }
 
 impl TicketData {
-    pub fn matches_any_rule(&self, value: usize) -> bool {
+    fn matches_any_rule(&self, value: usize) -> bool {
         for range in &mut self.rules.values() {
             if range.contains(value) {
                 return true;
             }
         }
-        return false;
+        false
     }
 }
 
@@ -82,7 +79,7 @@ impl TicketDataSection {
 }
 
 #[aoc_generator(day16)]
-pub fn gen(input: &str) -> TicketData {
+fn gen(input: &str) -> TicketData {
     use TicketDataSection::*;
     let mut section = Rules;
     let mut rules = HashMap::new();
@@ -100,32 +97,28 @@ pub fn gen(input: &str) -> TicketData {
                 let (name, ranges) = line.splitn(2, ": ").collect_tuple().unwrap();
                 rules.insert(name.to_string(), ranges.parse().unwrap());
             }
-            TicketHeader => {
+            TicketHeader | NearbyTicketsHeader => {
                 section.advance();
                 continue;
             } // Skip the header
             Ticket => ticket = line.split(',').map(|x| x.parse().unwrap()).collect(),
-            NearbyTicketsHeader => {
-                section.advance();
-                continue;
-            } // Skip the header
             NearbyTickets => {
                 nearby_tickets.push(line.split(',').map(|x| x.parse().unwrap()).collect())
             }
         }
     }
-    return TicketData {
-        rules: rules,
-        ticket: ticket,
-        nearby_tickets: nearby_tickets,
-    };
+    TicketData {
+        rules,
+        ticket,
+        nearby_tickets,
+    }
 }
 
 #[aoc(day16, part1)]
 fn part1(input: &TicketData) -> usize {
     // Find all invalid values
     let mut invalid: Vec<usize> = Vec::new();
-    for ticket in input.nearby_tickets.iter() {
+    for ticket in &input.nearby_tickets {
         for value in ticket.iter() {
             if !&input.matches_any_rule(*value) {
                 invalid.push(*value);
@@ -139,7 +132,7 @@ fn part1(input: &TicketData) -> usize {
 fn part2(input: &TicketData) -> usize {
     // First discard out all invalid tickets
     let mut valid: Vec<Vec<usize>> = Vec::new();
-    for ticket in input.nearby_tickets.iter() {
+    for ticket in &input.nearby_tickets {
         let mut invalid = false;
         for value in ticket.iter() {
             if !input.matches_any_rule(*value) {
@@ -157,7 +150,7 @@ fn part2(input: &TicketData) -> usize {
     // Then filter out what's not possible
     for ticket in &valid {
         for (index, value) in ticket.iter().enumerate() {
-            &possibilities[index].retain(|_, range| range.contains(*value));
+            possibilities[index].retain(|_, range| range.contains(*value));
         }
     }
 
@@ -177,12 +170,11 @@ fn part2(input: &TicketData) -> usize {
         if single_options.is_empty() {
             // Can't do anything more
             break;
-        } else {
-            // Remove the possible fields from ones with > 1
-            for rule in single_options {
-                for index in 0..input.ticket.len() {
-                    &possibilities[index].retain(|name, _| *name != rule);
-                }
+        }
+        // Remove the possible fields from ones with > 1
+        for rule in single_options {
+            for possible in &mut possibilities {
+                possible.retain(|name, _| *name != rule);
             }
         }
     }
@@ -193,5 +185,5 @@ fn part2(input: &TicketData) -> usize {
             departure_fields_multiplied *= &input.ticket[index];
         }
     }
-    return departure_fields_multiplied;
+    departure_fields_multiplied
 }

@@ -4,37 +4,37 @@ use std::convert::Infallible;
 use std::str::FromStr;
 
 #[derive(PartialEq, Debug, Clone)]
-pub struct Player {
+struct Player {
     deck: VecDeque<usize>,
 }
 
 impl FromStr for Player {
     type Err = Infallible;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        return Ok(Player {
+        Ok(Self {
             // Read in the player's cards (skip the first line which is the Player ID)
             deck: s
                 .lines()
                 .skip(1)
                 .map(|card| card.parse::<usize>().unwrap())
                 .collect::<VecDeque<usize>>(),
-        });
+        })
     }
 }
 
 impl Player {
     /// Creates a new deck using the first size cards from the current one
-    pub fn copy_deck(&self, size: usize) -> VecDeque<usize> {
+    fn copy_deck(&self, size: usize) -> VecDeque<usize> {
         self.deck
             .iter()
             .take(size)
-            .map(|card| *card)
+            .copied()
             .collect::<VecDeque<usize>>()
     }
 
     /// Creates a representation of the current deck that can be used to
     /// check we aren't playing the same decks again and again
-    pub fn deck_img(&self) -> String {
+    fn deck_img(&self) -> String {
         // TODO: Use something better than a String?
         self.deck
             .iter()
@@ -45,14 +45,14 @@ impl Player {
 }
 
 #[derive(PartialEq, Debug, Clone)]
-pub struct Game {
+struct Game {
     players: Vec<Player>,
 }
 
 impl Game {
-    /// Creates a new sub game using the first deck_sizes number of cards for each player
-    pub fn new_sub_game(&self, deck_sizes: [usize; 2]) -> Game {
-        Game {
+    /// Creates a new sub game using the first `deck_sizes` number of cards for each player
+    fn new_sub_game(&self, deck_sizes: [usize; 2]) -> Self {
+        Self {
             players: [
                 Player {
                     deck: self.players[0].copy_deck(deck_sizes[0]),
@@ -66,7 +66,7 @@ impl Game {
     }
 
     /// Plays a normal game of combat until someone wins
-    pub fn play(&mut self) {
+    fn play(&mut self) {
         while self.winner().is_none() {
             let (card1, card2) = self.draw();
             if card1 > card2 {
@@ -78,7 +78,7 @@ impl Game {
     }
 
     /// Plays a recursive game of combat until someone wins
-    pub fn play_recursive(&mut self) -> usize {
+    fn play_recursive(&mut self) -> usize {
         let mut previous_hands = vec![HashSet::new(); 2];
         while self.winner().is_none() {
             // Check we haven't seen these hands before
@@ -87,11 +87,10 @@ impl Game {
             if previous_hands[0].contains(&deck1) || previous_hands[1].contains(&deck2) {
                 // Already seen this set of decks before, player 1 immediately wins
                 return 0;
-            } else {
-                // Store the hands for later comparison
-                previous_hands[0].insert(deck1);
-                previous_hands[1].insert(deck2);
             }
+            // Store the hands for later comparison
+            previous_hands[0].insert(deck1);
+            previous_hands[1].insert(deck2);
 
             // Draw cards and work out how to play the round
             let (card1, card2) = self.draw();
@@ -115,14 +114,14 @@ impl Game {
                 self.complete_round(1, [card2, card1]);
             }
         }
-        return self.winner().unwrap();
+        self.winner().unwrap()
     }
 
     /// Returns the winner of the game (or None if no one has won yet)
-    pub fn winner(&self) -> Option<usize> {
-        if self.players[0].deck.len() == 0 {
+    fn winner(&self) -> Option<usize> {
+        if self.players[0].deck.is_empty() {
             Some(1)
-        } else if self.players[1].deck.len() == 0 {
+        } else if self.players[1].deck.is_empty() {
             Some(0)
         } else {
             None
@@ -130,7 +129,7 @@ impl Game {
     }
 
     /// Returns the score of the winning player
-    pub fn winning_score(&self) -> usize {
+    fn winning_score(&self) -> usize {
         // Reverse the cards and then multiply by 1..N and sum up
         return self.players[self.winner().unwrap()]
             .deck
@@ -142,7 +141,7 @@ impl Game {
     }
 
     /// Draws the next round of cards
-    pub fn draw(&mut self) -> (usize, usize) {
+    fn draw(&mut self) -> (usize, usize) {
         (
             self.players[0].deck.pop_front().unwrap(),
             self.players[1].deck.pop_front().unwrap(),
@@ -150,7 +149,7 @@ impl Game {
     }
 
     /// Completes a round by adding the cards to the end of the winning players deck
-    pub fn complete_round(&mut self, winner: usize, cards: [usize; 2]) {
+    fn complete_round(&mut self, winner: usize, cards: [usize; 2]) {
         cards
             .iter()
             .for_each(|card| self.players[winner].deck.push_back(*card));
@@ -158,7 +157,7 @@ impl Game {
 }
 
 #[aoc_generator(day22)]
-pub fn gen(input: &str) -> Game {
+fn gen(input: &str) -> Game {
     return Game {
         players: input
             .split("\r\n\r\n")
@@ -171,12 +170,12 @@ pub fn gen(input: &str) -> Game {
 fn part1(input: &Game) -> usize {
     let mut game = input.clone();
     game.play();
-    return game.winning_score();
+    game.winning_score()
 }
 
 #[aoc(day22, part2)]
 fn part2(input: &Game) -> usize {
     let mut game = input.clone();
     game.play_recursive();
-    return game.winning_score();
+    game.winning_score()
 }

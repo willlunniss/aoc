@@ -3,7 +3,7 @@ use std::convert::Infallible;
 use std::str::FromStr;
 
 #[derive(Debug, Clone)]
-pub struct Tile {
+struct Tile {
     id: usize,
     data: Vec<Vec<char>>,
     edges: Vec<String>,
@@ -12,13 +12,8 @@ pub struct Tile {
 
 impl Tile {
     /// Checks if a Tile is a corner (has 2/4 connected edges)
-    pub fn is_corner(&self) -> bool {
-        self.links
-            .iter()
-            .filter(|link| link.is_some())
-            .collect::<Vec<_>>()
-            .len()
-            == 2
+    fn is_corner(&self) -> bool {
+        self.links.iter().filter(|link| link.is_some()).count() == 2
     }
 }
 
@@ -64,17 +59,17 @@ impl FromStr for Tile {
             .map(|line| line.chars().skip(1).take(tile_size).collect::<Vec<char>>())
             .collect();
 
-        return Ok(Tile {
-            id: id,
-            data: data,
-            edges: edges,
+        Ok(Self {
+            id,
+            data,
+            edges,
             links: vec![None; 4],
-        });
+        })
     }
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct TileLayout {
+struct TileLayout {
     id: usize,
     orientation: usize,
     flipped: bool,
@@ -156,22 +151,12 @@ fn link_edges(tiles: &mut HashMap<usize, Tile>) {
             tiles.get_mut(&tile_id2).unwrap().links[edge2] = Some((tile_id1, edge1, reversed1));
         } else if linked1 && linked2 {
             continue; // Ignore as already linked (will be the inverse pair)
-        } else if linked1 {
-            panic!(
-                "{}:{} is already linked, cannot link {}:{}({}) <-> {}:{}({})",
-                tile_id1, edge1, tile_id1, edge1, reversed1, tile_id1, edge2, reversed2
-            );
-        } else if linked2 {
-            panic!(
-                "{}:{} is already linked, cannot link {}:{}({}) <-> {}:{}({})",
-                tile_id2, edge2, tile_id1, edge1, reversed1, tile_id2, edge2, reversed2
-            );
         }
     }
 }
 
 /// Lays out the tiles on a grid returning a 2d vector of tile layout info
-pub fn layout_grid(tiles: &HashMap<usize, Tile>) -> Vec<Vec<TileLayout>> {
+fn layout_grid(tiles: &HashMap<usize, Tile>) -> Vec<Vec<TileLayout>> {
     let grid_size = f64::sqrt(tiles.len() as f64) as usize;
     let mut grid = vec![vec![None; grid_size]; grid_size];
 
@@ -220,7 +205,7 @@ pub fn layout_grid(tiles: &HashMap<usize, Tile>) -> Vec<Vec<TileLayout>> {
             grid[row][coll] = Some(TileLayout {
                 id: tile.id,
                 orientation: up,
-                flipped: flipped,
+                flipped,
             });
             if row == 0 {
                 assert_eq!(tile.links[up], None);
@@ -278,7 +263,7 @@ pub fn layout_grid(tiles: &HashMap<usize, Tile>) -> Vec<Vec<TileLayout>> {
     }
     return grid
         .iter()
-        .map(|row| row.iter().map(|cell| cell.unwrap().clone()).collect())
+        .map(|row| row.iter().map(|cell| cell.unwrap()).collect())
         .collect();
 }
 
@@ -311,7 +296,7 @@ fn build_image(tiles: &HashMap<usize, Tile>, layout: &Vec<Vec<TileLayout>>) -> V
             }
         }
     }
-    return image;
+    image
 }
 
 fn build_sea_monster_markers() -> Vec<(usize, usize)> {
@@ -325,7 +310,7 @@ fn build_sea_monster_markers() -> Vec<(usize, usize)> {
             }
         }
     }
-    return markers;
+    markers
 }
 
 /// Finds sea monsters in an image by searching for supplied # markers
@@ -351,7 +336,7 @@ fn find_sea_monsters(image: &Vec<Vec<char>>, markers: &Vec<(usize, usize)>) -> V
             }
         }
     }
-    return monsters;
+    monsters
 }
 
 #[allow(dead_code)]
@@ -386,7 +371,7 @@ fn print_image(image: &Vec<Vec<char>>) {
 }
 
 #[aoc_generator(day20)]
-pub fn gen(input: &str) -> Vec<Tile> {
+fn gen(input: &str) -> Vec<Tile> {
     input
         .split("\r\n\r\n")
         .map(|tile| tile.parse().unwrap())
@@ -411,7 +396,7 @@ fn part1(input: &Vec<Tile>) -> usize {
         .map(|(id, _)| **id)
         .collect::<Vec<usize>>()
         .iter()
-        .fold(1, |acc, id| acc * id);
+        .product();
 }
 
 #[aoc(day20, part2)]
@@ -429,8 +414,7 @@ fn part2(input: &Vec<Tile>) -> usize {
     let wave_tiles = image
         .iter()
         .flat_map(|row| row.iter().filter(|c| **c == '#'))
-        .collect::<Vec<_>>()
-        .len();
+        .count();
 
     // Build the search pattern we need to find monsters
     let markers = build_sea_monster_markers();
@@ -455,7 +439,7 @@ fn part2(input: &Vec<Tile>) -> usize {
     }
 
     // Final solution is number of # - (monsters * monster tiles)
-    return wave_tiles - (monsters.len() * markers.len());
+    wave_tiles - (monsters.len() * markers.len())
 }
 
 #[cfg(test)]

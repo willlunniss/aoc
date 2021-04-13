@@ -2,7 +2,7 @@ use parse_display::{Display, FromStr};
 
 #[derive(Display, FromStr, PartialEq, Debug, Clone, Copy)]
 #[display(style = "lowercase")]
-pub enum Op {
+enum Op {
     Acc,
     Jmp,
     Nop,
@@ -10,7 +10,7 @@ pub enum Op {
 
 #[derive(Display, FromStr, PartialEq, Debug, Clone, Copy)]
 #[display("{op} {value}")]
-pub struct Instr {
+struct Instr {
     op: Op,
     value: isize,
 }
@@ -23,11 +23,11 @@ struct State {
 }
 
 #[aoc_generator(day8)]
-pub fn gen(input: &str) -> Vec<Instr> {
+fn gen(input: &str) -> Vec<Instr> {
     input.lines().map(|x| x.parse().unwrap()).collect()
 }
 
-fn execute_instr(program: &Vec<Instr>, state: &mut State) {
+fn execute_instr(program: &[Instr], state: &mut State) {
     let instr = program[state.pc];
     //println!("{:?}: Executing {:?}", state, instr);
     match instr.op {
@@ -50,26 +50,26 @@ fn execute_instr(program: &Vec<Instr>, state: &mut State) {
 
 /// Executes the supplied program until it ends or hits and infinite loop
 /// Returns the final program state
-fn execute(program: &Vec<Instr>) -> State {
+fn execute(program: &[Instr]) -> State {
     let mut state = State { pc: 0, acc: 0 };
     let mut executed_instrs = vec![0; program.len()];
     // Run until we hit a loop (try to execute the same instruction again)
     // or reach the end of the program
     while state.pc < program.len() && executed_instrs[state.pc] == 0 {
         executed_instrs[state.pc] = 1;
-        execute_instr(&program, &mut state);
+        execute_instr(program, &mut state);
     }
-    return state;
+    state
 }
 
 #[aoc(day8, part1)]
-fn part1(input: &Vec<Instr>) -> isize {
-    let state = execute(&input);
-    return state.acc;
+fn part1(input: &[Instr]) -> isize {
+    let state = execute(input);
+    state.acc
 }
 
 #[aoc(day8, part2)]
-fn part2(input: &Vec<Instr>) -> isize {
+fn part2(input: &[Instr]) -> isize {
     // Create a copy of the program so that we can try to correct it
     let mut program = input.to_vec();
     for idx in 0..program.len() {
@@ -101,5 +101,5 @@ fn part2(input: &Vec<Instr>) -> isize {
         program[idx] = instr;
     }
     // Something went wrong, nothing worked :(
-    return -1;
+    -1
 }

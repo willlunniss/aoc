@@ -1,12 +1,9 @@
 use std::collections::HashSet;
 
 #[aoc_generator(day1)]
-pub fn gen(input: &str) -> HashSet<i64> {
+fn gen(input: &str) -> HashSet<i64> {
     // Parse each line into a number and store in a HashSet
-    input
-        .lines()
-        .map(|x| x.parse::<i64>().unwrap())
-        .collect::<HashSet<i64>>()
+    input.lines().map(|x| x.parse().unwrap()).collect()
 }
 
 #[aoc(day1, part1)]
@@ -20,7 +17,7 @@ fn part1(input: &HashSet<i64>) -> i64 {
             return multiplied;
         }
     }
-    return 0;
+    0
 }
 
 #[aoc(day1, part2)]
@@ -37,5 +34,5 @@ fn part2(input: &HashSet<i64>) -> i64 {
             }
         }
     }
-    return 0;
+    0
 }

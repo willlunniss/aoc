@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 #[aoc_generator(day10)]
-pub fn gen(input: &str) -> Vec<usize> {
+fn gen(input: &str) -> Vec<usize> {
     input.lines().map(|x| x.parse::<usize>().unwrap()).collect()
 }
 
@@ -9,19 +9,19 @@ pub fn gen(input: &str) -> Vec<usize> {
 fn part1(input: &Vec<usize>) -> usize {
     let mut sorted = input.clone();
     sorted.push(0); // Add outlet which is 0
-    sorted.sort(); // Sort smallest to largest
+    sorted.sort_unstable(); // Sort smallest to largest
     sorted.push(sorted.last().unwrap() + 3); // Add built in adapter is always +3 more than last
     let mut differences = vec![0; 4]; // Expect no more than +3 difference
     for i in 1..sorted.len() {
         // For each adapter, record the difference between it and the previous
         differences[sorted[i] - sorted[i - 1]] += 1;
     }
-    return differences[1] * differences[3];
+    differences[1] * differences[3]
 }
 
 /// Calculates the number of combinations that adapters could be arranged
 /// given the supplied contiguous len of adapters
-fn combinations(contiguous_len: &usize) -> usize {
+fn combinations(contiguous_len: usize) -> usize {
     // TODO: Work out the formula for this...
     match contiguous_len {
         3 => 2,
@@ -58,9 +58,9 @@ fn part2(input: &Vec<usize>) -> usize {
         }
     }
     let mut arrangements = 1;
-    for (len, count) in groups.iter() {
+    for (len, count) in &groups {
         // Work out the total number of arrangements
-        arrangements *= usize::pow(combinations(len), *count as u32);
+        arrangements *= usize::pow(combinations(*len), *count as u32);
     }
-    return arrangements;
+    arrangements
 }

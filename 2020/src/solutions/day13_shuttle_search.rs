@@ -1,7 +1,7 @@
 use modinverse::modinverse;
 
 #[aoc_generator(day13)]
-pub fn gen(input: &str) -> (i64, Vec<i64>) {
+fn gen(input: &str) -> (i64, Vec<i64>) {
     let mut lines = input.lines();
     let earliest_depart_time = lines.next().unwrap().parse().unwrap();
     let bus_ids = lines
@@ -13,11 +13,11 @@ pub fn gen(input: &str) -> (i64, Vec<i64>) {
             _ => id.parse().unwrap(),
         })
         .collect();
-    return (earliest_depart_time, bus_ids);
+    (earliest_depart_time, bus_ids)
 }
 
 #[aoc(day13, part1)]
-fn part1(input: &(i64, Vec<i64>)) -> usize {
+fn part1(input: &(i64, Vec<i64>)) -> f64 {
     let (edt, bus_ids) = input;
     let earliest_depart_time = *edt as f64;
     let mut min_wait = f64::MAX;
@@ -34,13 +34,13 @@ fn part1(input: &(i64, Vec<i64>)) -> usize {
             min_wait_id_mult = wait * bus_id;
         }
     }
-    return min_wait_id_mult.round() as usize;
+    min_wait_id_mult.round()
 }
 
 /// Calculates the CRT
 ///
-/// https://en.wikipedia.org/wiki/Chinese_remainder_theorem
-fn chinese_remainder_theorem(input: &Vec<(i64, i64)>) -> i64 {
+/// `https://en.wikipedia.org/wiki/Chinese_remainder_theorem`
+fn chinese_remainder_theorem(input: &[(i64, i64)]) -> i64 {
     let product = input.iter().map(|(_, m)| m).product::<i64>();
     let mut sum = 0;
     for (remainder, modulus) in input.iter() {
@@ -48,12 +48,12 @@ fn chinese_remainder_theorem(input: &Vec<(i64, i64)>) -> i64 {
         let p = product / modulus;
         sum += remainder * modinverse(p, *modulus).unwrap() * p
     }
-    return sum % product;
+    sum % product
 }
 
 /// Generates the offsets and periods needed for CRT from bus ids
 /// (we map offsets => remainders and periods => moduli)
-fn generate_offsets_periods(bus_ids: &Vec<i64>) -> Vec<(i64, i64)> {
+fn generate_offsets_periods(bus_ids: &[i64]) -> Vec<(i64, i64)> {
     // The periods are simply the id's of the scheduled buses
     // The offsets are calculated by going through buses, decrementing a counter for each
     // but only emitting it if the bus is scheduled (id != 0)
@@ -78,8 +78,7 @@ fn part2(input: &(i64, Vec<i64>)) -> i64 {
     // Use CRT to calculate the convergence point then subtract the
     // the number of buses - 1 (== max offset)
     // to get the time for the first bus (with 0 offset)
-    return chinese_remainder_theorem(&generate_offsets_periods(&input.1))
-        - (input.1.len() - 1) as i64;
+    chinese_remainder_theorem(&generate_offsets_periods(&input.1)) - (input.1.len() - 1) as i64
 }
 
 #[cfg(test)]

@@ -1,5 +1,5 @@
 #[derive(PartialEq, Debug, Clone, Copy)]
-pub enum Token {
+enum Token {
     Num(usize),
     Add,
     Mult,
@@ -8,42 +8,42 @@ pub enum Token {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum Operator {
+enum Operator {
     Add,
     Mult,
 }
 
 #[derive(Debug, Clone)]
-pub struct Node {
+struct Node {
     children: Vec<Node>,
     entry: Token,
 }
 
 impl Node {
-    pub fn new(token: Token) -> Node {
-        Node {
+    const fn new(token: Token) -> Self {
+        Self {
             children: Vec::new(),
             entry: token,
         }
     }
 
-    pub fn new_sub(children: Vec<Node>) -> Node {
-        Node {
-            children: children,
+    fn new_sub(children: Vec<Self>) -> Self {
+        Self {
+            children,
             entry: Token::Paren,
         }
     }
 
-    pub fn root(children: Vec<Node>) -> Node {
-        Node {
-            children: children,
+    fn root(children: Vec<Self>) -> Self {
+        Self {
+            children,
             entry: Token::Root,
         }
     }
 }
 
 /// Recursively parses a String as a char iterator into a nested vector of nodes
-pub fn parse(iter: &mut std::str::Chars<'_>) -> Vec<Node> {
+fn parse(iter: &mut std::str::Chars<'_>) -> Vec<Node> {
     let mut nodes = Vec::new();
     while let Some(c) = iter.next() {
         match c {
@@ -56,42 +56,42 @@ pub fn parse(iter: &mut std::str::Chars<'_>) -> Vec<Node> {
             _ => panic!("Unexpected char '{}'", c),
         }
     }
-    return nodes;
+    nodes
 }
 
 /// Performs the specified operation on two numbers
-pub fn operate(op: &Operator, a: usize, b: usize) -> usize {
+const fn operate(op: Operator, a: usize, b: usize) -> usize {
     match op {
-        Operator::Add => return a + b,
-        Operator::Mult => return a * b,
+        Operator::Add => a + b,
+        Operator::Mult => a * b,
     }
 }
 
 /// Evaluates the equation left to right (recursing down into parens as needed)
-pub fn evaluate(node: &Node) -> usize {
+fn evaluate(node: &Node) -> usize {
     let mut result = 0;
     let mut op: Operator = Operator::Add;
     for child in &node.children {
         match child.entry {
-            Token::Num(value) => result = operate(&op, result, value),
+            Token::Num(value) => result = operate(op, result, value),
             Token::Add => op = Operator::Add,
             Token::Mult => op = Operator::Mult,
-            Token::Paren => result = operate(&op, result, evaluate(&child)),
+            Token::Paren => result = operate(op, result, evaluate(child)),
             _ => {
                 panic!("Unexpected child {:?}", child.entry)
             }
         }
     }
-    return result;
+    result
 }
 
 /// Transforms the equation such that addition has higher
 /// precedence by wrapping them in parens
-pub fn promote_add(node: &Node) -> Node {
+fn promote_add(node: &Node) -> Node {
     let mut it = node.children.iter().peekable();
     let mut new = Node {
         children: Vec::new(),
-        entry: node.entry.clone(),
+        entry: node.entry,
     };
     // If the node has children process them
     while let Some(child) = it.next() {
@@ -121,11 +121,11 @@ pub fn promote_add(node: &Node) -> Node {
             new.children.push(promote_add(&child.clone()));
         }
     }
-    return new;
+    new
 }
 
 #[aoc_generator(day18)]
-pub fn gen(input: &str) -> Vec<Node> {
+fn gen(input: &str) -> Vec<Node> {
     return input
         .lines()
         .map(|line| Node::root(parse(&mut line.chars())))
@@ -133,11 +133,11 @@ pub fn gen(input: &str) -> Vec<Node> {
 }
 
 #[aoc(day18, part1)]
-fn part1(input: &Vec<Node>) -> usize {
+fn part1(input: &[Node]) -> usize {
     return input.iter().map(|e| evaluate(e)).sum();
 }
 
 #[aoc(day18, part2)]
-fn part2(input: &Vec<Node>) -> usize {
+fn part2(input: &[Node]) -> usize {
     return input.iter().map(|e| evaluate(&promote_add(e))).sum();
 }

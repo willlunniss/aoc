@@ -2,14 +2,14 @@ use itertools::Itertools;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-pub fn gen(input: &str) -> (HashMap<&str, usize>, HashMap<&str, Vec<HashSet<&str>>>) {
+fn gen(input: &str) -> (HashMap<&str, usize>, HashMap<&str, Vec<HashSet<&str>>>) {
     let mut allergen_to_ingredients: HashMap<&str, Vec<HashSet<&str>>> = HashMap::new();
     let mut all_ingredients_count: HashMap<&str, usize> = HashMap::new();
     for product in input.lines() {
         // abc def ghi (contains xyz, uvw)
         let (ingredients_str, allergens) =
             product.splitn(2, " (contains ").collect_tuple().unwrap();
-        let ingredients = ingredients_str.split(" ").collect::<HashSet<&str>>();
+        let ingredients = ingredients_str.split(' ').collect::<HashSet<&str>>();
         for ingredient in &ingredients {
             let count = all_ingredients_count.entry(ingredient).or_default();
             *count += 1;
@@ -21,7 +21,7 @@ pub fn gen(input: &str) -> (HashMap<&str, usize>, HashMap<&str, Vec<HashSet<&str
                 .push(ingredients.clone());
         }
     }
-    return (all_ingredients_count, allergen_to_ingredients);
+    (all_ingredients_count, allergen_to_ingredients)
 }
 
 /// Analyses the ingredients
@@ -36,7 +36,7 @@ fn analyse_ingredients(input: &str) -> (HashMap<&str, usize>, HashMap<&str, &str
     loop {
         let mut ingredient = None;
         let mut to_remove = None;
-        for (allergen, potential_ingredients) in allergen_to_ingredients.iter() {
+        for (allergen, potential_ingredients) in &allergen_to_ingredients {
             let minimal: HashSet<_> = potential_ingredients[0]
                 .iter()
                 .filter(|k| potential_ingredients.iter().skip(1).all(|s| s.contains(*k)))
@@ -64,7 +64,7 @@ fn analyse_ingredients(input: &str) -> (HashMap<&str, usize>, HashMap<&str, &str
         inert_ingredients.remove(ingredient.unwrap());
     }
 
-    return (inert_ingredients, dangerous_ingredients);
+    (inert_ingredients, dangerous_ingredients)
 }
 
 #[aoc(day21, part1)]
@@ -85,5 +85,5 @@ fn part2(input: &str) -> String {
         dangerous.push(*dangerous_ingredients.get(key).unwrap());
     }
 
-    return dangerous.join(",");
+    dangerous.join(",")
 }

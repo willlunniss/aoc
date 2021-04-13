@@ -4,7 +4,7 @@ use std::convert::Infallible;
 use std::str::FromStr;
 
 #[derive(PartialEq, Debug, Clone)]
-pub enum Direction {
+enum Direction {
     E,
     SE,
     SW,
@@ -13,18 +13,16 @@ pub enum Direction {
     NE,
 }
 
-pub struct DirectionList {
+struct DirectionList {
     directions: Vec<Direction>,
 }
 
 impl DirectionList {
-    pub fn new(directions: Vec<Direction>) -> DirectionList {
-        return DirectionList {
-            directions: directions,
-        };
+    const fn new(directions: Vec<Direction>) -> Self {
+        Self { directions }
     }
 
-    pub fn resolve(&self) -> CubeCoordinate {
+    fn resolve(&self) -> CubeCoordinate {
         CubeCoordinate::resolve(
             self.directions
                 .iter()
@@ -59,16 +57,14 @@ impl FromStr for DirectionList {
                 }
             }
         }
-        return Ok(DirectionList {
-            directions: directions,
-        });
+        Ok(Self { directions })
     }
 }
 
 // Use 3 dimensions to represent cubs on the hex grid
-// https://www.redblobgames.com/grids/hexagons/
+// `https://www.redblobgames.com/grids/hexagons/`
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
-pub struct CubeCoordinate {
+struct CubeCoordinate {
     x: isize,
     y: isize,
     z: isize,
@@ -91,22 +87,22 @@ lazy_static! {
 
 impl CubeCoordinate {
     /// Creates a new coordinate from a direction
-    pub fn new(direction: &Direction) -> CubeCoordinate {
+    const fn new(direction: &Direction) -> Self {
         use Direction::*;
         match direction {
-            E => CubeCoordinate { x: 1, y: -1, z: 0 },
-            SE => CubeCoordinate { x: 0, y: -1, z: 1 },
-            SW => CubeCoordinate { x: -1, y: 0, z: 1 },
-            W => CubeCoordinate { x: -1, y: 1, z: 0 },
-            NW => CubeCoordinate { x: 0, y: 1, z: -1 },
-            NE => CubeCoordinate { x: 1, y: 0, z: -1 },
+            E => Self { x: 1, y: -1, z: 0 },
+            SE => Self { x: 0, y: -1, z: 1 },
+            SW => Self { x: -1, y: 0, z: 1 },
+            W => Self { x: -1, y: 1, z: 0 },
+            NW => Self { x: 0, y: 1, z: -1 },
+            NE => Self { x: 1, y: 0, z: -1 },
         }
     }
 
-    pub fn neighbours(&self) -> Vec<CubeCoordinate> {
+    fn neighbours(&self) -> Vec<Self> {
         return NEIGHBOURS
             .iter()
-            .map(|n| CubeCoordinate {
+            .map(|n| Self {
                 x: self.x + n.x,
                 y: self.y + n.y,
                 z: self.z + n.z,
@@ -114,24 +110,22 @@ impl CubeCoordinate {
             .collect();
     }
 
-    pub fn origin() -> CubeCoordinate {
-        CubeCoordinate { x: 0, y: 0, z: 0 }
+    fn origin() -> Self {
+        Self { x: 0, y: 0, z: 0 }
     }
 
     /// Resolves a list of coordinates into a single one
-    pub fn resolve(coordinates: Vec<CubeCoordinate>) -> CubeCoordinate {
-        coordinates
-            .iter()
-            .fold(CubeCoordinate::origin(), |acc, c| CubeCoordinate {
-                x: acc.x + c.x,
-                y: acc.y + c.y,
-                z: acc.z + c.z,
-            })
+    fn resolve(coordinates: Vec<Self>) -> Self {
+        coordinates.iter().fold(Self::origin(), |acc, c| Self {
+            x: acc.x + c.x,
+            y: acc.y + c.y,
+            z: acc.z + c.z,
+        })
     }
 }
 
 /// Gets the next state for a tile
-pub fn next_state(tiles: &HashMap<CubeCoordinate, bool>, tile: &CubeCoordinate) -> bool {
+fn next_state(tiles: &HashMap<CubeCoordinate, bool>, tile: &CubeCoordinate) -> bool {
     let mut flipped_neighbours = 0;
     for n in tile.neighbours() {
         if *tiles.get(&n).unwrap_or(&false) {
@@ -148,15 +142,15 @@ pub fn next_state(tiles: &HashMap<CubeCoordinate, bool>, tile: &CubeCoordinate) 
 }
 
 #[aoc_generator(day24)]
-pub fn gen(input: &str) -> Vec<CubeCoordinate> {
-    return input
+fn gen(input: &str) -> Vec<CubeCoordinate> {
+    input
         .lines()
         .map(|s| s.parse::<DirectionList>().unwrap().resolve())
-        .collect();
+        .collect()
 }
 
 #[aoc(day24, part1)]
-fn part1(input: &Vec<CubeCoordinate>) -> usize {
+fn part1(input: &[CubeCoordinate]) -> usize {
     let mut tiles: HashMap<CubeCoordinate, bool> = HashMap::new();
     for tile in input {
         // For each referenced tile, get it's state (defaulting to not flipped)
@@ -165,15 +159,11 @@ fn part1(input: &Vec<CubeCoordinate>) -> usize {
         *flipped ^= true;
     }
     // Count tiles which end in the flipped state
-    return tiles
-        .values()
-        .filter(|flipped| **flipped)
-        .collect::<Vec<_>>()
-        .len();
+    tiles.values().filter(|flipped| **flipped).count()
 }
 
 #[aoc(day24, part2)]
-fn part2(input: &Vec<CubeCoordinate>) -> usize {
+fn part2(input: &[CubeCoordinate]) -> usize {
     let mut tiles: HashMap<CubeCoordinate, bool> = HashMap::new();
     for tile in input {
         // For each referenced tile, get it's state (defaulting to not flipped)
@@ -186,7 +176,7 @@ fn part2(input: &Vec<CubeCoordinate>) -> usize {
         let mut next: HashMap<CubeCoordinate, bool> = HashMap::new();
         // First check states for all existing tiles
         for tile in tiles.keys() {
-            next.insert(tile.clone(), next_state(&tiles, &tile));
+            next.insert(tile.clone(), next_state(&tiles, tile));
         }
         // Now check neighbours (as the grid will keep expanding)
         for tile in tiles.keys() {
@@ -200,11 +190,7 @@ fn part2(input: &Vec<CubeCoordinate>) -> usize {
         std::mem::swap(&mut next, &mut tiles);
     }
     // Count tiles which end in the flipped state
-    return tiles
-        .values()
-        .filter(|flipped| **flipped)
-        .collect::<Vec<_>>()
-        .len();
+    tiles.values().filter(|flipped| **flipped).count()
 }
 
 #[cfg(test)]

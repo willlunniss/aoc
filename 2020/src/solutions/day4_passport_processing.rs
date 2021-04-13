@@ -13,12 +13,12 @@ lazy_static! {
 fn has_required(data: &HashMap<&str, &str>) -> bool {
     // Check all required fields (don't require cid)
     let required_fields = ["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"];
-    for required in required_fields.iter() {
+    for required in &required_fields {
         if !data.contains_key(required) {
             return false;
         }
     }
-    return true;
+    true
 }
 
 fn is_valid(key: &str, value: &str) -> bool {
@@ -40,10 +40,7 @@ fn is_valid(key: &str, value: &str) -> bool {
             // If cm, the number must be at least 150 and at most 193.
             // If in, the number must be at least 59 and at most 76.
             let capture = RE_HGT.captures(value);
-            if capture.is_none() {
-                false
-            } else {
-                let hgt = capture.unwrap();
+            capture.map_or(false, |hgt| {
                 if hgt.get(2).unwrap().as_str() == "cm" {
                     (150..=193).contains(&hgt.get(1).unwrap().as_str().parse::<usize>().unwrap())
                 } else if hgt.get(2).unwrap().as_str() == "in" {
@@ -51,7 +48,7 @@ fn is_valid(key: &str, value: &str) -> bool {
                 } else {
                     false
                 }
-            }
+            })
         }
         "hcl" => {
             // hcl (Hair Color) - a # followed by exactly six characters 0-9 or a-f.
@@ -80,10 +77,10 @@ fn all_valid(data: &HashMap<&str, &str>) -> bool {
             return false;
         }
     }
-    return true;
+    true
 }
 
-pub fn gen(input: &str) -> Vec<HashMap<&str, &str>> {
+fn gen(input: &str) -> Vec<HashMap<&str, &str>> {
     return input
         .split("\r\n\r\n") // Split into sections based on empty lines
         .map(|section| {

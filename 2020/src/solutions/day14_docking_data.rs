@@ -27,15 +27,14 @@ impl AddressMask {
     /// Returns a vector of addresses
     fn apply_to(&self, value: usize) -> Vec<usize> {
         let base = value | self.set;
-        let mut current = Vec::new();
-        current.push(base);
+        let mut current = vec![base];
         let mut generated = Vec::new();
         for index in 0..36 {
             let bit_value = 2i64.pow(index) as usize;
             if self.floating & bit_value != 0 {
                 // This is a floating bit, create two new values for each address
                 // One with it set and one with it not
-                for addr in current.iter() {
+                for addr in current {
                     generated.push(addr & !bit_value); // Unset the bit (AND with the bitwise inverse)
                     generated.push(addr | bit_value) // Set the bit (Or with the bit)
                 }
@@ -43,7 +42,7 @@ impl AddressMask {
                 generated.clear();
             }
         }
-        return current;
+        current
     }
 }
 
@@ -51,7 +50,7 @@ impl ValueMask {
     /// Applies the mask to the specified value
     ///
     /// Returns the masked value
-    fn apply_to(&self, value: usize) -> usize {
+    const fn apply_to(&self, value: usize) -> usize {
         // Use OR to set the bits and AND to unset
         (value | self.set) & self.unset
     }
@@ -70,7 +69,7 @@ fn get_mask_bits_values(mask: &str) -> Vec<(usize, char)> {
         let bit_value = 2i64.pow((mask.len() - index - 1) as u32);
         result.push((bit_value as usize, value));
     }
-    return result;
+    result
 }
 
 impl FromStr for AddressMask {
@@ -94,10 +93,7 @@ impl FromStr for AddressMask {
                 }
             }
         }
-        return Ok(AddressMask {
-            set: set,
-            floating: floating,
-        });
+        Ok(Self { set, floating })
     }
 }
 
@@ -123,15 +119,12 @@ impl FromStr for ValueMask {
                 }
             }
         }
-        return Ok(ValueMask {
-            set: set,
-            unset: unset,
-        });
+        Ok(Self { set, unset })
     }
 }
 
 #[aoc_generator(day14)]
-pub fn gen(input: &str) -> Vec<Command> {
+fn gen(input: &str) -> Vec<Command> {
     let mut commands = Vec::new();
     for line in input.lines() {
         let (instr, value) = line.splitn(2, " = ").collect_tuple().unwrap();
@@ -151,11 +144,11 @@ pub fn gen(input: &str) -> Vec<Command> {
             panic!("Unrecognised instruction '{}'", line);
         }
     }
-    return commands;
+    commands
 }
 
 #[aoc(day14, part1)]
-fn part1(input: &Vec<Command>) -> usize {
+fn part1(input: &[Command]) -> usize {
     let mut mask = ValueMask { set: 0, unset: 0 };
     let mut mem: HashMap<usize, usize> = HashMap::new();
     for command in input {
@@ -172,7 +165,7 @@ fn part1(input: &Vec<Command>) -> usize {
 }
 
 #[aoc(day14, part2)]
-fn part2(input: &Vec<Command>) -> usize {
+fn part2(input: &[Command]) -> usize {
     let mut mask = AddressMask {
         set: 0,
         floating: 0,

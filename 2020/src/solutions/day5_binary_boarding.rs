@@ -15,34 +15,34 @@ fn decode(boarding_pass: &str) -> (usize, usize, usize) {
     let row = row_min;
     let seat = seat_min;
     let seat_id = (row * 8) + seat;
-    return (seat_id, seat, row);
+    (seat_id, seat, row)
 }
 
 #[aoc_generator(day5)]
-pub fn gen(input: &str) -> Vec<usize> {
+fn gen(input: &str) -> Vec<usize> {
     let mut seat_ids: Vec<usize> = Vec::new();
     for boarding_pass in input.lines() {
         let (seat_id, _, _) = decode(boarding_pass);
         seat_ids.push(seat_id);
     }
-    seat_ids.sort();
-    return seat_ids;
+    seat_ids.sort_unstable();
+    seat_ids
 }
 
 #[aoc(day5, part1)]
-fn part1(seat_ids: &Vec<usize>) -> Option<usize> {
+fn part1(seat_ids: &[usize]) -> Option<usize> {
     seat_ids.iter().max().copied()
 }
 
 #[aoc(day5, part2)]
-fn part2(seat_ids: &Vec<usize>) -> usize {
+fn part2(seat_ids: &[usize]) -> usize {
     let mut last_id = 0;
-    for id in seat_ids.iter() {
+    for id in seat_ids {
         if *id == last_id + 2 {
             // We have two IDs either side of a missing one
             return id - 1;
         }
         last_id = *id;
     }
-    return 0;
+    0
 }

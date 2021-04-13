@@ -10,8 +10,8 @@ pub enum State {
 impl fmt::Debug for State {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            State::Occupied => write!(f, "#"),
-            State::Empty => write!(f, "L"),
+            Self::Occupied => write!(f, "#"),
+            Self::Empty => write!(f, "L"),
             _ => write!(f, "."),
         }
     }
@@ -25,11 +25,11 @@ enum Mode {
 
 impl State {
     /// Create a new State from a char
-    pub fn new(c: char) -> State {
+    fn new(c: char) -> Self {
         match c {
-            'L' => State::Empty,
-            '#' => State::Occupied,
-            '.' => State::Floor,
+            'L' => Self::Empty,
+            '#' => Self::Occupied,
+            '.' => Self::Floor,
             _ => {
                 panic!("Unexpected state '{}'", c)
             }
@@ -38,14 +38,14 @@ impl State {
 }
 
 #[aoc_generator(day11)]
-pub fn gen(input: &str) -> Vec<Vec<State>> {
+fn gen(input: &str) -> Vec<Vec<State>> {
     let mut data: Vec<Vec<State>> = Vec::new();
 
     for line in input.lines() {
-        let row = line.chars().map(|x| State::new(x)).collect::<Vec<State>>();
+        let row = line.chars().map(State::new).collect::<Vec<State>>();
         data.push(row);
     }
-    return data;
+    data
 }
 
 // TODO Do this statically
@@ -58,10 +58,10 @@ fn angles() -> Vec<(isize, isize)> {
             }
         }
     }
-    return angles;
+    angles
 }
 
-fn get_pos(
+const fn get_pos(
     height: usize,
     width: usize,
     start: (usize, usize),
@@ -73,7 +73,7 @@ fn get_pos(
     if y >= 0 && (y as usize) < height && x >= 0 && (x as usize) < width {
         return Some((y as usize, x as usize));
     }
-    return None;
+    None
 }
 
 fn occupied_seats_from_pos(input: &Vec<Vec<State>>, pos: (usize, usize), mode: Mode) -> usize {
@@ -88,38 +88,35 @@ fn occupied_seats_from_pos(input: &Vec<Vec<State>>, pos: (usize, usize), mode: M
             if neighbour == None {
                 // Reached edge of grid, move to next angle
                 break;
-            } else {
-                // See if there is a seat here
-                let (y, x) = neighbour.unwrap();
-                let state = input[y][x];
-                if state == State::Floor && mode == Mode::FirstVisibleSeat {
-                    // No seat and using first visible, increase range and try again
-                    range += 1;
-                    continue;
-                }
-                if state == State::Occupied {
-                    count += 1;
-                }
-                // Found a seat
-                break;
             }
+            // See if there is a seat here
+            let (y, x) = neighbour.unwrap();
+            let state = input[y][x];
+            if state == State::Floor && mode == Mode::FirstVisibleSeat {
+                // No seat and using first visible, increase range and try again
+                range += 1;
+                continue;
+            }
+            if state == State::Occupied {
+                count += 1;
+            }
+            // Found a seat
+            break;
         }
     }
-    return count;
+    count
 }
 
 fn count_occupied(input: &Vec<Vec<State>>) -> usize {
-    let width = input.first().unwrap().len();
-    let height = input.len();
     let mut occupied_seats = 0;
-    for y in 0..height {
-        for x in 0..width {
-            if input[y][x] == State::Occupied {
+    for row in input {
+        for seat in row {
+            if *seat == State::Occupied {
                 occupied_seats += 1;
             }
         }
     }
-    return occupied_seats;
+    occupied_seats
 }
 
 fn simulate_seating(input: &Vec<Vec<State>>, occupied_limit: usize, mode: Mode) -> Vec<Vec<State>> {
@@ -151,19 +148,19 @@ fn simulate_seating(input: &Vec<Vec<State>>, occupied_limit: usize, mode: Mode) 
         }
     }
 
-    return next;
+    next
 }
 
 #[aoc(day11, part1)]
 fn part1(input: &Vec<Vec<State>>) -> usize {
     let layout = simulate_seating(input, 4, Mode::ImmediateNeighbour);
-    return count_occupied(&layout);
+    count_occupied(&layout)
 }
 
 #[aoc(day11, part2)]
 fn part2(input: &Vec<Vec<State>>) -> usize {
     let layout = simulate_seating(input, 5, Mode::FirstVisibleSeat);
-    return count_occupied(&layout);
+    count_occupied(&layout)
 }
 
 #[cfg(test)]

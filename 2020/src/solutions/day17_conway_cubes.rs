@@ -1,7 +1,7 @@
 use std::fmt;
 
 #[derive(PartialEq, Clone)]
-pub struct Grid {
+struct Grid {
     len: isize,
     offset: isize,
     points: Vec<Vec<Vec<Vec<State>>>>,
@@ -9,7 +9,7 @@ pub struct Grid {
 
 impl Grid {
     /// Creates a new Grid
-    pub fn new(size: usize) -> Grid {
+    fn new(size: usize) -> Grid {
         Grid {
             len: size as isize / 2,
             offset: (size + 4) as isize / 2,
@@ -19,19 +19,19 @@ impl Grid {
     }
 
     /// Gets the state of a point
-    pub fn get(&self, point: Point) -> State {
+    fn get(&self, point: Point) -> State {
         self.points[(point.w + self.offset) as usize][(point.z + self.offset) as usize]
             [(point.y + self.offset) as usize][(point.x + self.offset) as usize]
     }
 
     /// Set a point to s state
-    pub fn set(&mut self, point: Point, state: State) {
+    fn set(&mut self, point: Point, state: State) {
         self.points[(point.w + self.offset) as usize][(point.z + self.offset) as usize]
             [(point.y + self.offset) as usize][(point.x + self.offset) as usize] = state;
     }
 
     /// Counts the active points
-    pub fn active(&self) -> usize {
+    fn active(&self) -> usize {
         self.points
             .iter()
             .flatten()
@@ -42,7 +42,7 @@ impl Grid {
     }
 
     /// Counts the active neighbours in 3D space
-    pub fn active_neighbours3(&self, point: Point) -> usize {
+    fn active_neighbours3(&self, point: Point) -> usize {
         let mut count = 0;
         for z in point.z - 1..=point.z + 1 {
             for y in point.y - 1..=point.y + 1 {
@@ -54,11 +54,11 @@ impl Grid {
                 }
             }
         }
-        return count;
+        count
     }
 
     /// Counts the active neighbours in 4D space
-    pub fn active_neighbours4(&self, point: Point) -> usize {
+    fn active_neighbours4(&self, point: Point) -> usize {
         let mut count = 0;
         for w in point.w - 1..=point.w + 1 {
             for z in point.z - 1..=point.z + 1 {
@@ -72,7 +72,7 @@ impl Grid {
                 }
             }
         }
-        return count;
+        count
     }
 
     /// Get a list of all points contained within the grid in 3D space
@@ -87,7 +87,7 @@ impl Grid {
                 }
             }
         }
-        return points;
+        points
     }
 
     /// Get a list of all points contained within the grid in 4D space
@@ -104,7 +104,7 @@ impl Grid {
                 }
             }
         }
-        return points;
+        points
     }
 }
 
@@ -130,12 +130,12 @@ impl fmt::Debug for Grid {
                 }
             }
         }
-        return fmt::Result::Ok(());
+        fmt::Result::Ok(())
     }
 }
 
 #[derive(PartialEq, Debug, Clone, Copy)]
-pub struct Point {
+struct Point {
     w: isize,
     z: isize,
     y: isize,
@@ -144,7 +144,7 @@ pub struct Point {
 
 impl Point {
     /// Create a new Point in 2D space
-    pub fn new2(x: isize, y: isize) -> Point {
+    fn new2(x: isize, y: isize) -> Point {
         Point {
             w: 0,
             z: 0,
@@ -154,7 +154,7 @@ impl Point {
     }
 
     /// Create a new Point in 3D space
-    pub fn new3(x: isize, y: isize, z: isize) -> Point {
+    fn new3(x: isize, y: isize, z: isize) -> Point {
         Point {
             w: 0,
             z: z,
@@ -164,7 +164,7 @@ impl Point {
     }
 
     /// Create a new Point in 4D space
-    pub fn new4(x: isize, y: isize, z: isize, w: isize) -> Point {
+    fn new4(x: isize, y: isize, z: isize, w: isize) -> Point {
         Point {
             w: w,
             z: z,
@@ -175,7 +175,7 @@ impl Point {
 }
 
 #[derive(PartialEq, Clone, Copy)]
-pub enum State {
+enum State {
     Active,
     Inactive,
 }
@@ -183,38 +183,38 @@ pub enum State {
 impl fmt::Debug for State {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            State::Active => write!(f, "#"),
-            State::Inactive => write!(f, "."),
+            Self::Active => write!(f, "#"),
+            Self::Inactive => write!(f, "."),
         }
     }
 }
 
 impl State {
     /// Create a new State from a char
-    pub fn new(c: char) -> State {
+    fn new(c: char) -> Self {
         match c {
-            '#' => State::Active,
-            '.' => State::Inactive,
+            '#' => Self::Active,
+            '.' => Self::Inactive,
             _ => panic!("Unexpected char '{}'", c),
         }
     }
 
     /// Return the next state based on current state and the supplied
     /// number of active neighbours
-    pub fn cycle(&self, active_neighbours: usize) -> State {
+    const fn cycle(self, active_neighbours: usize) -> Self {
         match self {
-            State::Active => {
+            Self::Active => {
                 if active_neighbours == 2 || active_neighbours == 3 {
-                    State::Active
+                    Self::Active
                 } else {
-                    State::Inactive
+                    Self::Inactive
                 }
             }
-            State::Inactive => {
+            Self::Inactive => {
                 if active_neighbours == 3 {
-                    State::Active
+                    Self::Active
                 } else {
-                    State::Inactive
+                    Self::Inactive
                 }
             }
         }
@@ -222,7 +222,7 @@ impl State {
 }
 
 #[aoc_generator(day17)]
-pub fn gen(input: &str) -> Grid {
+fn gen(input: &str) -> Grid {
     // Assumption: The we get an NxN slice to start
     // Assumption: We won't simulate for more than 6 cycles and we won't grow
     // by more than 1 per cycle in EACH direction so can set overall size to N + 12
@@ -237,7 +237,7 @@ pub fn gen(input: &str) -> Grid {
         }
     }
 
-    return grid;
+    grid
 }
 
 #[aoc(day17, part1)]
@@ -251,7 +251,7 @@ fn part1(input: &Grid) -> usize {
             next.set(point, current.get(point).cycle(count));
         }
     }
-    return next.active();
+    next.active()
 }
 
 #[aoc(day17, part2)]
@@ -265,5 +265,5 @@ fn part2(input: &Grid) -> usize {
             next.set(point, current.get(point).cycle(count));
         }
     }
-    return next.active();
+    next.active()
 }

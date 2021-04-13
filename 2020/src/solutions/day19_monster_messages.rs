@@ -52,10 +52,10 @@ fn part2_gen_11(rule48: String, rule31: String) -> String {
     }
     builder.push(&rule31);
     builder.push(")");
-    return builder.concat();
+    builder.concat()
 }
 
-pub fn gen(input: &str) -> (HashMap<&str, &str>, Vec<&str>) {
+fn gen(input: &str) -> (HashMap<&str, &str>, Vec<&str>) {
     // Split into rules and messages
     let (rules_str, messages_str) = input.splitn(2, "\r\n\r\n").collect_tuple().unwrap();
     // Load rules into a HashMap
@@ -68,19 +68,18 @@ pub fn gen(input: &str) -> (HashMap<&str, &str>, Vec<&str>) {
 
 #[aoc(day19, part1)]
 fn part1(input: &str) -> usize {
-    let (rules, messages) = gen(&input);
+    let (rules, messages) = gen(input);
     // Use Regex to count how many messages match rule 0
     let re = Regex::new(&["^", &resolve(&rules, "0"), "$"].concat()).unwrap();
-    return messages
+    messages
         .iter()
         .filter(|message| re.is_match(message))
-        .collect::<Vec<_>>()
-        .len();
+        .count()
 }
 
 #[aoc(day19, part2)]
 fn part2(input: &str) -> usize {
-    let (mut rules, messages) = gen(&input);
+    let (mut rules, messages) = gen(input);
     // Patch rules (the introduced loops can be handled for these cases as meaning 1 or more instances of the references in the original rule)
     // 8: 42 | 42 8 can simply be represented as (42)+ for 1 or more
     let patched8 = &["(", &resolve(&rules, "42"), ")+"].concat();
@@ -90,9 +89,8 @@ fn part2(input: &str) -> usize {
     rules.insert("11", patched11);
     // Use Regex to count how many messages match the new rule 0
     let re = Regex::new(&["^", &resolve(&rules, "0"), "$"].concat()).unwrap();
-    return messages
+    messages
         .iter()
         .filter(|message| re.is_match(message))
-        .collect::<Vec<_>>()
-        .len();
+        .count()
 }

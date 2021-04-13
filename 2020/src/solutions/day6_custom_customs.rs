@@ -10,7 +10,7 @@ fn part1(input: &str) -> usize {
         .map(|group| {
             group
                 .lines()
-                .flat_map(|l| l.chars())
+                .flat_map(str::chars)
                 .collect::<HashSet<char>>()
                 .len()
         })

@@ -1,5 +1,5 @@
 #[aoc_generator(day15)]
-pub fn gen(input: &str) -> Vec<usize> {
+fn gen(input: &str) -> Vec<usize> {
     input.split(',').map(|x| x.parse().unwrap()).collect()
 }
 
@@ -36,7 +36,7 @@ fn find_nth_number(input: &Vec<usize>, n: usize) -> usize {
         turn += 1;
     }
 
-    return last_number;
+    last_number
 }
 
 #[aoc(day15, part1)]
@@ -46,7 +46,7 @@ fn part1(input: &Vec<usize>) -> usize {
 
 #[aoc(day15, part2)]
 fn part2(input: &Vec<usize>) -> usize {
-    find_nth_number(input, 30000000)
+    find_nth_number(input, 30_000_000)
 }
 
 #[cfg(test)]

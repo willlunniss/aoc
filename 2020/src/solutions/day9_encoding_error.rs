@@ -2,11 +2,11 @@ use itertools::Itertools;
 use std::collections::HashSet;
 
 #[aoc_generator(day9)]
-pub fn gen(input: &str) -> Vec<usize> {
+fn gen(input: &str) -> Vec<usize> {
     input.lines().map(|x| x.parse::<usize>().unwrap()).collect()
 }
 
-fn find_invalid(input: &Vec<usize>, preamble: usize) -> usize {
+fn find_invalid(input: &[usize], preamble: usize) -> usize {
     for i in preamble..input.len() {
         let value = input[i];
         // Build a HashSet of valid values based on the different combinations of the previous N numbers
@@ -20,16 +20,16 @@ fn find_invalid(input: &Vec<usize>, preamble: usize) -> usize {
             return value;
         }
     }
-    return 0;
+    0
 }
 
 #[aoc(day9, part1)]
-fn part1(input: &Vec<usize>) -> usize {
+fn part1(input: &[usize]) -> usize {
     find_invalid(input, 25)
 }
 
 #[aoc(day9, part2)]
-fn part2(input: &Vec<usize>) -> usize {
+fn part2(input: &[usize]) -> usize {
     // Find the invalid value
     let preamble = 25;
     let target = find_invalid(input, preamble);
@@ -51,6 +51,6 @@ fn part2(input: &Vec<usize>) -> usize {
             }
         }
     }
-
-    return 0;
+    // Failed to find the answer
+    0
 }

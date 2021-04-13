@@ -20,13 +20,13 @@ fn traverse_slope(input: &str, right: usize, down: usize) -> i64 {
         }
         x += step;
     }
-    return trees as i64;
+    trees as i64
 }
 
 #[aoc(day3, part1)]
 fn part1(input: &str) -> i64 {
     // Just traverse the one slope and count trees
-    traverse_slope(&input, 3, 1)
+    traverse_slope(input, 3, 1)
 }
 
 #[aoc(day3, part2)]
@@ -35,9 +35,9 @@ fn part2(input: &str) -> i64 {
     // trees encountered on each slope
     let slopes: [(usize, usize); 5] = [(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)];
     let mut result = 1;
-    for slope in slopes.iter() {
+    for slope in &slopes {
         let (right, down) = slope;
-        result = result * traverse_slope(&input, *right, *down);
+        result *= traverse_slope(input, *right, *down);
     }
-    return result;
+    result
 }

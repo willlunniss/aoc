@@ -72,7 +72,7 @@ fn matching_ops(sample: &Sample) -> HashSet<Op> {
 #[aoc_generator(day16)]
 fn gen(input: &str) -> (Vec<Sample>, Vec<[usize; 4]>) {
     /// Converts a split string into a fixed sized array of usize values
-    fn to_num_arr<const SIZE: usize>(split: std::str::Split<'_, &str>) -> [usize; SIZE] {
+    fn to_num_arr<'a, const SIZE: usize>(split: impl Iterator<Item = &'a str>) -> [usize; SIZE] {
         split
             .map(|value| value.parse().unwrap())
             .collect::<Vec<_>>()
@@ -93,7 +93,7 @@ fn gen(input: &str) -> (Vec<Sample>, Vec<[usize; 4]>) {
         // 15 0 2 1
         // After:  [1, 0, 2, 0]
         let before = to_num_arr(line[9..19].split(", "));
-        let instr = to_num_arr(lines.next().unwrap().split(" "));
+        let instr = to_num_arr(lines.next().unwrap().split(' '));
         let after = to_num_arr(lines.next().unwrap()[9..19].split(", "));
         samples.push(Sample {
             before,
@@ -107,7 +107,7 @@ fn gen(input: &str) -> (Vec<Sample>, Vec<[usize; 4]>) {
     // Read in the rest of the input in as the test program (series of instructions)
     let test_program = lines
         .skip(1)
-        .map(|line| to_num_arr(line.split(" ")))
+        .map(|line| to_num_arr(line.split(' ')))
         .collect();
 
     (samples, test_program)

@@ -29,7 +29,7 @@ impl FromStr for Room {
         //- escape pod
         //
         //Command?
-        
+
         // Skip the first 3 blank lines
         let mut lines = s.lines().skip(3);
         // Get the name of the room
@@ -38,7 +38,7 @@ impl FromStr for Room {
         let mut lines = lines.skip(3);
         let mut doors = Vec::new();
         loop {
-            // Get the names of the doors 
+            // Get the names of the doors
             let mut chars = lines.next().unwrap().chars();
             if chars.next() == Some('-') {
                 doors.push(chars.skip(1).collect());
@@ -77,8 +77,8 @@ impl Droid {
             "north" => Some("south".to_owned()),
             "east" => Some("west".to_owned()),
             "south" => Some("north".to_owned()),
-             "west" => Some("east".to_owned()),
-            _ => None
+            "west" => Some("east".to_owned()),
+            _ => None,
         })
     }
 
@@ -104,11 +104,11 @@ impl Droid {
     }
 
     /// Tries to verify identify at a security checkpoint
-    /// 
+    ///
     /// Moves through the specified door holding different combinations of items to
     /// try to achieve the correct weight in order to be let through the pressure sensitive floor
     /// Shouldn't be called until all items from the ship have been collected
-    fn try_verify_identity(&mut self, door :&str) -> usize {
+    fn try_verify_identity(&mut self, door: &str) -> usize {
         // Find out what we are holding (check inventory)
         let mut inventory: Vec<String> = Vec::new();
         self.controller.inputln("inv");
@@ -152,7 +152,7 @@ impl Droid {
     }
 
     /// Explores the ship and returns the password for the main airlock
-    /// 
+    ///
     /// Goes through every door picking up items that are safe until the ship
     /// has been fully explored.
     /// Once fully explored the droid heads to the security checkpoint and attempts
@@ -172,47 +172,61 @@ impl Droid {
             let output = self.controller.outputs_as_ascii();
             let room = output.parse::<Room>().unwrap();
             // Get/record which doors we still need to go through
-            let doors = unexplored_doors.entry(room.name.clone()).or_insert_with(||{
-                // Found a new room
-                // If the room has an item that is safe to take then pick it up
-                if let Some(item) = room.item {
-                    if Self::safe_to_take(&item) {
-                        let mut command = "take ".to_owned();
-                        command.push_str(&item);
-                        // Pick up the item and discard output message about what we just picked up
-                        self.controller.inputln(&command);
-                        self.controller.run();
-                        self.controller.outputs().clear();
+            let doors = unexplored_doors
+                .entry(room.name.clone())
+                .or_insert_with(|| {
+                    // Found a new room
+                    // If the room has an item that is safe to take then pick it up
+                    if let Some(item) = room.item {
+                        if Self::safe_to_take(&item) {
+                            let mut command = "take ".to_owned();
+                            command.push_str(&item);
+                            // Pick up the item and discard output message about what we just picked up
+                            self.controller.inputln(&command);
+                            self.controller.run();
+                            self.controller.outputs().clear();
+                        }
                     }
-                }
-                if room.name == "== Security Checkpoint ==" {
-                    // Found the security checkpoint
-                    // Make a note of how we got here
-                    security_checkpoint_route = route.clone();
-                    // Can't go further until we have fully explored the ship though so record 0 doors
-                    return Vec::new();
-                }
-                // Record which doors are present, excluding the one that takes up back to where we came
-                if let Some(backwards) = Self::backwards(route.last()) {
-                    room.doors.iter().filter_map(|door| if *door != backwards { Some(door.clone())} else { None }).collect()
-                } else {
-                    room.doors.clone()
-                }
-            });
+                    if room.name == "== Security Checkpoint ==" {
+                        // Found the security checkpoint
+                        // Make a note of how we got here
+                        security_checkpoint_route = route.clone();
+                        // Can't go further until we have fully explored the ship though so record 0 doors
+                        return Vec::new();
+                    }
+                    // Record which doors are present, excluding the one that takes up back to where we came
+                    if let Some(backwards) = Self::backwards(route.last()) {
+                        room.doors
+                            .iter()
+                            .filter_map(|door| {
+                                if *door != backwards {
+                                    Some(door.clone())
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect()
+                    } else {
+                        room.doors.clone()
+                    }
+                });
             // Now work out where to go next
             if doors.is_empty() {
                 // Fully explored this room, go back
                 if route.is_empty() {
                     // At the start so must have explored everywhere!
                     // Go to back to the checkpoint
-                    security_checkpoint_route.iter().for_each(|door| self.controller.inputln(door));
+                    security_checkpoint_route
+                        .iter()
+                        .for_each(|door| self.controller.inputln(door));
                     self.controller.run();
                     self.controller.outputs().clear();
                     // Now try to get through, returning the password that we should find on the other side
                     return self.try_verify_identity(security_checkpoint_route.last().unwrap());
                 }
                 // Go backwards through the last door we came from
-                self.controller.inputln(&Self::backwards(route.last()).unwrap());
+                self.controller
+                    .inputln(&Self::backwards(route.last()).unwrap());
                 route.pop();
             } else {
                 // Have a door that we haven't explored yet, let's go there and see what's in that room

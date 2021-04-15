@@ -1,5 +1,5 @@
-use std::convert::TryFrom;
 use std::{convert::Infallible, str::FromStr};
+use utils::grid::{MapGrid, Pos};
 
 #[derive(Debug, Clone)]
 struct Point {
@@ -72,28 +72,10 @@ fn gen(input: &str) -> Vec<Point> {
 fn part1(input: &Vec<Point>) -> String {
     // Align the points
     let (_, aligned) = align(input);
-    // Find min/max x/y
-    let min_x = aligned.iter().map(|point| point.position.0).min().unwrap();
-    let min_y = aligned.iter().map(|point| point.position.1).min().unwrap();
-    let max_x = aligned.iter().map(|point| point.position.0).max().unwrap();
-    let max_y = aligned.iter().map(|point| point.position.1).max().unwrap();
-    // Build a nested vec to render the points offset so that the top left of the image is at 0, 0
-    let y_size = usize::try_from(max_y - min_y).unwrap() + 1;
-    let x_size = usize::try_from(max_x - min_x).unwrap() + 1;
-    let mut image = vec![vec![' '; x_size]; y_size];
-    for point in &aligned {
-        let y = usize::try_from(point.position.1 - min_y).unwrap();
-        let x = usize::try_from(point.position.0 - min_x).unwrap();
-        image[y][x] = '█';
-    }
     // Print to the console
-    for row in image {
-        for c in row {
-            print!("{}", c);
-        }
-        println!();
-    }
-    println!();
+    let grid = MapGrid::from_iter(aligned.iter().map(|point| (Pos::from(point.position), '█')));
+    grid.print(' ');
+
     "↑ Check the printed image ↑".to_owned()
 }
 

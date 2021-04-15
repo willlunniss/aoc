@@ -71,7 +71,7 @@ impl<V: Clone> MapGrid<V> {
     /// by be set to default
     pub fn to_vec(&self, default: V) -> Vec<Vec<V>> {
         // 1st pass: Find the size of the grid needed
-        let (mut min_x, mut max_x, mut min_y, mut max_y) = (0, 0, 0, 0);
+        let (mut min_x, mut max_x, mut min_y, mut max_y) = (isize::MAX, isize::MIN, isize::MAX, isize::MIN);
         for pos in self.data.keys() {
             if pos.x < min_x {
                 min_x = pos.x;

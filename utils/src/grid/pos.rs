@@ -82,7 +82,18 @@ impl Pos {
 
     /// Gets position of the 8 neighbours
     pub fn neighbours8(self) -> impl Iterator<Item = Pos> {
-        [(0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0), (-1, 1)].iter().map(move |shift| self + *shift)
+        [
+            (0, 1),
+            (1, 1),
+            (1, 0),
+            (1, -1),
+            (0, -1),
+            (-1, -1),
+            (-1, 0),
+            (-1, 1),
+        ]
+        .iter()
+        .map(move |shift| self + *shift)
     }
 }
 

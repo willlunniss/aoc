@@ -10,6 +10,21 @@ pub enum Direction {
     Right,
 }
 
+impl From<char> for Direction {
+    /// Returns a Direction from NSEW or UDLR single chars
+    fn from(item: char) -> Self {
+        match item {
+            'U' | 'N' => Self::Up,
+            'D' | 'S' => Self::Down,
+            'L' | 'W' => Self::Left,
+            'R' | 'E' => Self::Right,
+            _ => {
+                panic!("Cannot convert '{}' to direction", item)
+            }
+        }
+    }
+}
+
 impl Direction {
     /// Rotates left
     pub const fn rotate_left(self) -> Self {

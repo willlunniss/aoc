@@ -1,4 +1,5 @@
-use crate::grid::pos::Pos;
+use crate::grid::Direction;
+use crate::grid::Pos;
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::iter::FromIterator;
@@ -65,13 +66,25 @@ impl<V: Clone> MapGrid<V> {
         self.data.entry(key)
     }
 
+    /// Gets the direction, pos and values of the 4 neighbours to the supplied position
+    pub fn neighbours_ex(
+        &self,
+        pos: Pos,
+    ) -> impl Iterator<Item = (Direction, Pos, Option<&V>)> + '_ {
+        Direction::all().map(move |d| {
+            let next = pos.next(d);
+            (d, next, self.get(&next))
+        })
+    }
+
     /// Converts a `HashMap` based grid to a nested vector
     ///
     /// Any cells within the bounds of those specified in map that don't have values
     /// by be set to default
     pub fn to_vec(&self, default: V) -> Vec<Vec<V>> {
         // 1st pass: Find the size of the grid needed
-        let (mut min_x, mut max_x, mut min_y, mut max_y) = (isize::MAX, isize::MIN, isize::MAX, isize::MIN);
+        let (mut min_x, mut max_x, mut min_y, mut max_y) =
+            (isize::MAX, isize::MIN, isize::MAX, isize::MIN);
         for pos in self.data.keys() {
             if pos.x < min_x {
                 min_x = pos.x;

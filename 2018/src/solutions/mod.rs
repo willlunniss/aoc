@@ -16,3 +16,4 @@ pub mod day15_beverage_bandits;
 pub mod day16_chronal_classification;
 pub mod day17_reservoir_research;
 pub mod day18_settlers_of_the_north_pole;
+pub mod day19_go_with_the_flow;

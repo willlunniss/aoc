@@ -46,8 +46,8 @@ impl<V: Clone> MapGrid<V> {
     }
 
     /// Inserts the element into the supplied position
-    pub fn insert(&mut self, pos: Pos, value: V) {
-        self.data.insert(pos, value);
+    pub fn insert(&mut self, pos: Pos, value: V) -> Option<V> {
+        self.data.insert(pos, value)
     }
 
     /// Returns a reference to the value at the position

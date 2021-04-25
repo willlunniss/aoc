@@ -15,3 +15,4 @@ pub mod day14_chocolate_charts;
 pub mod day15_beverage_bandits;
 pub mod day16_chronal_classification;
 pub mod day17_reservoir_research;
+pub mod day18_settlers_of_the_north_pole;

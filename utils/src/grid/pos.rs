@@ -79,6 +79,11 @@ impl Pos {
     pub fn neighbours(&self) -> impl Iterator<Item = Pos> + '_ {
         Direction::all().map(move |d| self.next(d))
     }
+
+    /// Gets position of the 8 neighbours
+    pub fn neighbours8(self) -> impl Iterator<Item = Pos> {
+        [(0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0), (-1, 1)].iter().map(move |shift| self + *shift)
+    }
 }
 
 impl Add<(isize, isize)> for Pos {

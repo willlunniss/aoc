@@ -86,6 +86,11 @@ impl<V: Clone + Copy> VecGrid<V> {
             (d, next, self.get(next))
         })
     }
+
+    /// Gets the values of the 8 neighbours to the supplied position
+    pub fn neighbours8(&self, pos: Pos) -> impl Iterator<Item = Option<V>> + '_ {
+        pos.neighbours8().map(move |neighbour| self.get(neighbour))
+    }
 }
 
 impl<V> VecGrid<V> {

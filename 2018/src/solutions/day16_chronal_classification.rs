@@ -1,52 +1,7 @@
+use crate::chronal_device::Op;
 use std::collections::{HashMap, HashSet};
 use std::convert::TryInto;
 use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
-
-#[allow(non_camel_case_types)]
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, EnumIter)]
-enum Op {
-    addr,
-    addi,
-    mulr,
-    muli,
-    banr,
-    bani,
-    borr,
-    bori,
-    setr,
-    seti,
-    gtir,
-    gtri,
-    gtrr,
-    eqir,
-    eqri,
-    eqrr,
-}
-
-impl Op {
-    /// Executes an instruction returning the calculated result (that should be stored in register c)
-    const fn execute(self, a: usize, b: usize, registers: &[usize; 4]) -> usize {
-        match self {
-            Self::addr => registers[a] + registers[b],
-            Self::addi => registers[a] + b,
-            Self::mulr => registers[a] * registers[b],
-            Self::muli => registers[a] * b,
-            Self::banr => registers[a] & registers[b],
-            Self::bani => registers[a] & b,
-            Self::borr => registers[a] | registers[b],
-            Self::bori => registers[a] | b,
-            Self::setr => registers[a],
-            Self::seti => a,
-            Self::gtir => (a > registers[b]) as usize,
-            Self::gtri => (registers[a] > b) as usize,
-            Self::gtrr => (registers[a] > registers[b]) as usize,
-            Self::eqir => (a == registers[b]) as usize,
-            Self::eqri => (registers[a] == b) as usize,
-            Self::eqrr => (registers[a] == registers[b]) as usize,
-        }
-    }
-}
 
 #[derive(Debug)]
 struct Sample {

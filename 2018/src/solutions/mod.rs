@@ -18,3 +18,4 @@ pub mod day17_reservoir_research;
 pub mod day18_settlers_of_the_north_pole;
 pub mod day19_go_with_the_flow;
 pub mod day20_a_regular_map;
+pub mod day21_chronal_conversion;

@@ -21,3 +21,5 @@ pub mod day20_a_regular_map;
 pub mod day21_chronal_conversion;
 pub mod day22_mode_maze;
 pub mod day23_experimental_emergency_teleportation;
+#[allow(non_snake_case)]
+pub mod day24_immune_system_simulator_20XX;

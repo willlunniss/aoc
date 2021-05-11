@@ -24,7 +24,7 @@ fn part1(input: &(usize, Vec<Instr>)) -> usize {
 }
 
 #[aoc(day19, part2)]
-fn part2(input: &(usize, Vec<Instr>)) -> usize {
+fn part2(input: &(usize, Vec<Instr>)) -> Option<usize> {
     // Part 2 would take far too long to run to completion if we just run it
     // so had to inspect it to work out what it was trying to do
     //
@@ -52,10 +52,10 @@ fn part2(input: &(usize, Vec<Instr>)) -> usize {
         if registers[*ip_register] == 33 {
             let target = registers[instr.c];
             // Quickly sum up all numbers that are a factor of the target number
-            return (1..=target).filter(|&x| target % x == 0).sum();
+            return Some((1..=target).filter(|&x| target % x == 0).sum());
         }
         // Advance the IP
         registers[*ip_register] += 1;
     }
-    0
+    None
 }

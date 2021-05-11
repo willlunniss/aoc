@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use regex::Regex;
 use std::borrow::ToOwned;
 use std::cmp::Ordering;
@@ -264,23 +265,25 @@ fn part1(input: &str) -> usize {
 #[aoc(day24, part2)]
 fn part2(input: &str) -> usize {
     let initial = gen(input);
-    for boost in 0.. {
-        // Keep boosting the immune system's attack until they win
-        let mut groups = initial.clone();
-        for (_, group) in groups
-            .iter_mut()
-            .filter(|(_, group)| group.army == Army::ImmuneSystem)
-        {
-            group.attack_damage += boost;
-        }
-        // Fight
-        if let Some((winner, units)) = fight(groups) {
-            if winner == Army::ImmuneSystem {
-                return units;
+    // Keep boosting the immune system's attack until they win
+    let (_, units) = (0..usize::MAX)
+        .into_par_iter()
+        .map(|boost| {
+            // Create a new copy of the groups where the immune system's attack is boosted
+            let mut groups = initial.clone();
+            for (_, group) in groups
+                .iter_mut()
+                .filter(|(_, group)| group.army == Army::ImmuneSystem)
+            {
+                group.attack_damage += boost;
             }
-        } // else stalemate
-    }
-    0
+            groups
+        })
+        .filter_map(fight) // Fight and find the first boost value that results in the immune system winning
+        .find_first(|(winner, _)| *winner == Army::ImmuneSystem)
+        .unwrap();
+    // Return the number of units that the winning army (immune system) has left
+    units
 }
 
 #[cfg(test)]

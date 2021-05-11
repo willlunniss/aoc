@@ -78,9 +78,9 @@ fn part2(input: &HashMap<Pos3, u64>) -> Option<i64> {
         // Sum up the distances in each axis
         let distance_to_bot = Int::add(&ctx, &dist.iter().collect::<Vec<_>>());
 
-        // Check to see if we are in range of the bot by checking that the distance is less than range + 1 (no lte)
-        let bot_radius_plus_1 = Int::from_u64(&ctx, *range + 1);
-        let is_in_range_of_bot = distance_to_bot.lt(&bot_radius_plus_1);
+        // Check to see if we are in range of the bot by checking that the distance is less than or equal to range
+        let bot_range = Int::from_u64(&ctx, *range);
+        let is_in_range_of_bot = distance_to_bot.le(&bot_range);
 
         // Update the number of bots in range
         // If in range of the bot then add 1, else add 0

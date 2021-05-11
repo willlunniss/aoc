@@ -130,7 +130,7 @@ fn part1(input: &MapGrid<char>) -> usize {
     let min_y = input.keys().min_by_key(|pos| pos.y).unwrap().y;
     let max_y = input.keys().max_by_key(|pos| pos.y).unwrap().y;
     let mut map = input.clone();
-    // Simulate the water flowing from the spring and return the total number of 
+    // Simulate the water flowing from the spring and return the total number of
     // tiles the water can reach between min and max y
     flow(&mut map, &Pos::new(500, 0), max_y) - usize::try_from(min_y).unwrap()
 }

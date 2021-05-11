@@ -1,3 +1,5 @@
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
+
 /// Reacts a polymer by removing adjacent units of the same type (letter) but different polarity (case)
 /// and returns the length of the resulting polymer
 fn react(iter: impl Iterator<Item = char>) -> usize {
@@ -29,6 +31,7 @@ fn part2(input: &str) -> usize {
     // Calculate what the length of the reacted polymer would be if we removed each type of unit
     // and then return the minimum length
     ('a'..='z')
+        .into_par_iter()
         .map(|unit| {
             // React the polymer with this type of unit removed (of both polarities)
             react(

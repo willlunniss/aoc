@@ -152,7 +152,7 @@ fn part1(input: &(usize, Pos)) -> usize {
 }
 
 #[aoc(day22, part2)]
-fn part2(input: &(usize, Pos)) -> usize {
+fn part2(input: &(usize, Pos)) -> Option<usize> {
     let (depth, target) = *input;
     // Perform a BFS from the start outwards considering each (Pos, Tool) pair uniquely
     // As the cost is not fixed we have a custom cmp impl for `Search` to ensure that we
@@ -176,7 +176,7 @@ fn part2(input: &(usize, Pos)) -> usize {
         queue.remove(&current);
         if current.pos == target {
             // Reached the target, as we process the queue by time this is guaranteed to be the shortest
-            return current.time;
+            return Some(current.time);
         }
         // Check neighbours to see where we could move to
         for candidate in current.pos.neighbours() {
@@ -225,5 +225,5 @@ fn part2(input: &(usize, Pos)) -> usize {
             }
         }
     }
-    0
+    None
 }

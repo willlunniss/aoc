@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use utils::grid::VecGrid;
 
 /// Simulates lumber collection for `minutes` of time
-/// 
+///
 /// Returns the resource value after `minutes`
 fn simulate(input: &VecGrid<char>, minutes: usize) -> usize {
     let mut current = input.clone();

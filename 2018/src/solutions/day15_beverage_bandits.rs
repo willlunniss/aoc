@@ -1,3 +1,4 @@
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashSet, VecDeque};
 use utils::grid::{Pos, VecGrid};
@@ -222,5 +223,9 @@ fn part1(input: &VecGrid<char>) -> Option<usize> {
 #[aoc(day15, part2)]
 fn part2(input: &VecGrid<char>) -> Option<usize> {
     // Try with increasing elf attack until we get a fight that doesn't result in any elves dying
-    (4..).find_map(|elf_attack| fight(input, elf_attack, true))
+    (0..usize::MAX)
+        .into_par_iter()
+        .map(|elf_attack| fight(input, elf_attack, true))
+        .find_first(Option::is_some)
+        .unwrap()
 }

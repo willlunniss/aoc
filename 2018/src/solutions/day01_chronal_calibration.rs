@@ -15,7 +15,7 @@ fn part1(input: &[isize]) -> isize {
 }
 
 #[aoc(day1, part2)]
-fn part2(input: &[isize]) -> isize {
+fn part2(input: &[isize]) -> Option<isize> {
     let mut frequencies = HashSet::new();
     let mut frequency = 0;
     // Loop over the changes indefinitely
@@ -23,8 +23,8 @@ fn part2(input: &[isize]) -> isize {
         frequency += change;
         // Store the frequency, if we have already seen it before then return it
         if !frequencies.insert(frequency) {
-            return frequency;
+            return Some(frequency);
         }
     }
-    0
+    None
 }

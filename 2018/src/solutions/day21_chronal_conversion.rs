@@ -19,7 +19,7 @@ fn part1(input: &(usize, Vec<Instr>)) -> usize {
         if instr.op == Op::eqrr && instr.b == 0 {
             // Wait until we find the first (and only) instruction that reads the value from register 0
             // Set register 0 to be equal to the value in the other register so that this instruction
-            // results in the IP being advanced and then the program to halt
+            // results in the IP being advanced in the next instruction and then the program to halt
             registers[0] = registers[instr.a];
         }
         // Execute the instruction
@@ -32,7 +32,7 @@ fn part1(input: &(usize, Vec<Instr>)) -> usize {
 }
 
 #[aoc(day21, part2)]
-fn part2(input: &(usize, Vec<Instr>)) -> usize {
+fn part2(input: &(usize, Vec<Instr>)) -> Option<usize> {
     let (ip_register, instrs) = input;
     // FIXME: Part 2 is far too slow from fully executing the program
     // Start with registers initialised to 0
@@ -47,7 +47,7 @@ fn part2(input: &(usize, Vec<Instr>)) -> usize {
             // Once we see it again assume we have seen them all then return the one we saw last
             // as being the one that will cause the program to run the longest
             if !history.insert(registers[instr.a]) {
-                return last;
+                return Some(last);
             }
             last = registers[instr.a];
         }
@@ -56,6 +56,5 @@ fn part2(input: &(usize, Vec<Instr>)) -> usize {
         // Advance the IP
         registers[*ip_register] += 1;
     }
-    // Don't expect to get here
-    0
+    None
 }

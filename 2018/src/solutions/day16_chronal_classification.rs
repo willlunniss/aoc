@@ -139,11 +139,10 @@ mod tests {
             after,
         });
         assert_eq!(matching.len(), 3);
-        assert_eq!(
+        assert!(
             [Op::addi, Op::mulr, Op::seti]
                 .iter()
-                .all(|op| matching.contains(op)),
-            true
+                .all(|op| matching.contains(op))
         );
     }
 }

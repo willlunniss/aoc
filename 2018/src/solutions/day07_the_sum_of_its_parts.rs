@@ -40,7 +40,7 @@ fn gen(input: &str) -> HashMap<char, Step> {
         // Record that this step unlocks another
         steps.entry(step).or_default().unlocks.push(unlocks);
         // Record that the other step is unlocked by this one
-        steps.entry(unlocks).or_default().requires.push(step)
+        steps.entry(unlocks).or_default().requires.push(step);
     }
     steps
 }

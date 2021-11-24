@@ -296,9 +296,9 @@ mod tests {
         println!("{:?}", group);
         assert_eq!(group.units, 18);
         assert_eq!(group.hit_points, 729);
-        assert_eq!(group.weaknesses.contains("fire"), true);
-        assert_eq!(group.immunities.contains("cold"), true);
-        assert_eq!(group.immunities.contains("slashing"), true);
+        assert!(group.weaknesses.contains("fire"));
+        assert!(group.immunities.contains("cold"));
+        assert!(group.immunities.contains("slashing"));
         assert_eq!(group.attack_type, "radiation".to_owned());
         assert_eq!(group.attack_damage, 8);
         assert_eq!(group.initiative, 10);

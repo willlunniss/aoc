@@ -19,7 +19,7 @@ fn part2(input: &[isize]) -> Option<isize> {
     let mut frequencies = HashSet::new();
     let mut frequency = 0;
     // Loop over the changes indefinitely
-    for change in input.iter().cloned().cycle() {
+    for change in input.iter().cycle() {
         frequency += change;
         // Store the frequency, if we have already seen it before then return it
         if !frequencies.insert(frequency) {

@@ -14,7 +14,7 @@ jobs:
     
     strategy:
       matrix:
-        year: [2020, 2019, 2018]
+        year: [2021, 2020, 2019, 2018]
 
     runs-on: ubuntu-latest
 

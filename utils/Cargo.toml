@@ -2,10 +2,8 @@
 name = "utils"
 version = "0.1.0"
 authors = ["Will Lunniss <willlunniss@gmail.com>"]
-edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+edition = "2021"
 
 [dependencies]
-strum = "0.20"
-strum_macros = "0.20"
+strum = "0.23"
+strum_macros = "0.23"

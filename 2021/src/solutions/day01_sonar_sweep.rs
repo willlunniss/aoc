@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 #[aoc_generator(day1)]
 fn gen(input: &str) -> Vec<usize> {
     input
@@ -7,18 +9,14 @@ fn gen(input: &str) -> Vec<usize> {
 }
 
 fn count_increments(depths: &[usize], window_size: usize) -> usize {
-    let mut increments = 0;
-    let mut previous = 0;
-    // Skipping the first measurement, loop over all values using a sliding window
-    // and count how many times the sum of the values increments vs the previous
-    for values in depths.windows(window_size).skip(1) { 
-        let sum = values.iter().sum();
-        if sum > previous {
-            increments += 1;
-        }
-        previous = sum;
-    }
-    increments
+    // Loop over all values using a sliding window and count how many times
+    // the sum of the values increments vs the previous
+    depths
+        .windows(window_size)
+        .map(|values| values.iter().sum::<usize>())
+        .tuple_windows()
+        .filter(|&(previous, current)| current > previous)
+        .count()
 }
 
 #[aoc(day1, part1)]

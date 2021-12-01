@@ -95,6 +95,16 @@ impl Pos {
         .iter()
         .map(move |shift| self + *shift)
     }
+
+    /// Calculates the manhattan distance from another point
+    pub fn manhattan_distance(&self, from: &Pos) -> usize {
+        (isize::abs(from.x - self.x) + isize::abs(from.y - self.y)) as usize
+    }
+
+    /// Calculates the manhattan distance from the origin
+    pub fn manhattan_distance_origin(&self) -> usize {
+        (isize::abs(self.x) + isize::abs(self.y)) as usize
+    }
 }
 
 impl Add<(isize, isize)> for Pos {

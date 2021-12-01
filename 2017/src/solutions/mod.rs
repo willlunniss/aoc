@@ -1,0 +1,6 @@
+mod day01_inverse_captcha;
+mod day02_corruption_checksum;
+mod day03_spiral_memory;
+mod day04_high_entropy_passphrases;
+mod day05_a_maze_of_twisty_trampolines_all_alike;
+mod day06_memory_reallocation;

@@ -9,4 +9,8 @@ edition = "2021"
 [dependencies]
 aoc-runner = "0.3.0"
 aoc-runner-derive="0.3.0"
+utils = { path = "../utils" }
 itertools = "0.10.1"
+strum = "0.23"
+strum_macros = "0.23"
+indoc = "1.0"

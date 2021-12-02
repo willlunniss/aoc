@@ -54,22 +54,27 @@ impl Pos {
 
     /// Gets the next position if we headed in the supplied direction
     pub const fn next(&self, direction: Direction) -> Self {
+        self.next_by(direction, 1)
+    }
+
+    
+    pub const fn next_by(&self, direction: Direction, distance: isize) -> Self {
         use Direction::{Down, Left, Right, Up};
         match direction {
             Up => Self {
                 x: self.x,
-                y: self.y - 1,
+                y: self.y - distance,
             },
             Down => Self {
                 x: self.x,
-                y: self.y + 1,
+                y: self.y + distance,
             },
             Left => Self {
-                x: self.x - 1,
+                x: self.x - distance,
                 y: self.y,
             },
             Right => Self {
-                x: self.x + 1,
+                x: self.x + distance,
                 y: self.y,
             },
         }

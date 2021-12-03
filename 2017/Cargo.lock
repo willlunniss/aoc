@@ -22,6 +22,8 @@ dependencies = [
  "lazy_static",
  "rayon",
  "regex",
+ "strum",
+ "strum_macros",
  "utils",
 ]
 

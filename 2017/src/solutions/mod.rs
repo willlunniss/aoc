@@ -5,3 +5,4 @@ mod day04_high_entropy_passphrases;
 mod day05_a_maze_of_twisty_trampolines_all_alike;
 mod day06_memory_reallocation;
 mod day07_recursive_circus;
+mod day08_i_heard_you_like_registers;

@@ -1,151 +1,124 @@
-use std::collections::HashMap;
+use nalgebra::Matrix5;
 use std::collections::HashSet;
+use std::{convert::Infallible, str::FromStr};
 
-#[aoc_generator(day4)]
-fn gen(input: &str) -> (Vec<usize>, Vec<Vec<Vec<usize>>>) {
-    let mut lines = input.lines();
+#[derive(Debug, Copy, Clone)]
+struct Board {
+    grid: Matrix5<usize>,
+}
 
-    let numbers = lines.next().unwrap().split(',').map(|x| x.parse::<usize>().unwrap()).collect::<Vec<_>>();
+#[derive(Debug)]
+struct Bingo {
+    numbers: Vec<usize>,
+    boards: Vec<Board>,
+}
 
-    let mut boards = Vec::new();
-    let mut board = Vec::new();
+impl FromStr for Bingo {
+    type Err = Infallible;
 
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        // Split the input by blank lines into sections
+        let mut sections = s.split("\n\n");
 
-    for line in lines {
-        if line.is_empty() {
-            if !board.is_empty() {
-                boards.push(board);
-            }
-            // Start a new board;
-            board = Vec::new();
-            continue;
-        }
-        board.push(line.split_ascii_whitespace().map(|x| x.parse::<usize>().unwrap()).collect::<Vec<_>>());
+        // First section has the list of numbers to draw
+        let numbers = sections
+            .next()
+            .unwrap()
+            .split(',')
+            .map(|x| x.parse::<usize>().unwrap())
+            .collect();
+
+        // Remaining sections has the boards
+        let boards = sections
+            .map(|section| section.parse::<Board>().unwrap())
+            .collect();
+
+        Ok(Self { numbers, boards })
+    }
+}
+
+impl FromStr for Board {
+    type Err = Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        // Read in the grid into the 5x5 matrix value by value
+        Ok(Self {
+            grid: Matrix5::from_iterator(
+                s.split_ascii_whitespace()
+                    .map(|x| x.parse::<usize>().unwrap()),
+            ),
+        })
+    }
+}
+
+impl Board {
+    /// Calculates the score for the board based on the
+    /// drawn numbers and the last drawn number
+    fn score(self, drawn: &HashSet<usize>, last: usize) -> usize {
+        // Sum up the undrawn numbers and multiply by the last drawn
+        self.grid
+            .iter()
+            .filter(|n| !drawn.contains(n))
+            .sum::<usize>()
+            * last
     }
 
-    (numbers, boards)
+    /// Checks if a board has won given the drawn numbers
+    fn wins(self, drawn: &HashSet<usize>) -> bool {
+        // Check for any row or any column being fully drawn
+        self.grid
+            .row_iter()
+            .any(|row| row.iter().all(|n| drawn.contains(n)))
+            || self
+                .grid
+                .column_iter()
+                .any(|col| col.iter().all(|n| drawn.contains(n)))
+    }
+}
+
+#[aoc_generator(day4)]
+fn gen(input: &str) -> Bingo {
+    input.parse().unwrap()
 }
 
 #[aoc(day4, part1)]
-fn part1(input: &(Vec<usize>, Vec<Vec<Vec<usize>>>)) -> usize {
-    let (numbers, boards) = input;
-    let mut marked = Vec::new();
-    for _ in boards {
-        marked.push(vec![vec![false; 5]; 5]);
-    }
-    let mut map = Vec::new();
-    for board in boards {
-        let mut board_map = HashMap::new();
-        for (x, row) in board.iter().enumerate() {
-            for (y, col) in row.iter().enumerate() {
-                board_map.insert(col, (x, y));
-            }
-        }
-        map.push(board_map);
-    }
-    for number in numbers {
-        for (b_index, board) in map.iter().enumerate() {
-            if let Some(&(x, y)) = board.get(number) {
-                // Number is on the board - mark it
-                marked[b_index][x][y] = true;
-            }
-        }        
-        for (b_index, board) in marked.iter().enumerate() {
-            for row in 0..5 {
-                if (0..5).all(|y| board[row][y]) {
-                    // Found a complete row
-                    let mut unmarked = 0;
-                    for (&n, &(x, y)) in &map[b_index] {
-                        if !board[x][y] {
-                            unmarked += *n;
-                        }
-                    }
-                    return unmarked * number;
-                }
-            }
-            for col in 0..5 {
-                if (0..5).all(|x| board[x][col]) {
-                    // Found a complete column
-                    let mut unmarked = 0;
-                    for (&n, &(x, y)) in &map[b_index] {
-                        if !board[x][y] {
-                            unmarked += *n;
-                        }
-                    }
-                    return unmarked * number;
-                }
-            }
+fn part1(input: &Bingo) -> Option<usize> {
+    let mut drawn = HashSet::new();
+
+    for &number in &input.numbers {
+        // Draw the number
+        drawn.insert(number);
+
+        // Check to see if any boards have won
+        if let Some(winner) = input.boards.iter().find(|board| board.wins(&drawn)) {
+            // and return their score if they have
+            return Some(winner.score(&drawn, number));
         }
     }
-    0
+    None
 }
 
 #[aoc(day4, part2)]
-fn part2(input: &(Vec<usize>, Vec<Vec<Vec<usize>>>)) -> usize {
-    let (numbers, boards) = input;
-    let mut marked = Vec::new();
-    let mut loosing = HashSet::new();
-    let mut index = 0;
-    for _ in boards {
-        marked.push(vec![vec![false; 5]; 5]);
-        loosing.insert(index);
-        index += 1;
-    }
-    let mut map = Vec::new();
-    for board in boards {
-        let mut board_map = HashMap::new();
-        for (x, row) in board.iter().enumerate() {
-            for (y, col) in row.iter().enumerate() {
-                board_map.insert(col, (x, y));
+fn part2(input: &Bingo) -> Option<usize> {
+    let mut active = input.boards.clone();
+    let mut drawn = HashSet::new();
+
+    for &number in &input.numbers {
+        // Draw the number
+        drawn.insert(number);
+
+        if active.len() == 1 {
+            // If last board, return it's score if it won
+            let last = active.first().unwrap();
+            if last.wins(&drawn) {
+                return Some(last.score(&drawn, number));
             }
-        }
-        map.push(board_map);
-    }
-    for number in numbers {
-        for (b_index, board) in map.iter().enumerate() {
-            if let Some(&(x, y)) = board.get(number) {
-                // Number is on the board - mark it
-                marked[b_index][x][y] = true;
-            }
-        }        
-        for (b_index, board) in marked.iter().enumerate() {
-            if !loosing.contains(&b_index) {
-                continue;
-            }
-            for row in 0..5 {
-                if (0..5).all(|y| board[row][y]) {
-                    // Found a complete row
-                    if loosing.len() == 1 {
-                        let looser = *loosing.iter().next().unwrap();
-                        let mut unmarked = 0;
-                        for (&n, &(x, y)) in &map[b_index] {
-                            if !board[x][y] {
-                                unmarked += *n;
-                            }
-                        }
-                        return unmarked * number;
-                    }
-                    loosing.remove(&b_index);
-                }
-            }
-            for col in 0..5 {
-                if (0..5).all(|x| board[x][col]) {
-                    // Found a complete column
-                    if loosing.len() == 1 {
-                        let mut unmarked = 0;
-                        for (&n, &(x, y)) in &map[b_index] {
-                            if !board[x][y] {
-                                unmarked += *n;
-                            }
-                        }
-                        return unmarked * number;
-                    }
-                    loosing.remove(&b_index);
-                }
-            }
+        } else {
+            // Otherwise remove winners
+            active.retain(|board| !board.wins(&drawn));
         }
     }
-    0
+    None
 }
 
 #[cfg(test)]
@@ -177,11 +150,11 @@ mod tests {
 
     #[test]
     fn test_part1_example() {
-        assert_eq!(part1(&gen(EXAMPLE_INPUT)), 4512);
+        assert_eq!(part1(&gen(EXAMPLE_INPUT)), Some(4512));
     }
 
     #[test]
     fn test_part2_example() {
-        assert_eq!(part2(&gen(EXAMPLE_INPUT)), 0);
+        assert_eq!(part2(&gen(EXAMPLE_INPUT)), Some(1924));
     }
 }

@@ -121,7 +121,7 @@ mod tests {
 
     #[test]
     fn test_calculate() {
-        // Checks result by stepping through 4 fish starting with a timer of 4 through to 28 days
+        // Checks result by stepping through fish starting with a timer of 4 through to 28 days
         assert_eq!(calculate(4, 0), 1);
         assert_eq!(calculate(4, 1), 1);
         assert_eq!(calculate(4, 2), 1);

@@ -45,7 +45,9 @@ fn calculate(timer: usize, days: usize) -> usize {
     let completed_cycles = 1 + (days_after_first_cycle / 7);
 
     // Total is 1 + for each completed cycle, how many fish given an initial timer of 8 based taking into account when it will be spawned
-    1 + (0..completed_cycles).map(|cycle| calculate(8, days_after_first_cycle - (cycle * 7))).sum::<usize>()
+    1 + (0..completed_cycles)
+        .map(|cycle| calculate(8, days_after_first_cycle - (cycle * 7)))
+        .sum::<usize>()
 }
 
 /// Optimised count of how many fish there will be after a certain number of days

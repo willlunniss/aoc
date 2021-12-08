@@ -6,12 +6,27 @@ fn gen(input: &str) -> Vec<isize> {
         .collect()
 }
 
+fn median(input: &Vec<isize>) -> isize {
+    let mut numbers = input.clone();
+    numbers.sort_unstable();
+    if numbers.len() % 2 == 0 {
+        (numbers[numbers.len() / 2] + numbers[(numbers.len() / 2) + 1]) / 2
+    } else {
+        numbers[numbers.len() / 2]
+    }
+}
+
+fn mean(numbers: &[isize]) -> isize {
+    numbers.iter().sum::<isize>() / numbers.len() as isize
+}
+
 #[aoc(day7, part1)]
-fn part1(input: &[isize]) -> isize {
-    let max = *input.iter().max().unwrap();
-    // For all positions between 0 and maximum
-    // Find the one the results in the minimum number of total moves
-    (0..=max)
+fn part1(input: &Vec<isize>) -> isize {
+    // With a linear cost of movement the median will ~minimise overall fuel usage
+    let median = median(input);
+    // Due to rounding it may be slightly off, so check it and +/- 1 either side
+    (-1..=1)
+        .map(|offset| median + offset)
         .map(|target| input.iter().map(|&start| isize::abs(start - target)).sum())
         .min()
         .unwrap()
@@ -19,16 +34,19 @@ fn part1(input: &[isize]) -> isize {
 
 #[aoc(day7, part2)]
 fn part2(input: &[isize]) -> isize {
-    let max = *input.iter().max().unwrap();
-    // For all positions between 0 and maximum
-    // Find the one the results in the minimum number of total moves
-    (0..=max)
+    // With a increasing cost of movement the mean will ~minimise overall fuel usage
+    let mean = mean(input);
+    // Due to rounding it may be slightly off, so check it and +/- 1 either side
+    (-1..=1)
+        .map(|offset| mean + offset)
         .map(|target| {
             input
                 .iter()
-                .map(|&start| 
-                    // Cost increased with every move
-                    (1..=isize::abs(start - target)).sum::<isize>())
+                .map(|&start| {
+                    // Cost increased with every move aka triangular numbers (1, 2, 3, 4 ...)
+                    let dist = isize::abs(start - target);
+                    dist * (dist + 1) / 2
+                })
                 .sum()
         })
         .min()

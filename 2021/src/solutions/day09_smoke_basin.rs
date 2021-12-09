@@ -20,16 +20,15 @@ fn gen(input: &str) -> VecGrid<u8> {
 
 /// Finds all of the low points defined by having a value that is less than each
 /// of their neighbours
-fn find_low_points(grid: &VecGrid<u8>) -> impl Iterator<Item = (Pos, u8)> + '_ {
+fn find_low_points(grid: &VecGrid<u8>) -> impl Iterator<Item = (Pos, &u8)> + '_ {
     grid.into_iter()
         .filter(|(pos, &value)| grid.neighbours(*pos).flatten().all(|x| value < x))
-        .map(|(pos, &value)| (pos, value))
 }
 
 #[aoc(day9, part1)]
-fn part1(input: &VecGrid<u8>) -> u8 {
+fn part1(input: &VecGrid<u8>) -> u32 {
     // Risk value is low point value + 1 summed for all low points
-    find_low_points(input).map(|(_, value)| value + 1).sum()
+    find_low_points(input).map(|(_, &value)| value as u32 + 1).sum()
 }
 
 #[aoc(day9, part2)]

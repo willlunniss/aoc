@@ -28,7 +28,9 @@ fn find_low_points(grid: &VecGrid<u8>) -> impl Iterator<Item = (Pos, &u8)> + '_ 
 #[aoc(day9, part1)]
 fn part1(input: &VecGrid<u8>) -> u32 {
     // Risk value is low point value + 1 summed for all low points
-    find_low_points(input).map(|(_, &value)| value as u32 + 1).sum()
+    find_low_points(input)
+        .map(|(_, &value)| value as u32 + 1)
+        .sum()
 }
 
 #[aoc(day9, part2)]

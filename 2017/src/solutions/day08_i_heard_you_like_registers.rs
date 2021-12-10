@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::str::FromStr;
 use strum_macros::EnumString;
 
 #[derive(Debug, EnumString)]
@@ -30,12 +29,12 @@ fn parse_instruction(s: &str) -> Instruction {
     let parts = s.split(' ').collect::<Vec<_>>();
     Instruction {
         r: parts[0],
-        op: Op::from_str(parts[1]).unwrap(),
-        value: parts[2].parse::<isize>().unwrap(),
+        op: parts[1].parse().unwrap(),
+        value: parts[2].parse().unwrap(),
         condition: Condition {
             cr: parts[4],
             test: parts[5],
-            value: parts[6].parse::<isize>().unwrap(),
+            value: parts[6].parse().unwrap(),
         },
     }
 }

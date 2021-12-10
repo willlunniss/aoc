@@ -2,10 +2,7 @@ use cached::proc_macro::cached;
 
 #[aoc_generator(day6)]
 fn gen(input: &str) -> Vec<usize> {
-    input
-        .split(',')
-        .map(|c| c.parse::<usize>().unwrap())
-        .collect()
+    input.split(',').map(|c| c.parse().unwrap()).collect()
 }
 
 #[aoc(day6, part1, simulate)]

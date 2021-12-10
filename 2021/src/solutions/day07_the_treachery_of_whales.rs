@@ -1,9 +1,6 @@
 #[aoc_generator(day7)]
 fn gen(input: &str) -> Vec<isize> {
-    input
-        .split(',')
-        .map(|x| x.parse::<isize>().unwrap())
-        .collect()
+    input.split(',').map(|x| x.parse().unwrap()).collect()
 }
 
 fn median(input: &Vec<isize>) -> isize {

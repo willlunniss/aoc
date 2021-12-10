@@ -2,10 +2,7 @@ use itertools::Itertools;
 
 #[aoc_generator(day1)]
 fn gen(input: &str) -> Vec<usize> {
-    input
-        .lines()
-        .map(|line| line.parse::<usize>().unwrap())
-        .collect()
+    input.lines().map(|line| line.parse().unwrap()).collect()
 }
 
 fn count_increments(depths: &[usize], window_size: usize) -> usize {

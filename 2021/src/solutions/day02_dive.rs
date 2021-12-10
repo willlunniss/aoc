@@ -1,4 +1,3 @@
-use std::str::FromStr;
 use strum_macros::EnumString;
 use utils::grid::{Direction, Pos};
 
@@ -20,7 +19,7 @@ impl Command {
     fn from(s: &str) -> Self {
         let parts = s.split(' ').collect::<Vec<_>>();
         Self {
-            action: Action::from_str(parts[0]).unwrap(),
+            action: parts[0].parse().unwrap(),
             units: parts[1].parse().unwrap(),
         }
     }

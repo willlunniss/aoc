@@ -25,13 +25,11 @@ impl FromStr for Bingo {
             .next()
             .unwrap()
             .split(',')
-            .map(|x| x.parse::<usize>().unwrap())
+            .map(|x| x.parse().unwrap())
             .collect();
 
         // Remaining sections has the boards
-        let boards = sections
-            .map(|section| section.parse::<Board>().unwrap())
-            .collect();
+        let boards = sections.map(|section| section.parse().unwrap()).collect();
 
         Ok(Self { numbers, boards })
     }
@@ -43,10 +41,7 @@ impl FromStr for Board {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         // Read in the grid into the 5x5 matrix value by value
         Ok(Self {
-            grid: Matrix5::from_iterator(
-                s.split_ascii_whitespace()
-                    .map(|x| x.parse::<usize>().unwrap()),
-            ),
+            grid: Matrix5::from_iterator(s.split_ascii_whitespace().map(|x| x.parse().unwrap())),
         })
     }
 }

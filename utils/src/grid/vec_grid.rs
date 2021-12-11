@@ -91,12 +91,25 @@ impl<V: Clone + Copy> VecGrid<V> {
     pub fn neighbours8(&self, pos: Pos) -> impl Iterator<Item = Option<V>> + '_ {
         pos.neighbours8().map(move |neighbour| self.get(neighbour))
     }
+
+    /// Gets the position and values of the 8 neighbours to the supplied position
+    pub fn neighbours8_ex(&self, pos: Pos) -> impl Iterator<Item = (Pos, Option<V>)> + '_ {
+        pos.neighbours8()
+            .map(move |neighbour| (neighbour, self.get(neighbour)))
+    }
 }
 
-impl<V> VecGrid<V> {
+impl<V: Clone> VecGrid<V> {
     /// Creates a new empty `VecGrid`
     pub fn new() -> Self {
         Self { data: Vec::new() }
+    }
+
+    /// Creates a new empty `VecGrid` of the specified size
+    pub fn new_sized(default: V, width: usize, height: usize) -> Self {
+        Self {
+            data: vec![vec![default; width]; height],
+        }
     }
 
     /// Creates a new `VecGrid` from an existing nested vector

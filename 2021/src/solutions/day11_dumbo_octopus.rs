@@ -17,85 +17,52 @@ fn gen(input: &str) -> VecGrid<u8> {
     )
 }
 
-#[aoc(day11, part1)]
-fn part1(input: &VecGrid<u8>) -> usize {
-    let mut levels = input.clone();
-    let mut next = VecGrid::new_sized(0, levels.width(), levels.height());
-    let mut flashes = 0;
-    for _step in 1..=100 {
-        // Increase energy level across the grid
-        // Check for flashes
-        let mut flash_que = Vec::new();
-        let mut flashed = HashSet::new();
-        for (pos, &value) in &levels {
-            next.insert(pos, value + 1);
-            if value == 9 {
-                flash_que.push(pos);
-            }
+fn step(grid: &mut VecGrid<u8>) -> usize {
+    let mut next = VecGrid::new_sized(0, grid.width(), grid.height());
+    let mut flash_que = Vec::new();
+    let mut flashed = HashSet::new();
+    // Increase energy level across the grid
+    for (pos, &value) in grid.into_iter() {
+        next.insert(pos, value + 1);
+        if value + 1 == 10 {
+            flash_que.push(pos);
         }
+    }
 
-        while let Some(pos) = flash_que.pop() {
-            if flashed.insert(pos) {
-                next.insert(pos, 0);
-                let affected = next.neighbours8_ex(pos).collect::<Vec<_>>();
-                for (neighbour, value) in affected {
-                    if let Some(value) = value {
-                        next.insert(neighbour, value + 1);
-                        if value == 9 {
-                            flash_que.push(neighbour);
-                        }
+    while let Some(pos) = flash_que.pop() {
+        if flashed.insert(pos) {
+            // For every new flash increment the energy level for all neighbours
+            let affected = next.neighbours8_ex(pos).collect::<Vec<_>>();
+            for (neighbour, value) in affected {
+                if let Some(value) = value {
+                    next.insert(neighbour, value + 1);
+                    // If they have flashed, add to queue to process
+                    if value + 1 == 10 {
+                        flash_que.push(neighbour);
                     }
                 }
             }
         }
-        for &pos in &flashed {
-            next.insert(pos, 0);
-        }
-        flashes += flashed.len();
-        mem::swap(&mut levels, &mut next);
     }
-    flashes
+    for &pos in &flashed {
+        next.insert(pos, 0);
+    }
+    mem::swap(grid, &mut next);
+    // Result is number of flashes this turn
+    flashed.len()
+}
+
+#[aoc(day11, part1)]
+fn part1(input: &VecGrid<u8>) -> usize {
+    let mut grid = input.clone();
+    (1..=100).fold(0, |acc, _| acc + step(&mut grid))
 }
 
 #[aoc(day11, part2)]
 fn part2(input: &VecGrid<u8>) -> Option<usize> {
-    let mut levels = input.clone();
-    let mut next = VecGrid::new_sized(0, levels.width(), levels.height());
-    for step in 1.. {
-        // Increase energy level across the grid
-        // Check for flashes
-        let mut flash_que = Vec::new();
-        let mut flashed = HashSet::new();
-        for (pos, &value) in &levels {
-            next.insert(pos, value + 1);
-            if value == 9 {
-                flash_que.push(pos);
-            }
-        }
-
-        while let Some(pos) = flash_que.pop() {
-            if flashed.insert(pos) {
-                next.insert(pos, 0);
-                let affected = next.neighbours8_ex(pos).collect::<Vec<_>>();
-                for (neighbour, value) in affected {
-                    if let Some(value) = value {
-                        next.insert(neighbour, value + 1);
-                        if value == 9 {
-                            flash_que.push(neighbour);
-                        }
-                    }
-                }
-            }
-        }
-        for &pos in &flashed {
-            next.insert(pos, 0);
-        }
-        if flashed.len() == 100 {
-            return Some(step);
-        }
-        mem::swap(&mut levels, &mut next);
-    }
-    None
+    let mut grid = input.clone();
+    let size = grid.width() * grid.height();
+    (1..).find(|_| step(&mut grid) == size)
 }
 
 #[cfg(test)]

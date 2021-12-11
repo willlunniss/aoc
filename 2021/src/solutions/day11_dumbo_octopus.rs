@@ -1,6 +1,5 @@
 use std::collections::HashSet;
 use utils::grid::VecGrid;
-use std::mem;
 
 #[aoc_generator(day11)]
 fn gen(input: &str) -> VecGrid<u8> {
@@ -18,13 +17,13 @@ fn gen(input: &str) -> VecGrid<u8> {
 }
 
 fn step(grid: &mut VecGrid<u8>) -> usize {
-    let mut next = VecGrid::new_sized(0, grid.width(), grid.height());
     let mut flash_que = Vec::new();
     let mut flashed = HashSet::new();
     // Increase energy level across the grid
-    for (pos, &value) in grid.into_iter() {
-        next.insert(pos, value + 1);
-        if value + 1 == 10 {
+    for pos in grid.indexes() {
+        grid[pos] += 1;
+        if grid[pos] == 10 {
+            // If they have flashed, add to queue to process
             flash_que.push(pos);
         }
     }
@@ -32,12 +31,11 @@ fn step(grid: &mut VecGrid<u8>) -> usize {
     while let Some(pos) = flash_que.pop() {
         if flashed.insert(pos) {
             // For every new flash increment the energy level for all neighbours
-            let affected = next.neighbours8_ex(pos).collect::<Vec<_>>();
-            for (neighbour, value) in affected {
-                if let Some(value) = value {
-                    next.insert(neighbour, value + 1);
-                    // If they have flashed, add to queue to process
-                    if value + 1 == 10 {
+            for neighbour in pos.neighbours8() {
+                if grid.contains(neighbour) {
+                    grid[neighbour] += 1;
+                    if grid[neighbour] == 10 {
+                        // If they have flashed, add to queue to process
                         flash_que.push(neighbour);
                     }
                 }
@@ -45,9 +43,8 @@ fn step(grid: &mut VecGrid<u8>) -> usize {
         }
     }
     for &pos in &flashed {
-        next.insert(pos, 0);
+        grid[pos] = 0;
     }
-    mem::swap(grid, &mut next);
     // Result is number of flashes this turn
     flashed.len()
 }

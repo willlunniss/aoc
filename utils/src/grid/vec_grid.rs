@@ -1,6 +1,8 @@
 use crate::grid::direction::Direction;
 use crate::grid::pos::Pos;
+use itertools::Itertools;
 use std::fmt::Display;
+use std::ops::{Index, IndexMut};
 use strum::IntoEnumIterator;
 
 /// Grid that uses nested vectors to store data of a known and fixed size
@@ -99,6 +101,20 @@ impl<V: Clone + Copy> VecGrid<V> {
     }
 }
 
+impl<V> Index<Pos> for VecGrid<V> {
+    type Output = V;
+
+    fn index(&self, index: Pos) -> &Self::Output {
+        &self.data[index.y as usize][index.x as usize]
+    }
+}
+
+impl<V> IndexMut<Pos> for VecGrid<V> {
+    fn index_mut(&mut self, index: Pos) -> &mut Self::Output {
+        &mut self.data[index.y as usize][index.x as usize]
+    }
+}
+
 impl<V: Clone> VecGrid<V> {
     /// Creates a new empty `VecGrid`
     pub fn new() -> Self {
@@ -117,6 +133,13 @@ impl<V: Clone> VecGrid<V> {
         Self { data }
     }
 
+    /// Returns an iterator will all indexes to valid items in the grid
+    pub fn indexes(&'_ self) -> impl Iterator<Item = Pos> {
+        (0..self.width())
+            .cartesian_product(0..self.height())
+            .map(|(x, y)| Pos::from((x, y)))
+    }
+
     /// Gets the width of the grid
     pub fn width(&self) -> usize {
         self.data[0].len()
@@ -125,6 +148,11 @@ impl<V: Clone> VecGrid<V> {
     /// Gets the height of the grid
     pub fn height(&self) -> usize {
         self.data.len()
+    }
+
+    // Gets the size of the grid
+    pub fn size(&self) -> usize {
+        self.width() * self.height()
     }
 
     /// Sets the value at the specified position

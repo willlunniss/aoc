@@ -26,6 +26,7 @@ jobs:
       if: matrix.year == '2018'
       uses: pavpanchekha/setup-z3@1.2.2
     - uses: actions/checkout@v2
+    - uses: Swatinem/rust-cache@v1
     - name: Build
       run: cargo build --manifest-path=$manifest
     - name: Run tests

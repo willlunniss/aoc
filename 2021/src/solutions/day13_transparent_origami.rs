@@ -1,9 +1,12 @@
+use itertools::Itertools;
 use utils::grid::{MapGrid, Pos};
+
+type FoldInstruction = (Axis, isize);
 
 #[derive(Debug, Clone)]
 struct Origami {
     points: Vec<Pos>,
-    folds: Vec<(Axis, isize)>,
+    folds: Vec<FoldInstruction>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -14,6 +17,7 @@ enum Axis {
 
 #[aoc_generator(day13)]
 fn gen(input: &str) -> Origami {
+    // Parse the input as a list of points and then a list of fold instructions
     let (points, folds) = input.split_once("\n\n").unwrap();
     Origami {
         points: points.lines().map(|line| line.parse().unwrap()).collect(),
@@ -31,62 +35,39 @@ fn gen(input: &str) -> Origami {
     }
 }
 
-fn fold(input: &Origami, single_fold: bool) -> MapGrid<char> {
-    static MARKER: char = '█';
-
-    // Build the initial grid
-    let mut grid = MapGrid::new();
-    for point in &input.points {
-        grid.insert(*point, MARKER);
+/// Folds a position over a line
+fn origami_fold(pos: Pos, fold: &FoldInstruction) -> Pos {
+    if fold.0 == Axis::Y && pos.y > fold.1 {
+        Pos::from((pos.x, fold.1 - (pos.y - fold.1)))
+    } else if fold.0 == Axis::X && pos.x > fold.1 {
+        Pos::from((fold.1 - (pos.x - fold.1), pos.y))
+    } else {
+        // No folding needed
+        pos
     }
-
-    // Fold it
-    for fold in &input.folds {
-        if fold.0 == Axis::Y {
-            // Find all points past the fold
-            let folded = grid
-                .keys()
-                .filter(|pos| pos.y > fold.1)
-                .copied()
-                .collect::<Vec<_>>();
-            for pos in folded {
-                // Remove the old position
-                grid.remove(&pos);
-                // Add a new one the other side of the fold
-                let new_y = fold.1 - (pos.y - fold.1);
-                grid.insert(Pos::from((pos.x, new_y)), MARKER);
-            }
-        } else {
-            // Find all points past the fold
-            let folded = grid
-                .keys()
-                .filter(|pos| pos.x > fold.1)
-                .copied()
-                .collect::<Vec<_>>();
-            for pos in folded {
-                // Remove the old position
-                grid.remove(&pos);
-                // Add a new one the other side of the fold
-                let new_x = fold.1 - (pos.x - fold.1);
-                grid.insert(Pos::from((new_x, pos.y)), MARKER);
-            }
-        }
-        if single_fold {
-            break;
-        }
-    }
-
-    grid
 }
 
 #[aoc(day13, part1)]
 fn part1(input: &Origami) -> usize {
-    fold(input, true).keys().len()
+    input
+        .points
+        .iter()
+        .map(|&pos| origami_fold(pos, &input.folds[0]))
+        .unique()
+        .count()
 }
 
 #[aoc(day13, part2)]
 fn part2(input: &Origami) -> String {
-    fold(input, false).print(' ');
+    let result = MapGrid::from_iter(
+        input
+            .points
+            .iter()
+            .map(|&pos| input.folds.iter().fold(pos, |pos, x| origami_fold(pos, x)))
+            .unique()
+            .map(|pos| (pos, '█')),
+    );
+    result.print(' ');
     println!();
     "↑ Check the printed image ↑".to_owned()
 }

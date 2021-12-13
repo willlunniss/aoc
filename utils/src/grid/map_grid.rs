@@ -51,6 +51,11 @@ impl<V: Clone> MapGrid<V> {
         self.data.insert(pos, value)
     }
 
+    /// Removes a key from the map, returning the value at the key if the key was previously in the map.
+    pub fn remove(&mut self, pos: &Pos) -> Option<V> {
+        self.data.remove(pos)
+    }
+
     /// Returns a reference to the value at the position
     pub fn get(&self, pos: &Pos) -> Option<&V> {
         self.data.get(pos)

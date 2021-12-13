@@ -133,7 +133,7 @@ impl<V: Clone> VecGrid<V> {
         Self { data }
     }
 
-    /// Returns an iterator will all indexes to valid items in the grid
+    /// Returns an iterator with all indexes to valid items in the grid
     pub fn indexes(&'_ self) -> impl Iterator<Item = Pos> {
         (0..self.width())
             .cartesian_product(0..self.height())

@@ -10,3 +10,4 @@ mod day09_smoke_basin;
 mod day10_syntax_scoring;
 mod day11_dumbo_octopus;
 mod day12_passage_pathing;
+mod day13_transparent_origami;

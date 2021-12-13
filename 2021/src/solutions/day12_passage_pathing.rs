@@ -1,6 +1,6 @@
+use cached::UnboundCache;
 use itertools::Itertools;
 use std::collections::HashMap;
-use std::collections::VecDeque;
 
 #[derive(Debug, Clone)]
 struct Cave<'a> {
@@ -74,6 +74,38 @@ fn gen(input: &str) -> HashMap<CaveId, Cave> {
     caves
 }
 
+cached_key! {
+    CACHE: UnboundCache<String, usize> = UnboundCache::new();
+    Key = { format!("{}{}{}", id, visited, used_extra_visit) };
+    fn explore(caves: &[Vec<CaveId>], target: CaveId, id: CaveId, visited: CaveId, used_extra_visit: bool) -> usize = {
+        // Perform a recursive DFS to find all paths from `id` to `target`
+        // Memoize the result given an `id`, 'set' of `visited` caches, and whether or not we have `used_extra_visit`
+        // to benefit from the fact that there are multiple paths that end in the same way
+        let mut paths = 0;
+        // Consider all the places we could move to from this cave
+        for &next_id in &caves[id as usize] {
+            if next_id == target {
+                // Found a complete path
+                paths += 1;
+                continue;
+            }
+            // See if we have been here yet
+            // Track which caves we have visited by setting a bit based on the cave id
+            if visited & (1 << next_id) == 0 {
+                // Haven't visited this small cave before, move into it recording that
+                // we have visited it
+                paths += explore(caves, target, next_id, visited | 1 << next_id, used_extra_visit);
+            } else if !used_extra_visit {
+                // Have visited this small cave before, but haven't used our extra visit yet
+                // Use it up and move into it
+                paths += explore(caves, target, next_id, visited, true);
+            }
+        }
+        // Finished exploring from this cave, return number of paths found
+        paths
+    }
+}
+
 /// Counts the number of distinct paths from `start` --> `end`
 ///
 /// For each path, big caves can be visited multiple times and small caves can be visited once
@@ -107,32 +139,8 @@ fn count_paths(input: &HashMap<CaveId, Cave>, extra_visit: bool) -> usize {
         caves[id as usize] = cave.connections;
     }
 
-    // Third stage - now we can finally count the paths
-    let mut queue = VecDeque::new();
-    let mut paths = 0;
-    queue.push_back((start_id, 0, !extra_visit));
-    while let Some((id, visited, used_extra_visit)) = queue.pop_front() {
-        // Consider all the places we could move to from this cave
-        for &next_id in &caves[id as usize] {
-            if next_id == end_id {
-                // Found a complete path
-                paths += 1;
-                continue;
-            }
-            // See if we have been here yet
-            // Track which caves we have visited by setting a bit based on the cave id
-            if visited & (1 << next_id) == 0 {
-                // Haven't visited this small cave before, move into it recording that
-                // we have visited it
-                queue.push_back((next_id, visited | 1 << next_id, used_extra_visit));
-            } else if !used_extra_visit {
-                // Have visited this small cave before, but haven't used our extra visit yet
-                // Use it up and move into it
-                queue.push_back((next_id, visited, true));
-            }
-        }
-    }
-    paths
+    // Third stage - now we can finally explore the caves
+    explore(&caves, end_id, start_id, 0, !extra_visit)
 }
 
 #[aoc(day12, part1)]

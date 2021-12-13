@@ -6,6 +6,9 @@ extern crate aoc_runner;
 extern crate lazy_static;
 
 #[macro_use]
+extern crate cached;
+
+#[macro_use]
 extern crate aoc_runner_derive;
 
 pub mod solutions;

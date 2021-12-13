@@ -1,7 +1,7 @@
 use crate::grid::Direction;
 use itertools::Itertools;
 use std::cmp::Ordering;
-use std::ops::Add;
+use std::ops::{Add, Sub};
 use std::{convert::Infallible, str::FromStr};
 
 /// (x, y) position for referencing values in a `MapGrid` or `VecGrid`
@@ -166,6 +166,28 @@ impl Add<(isize, isize)> for Pos {
         Self {
             x: self.x + other.0,
             y: self.y + other.1,
+        }
+    }
+}
+
+impl Sub<(isize, isize)> for Pos {
+    type Output = Self;
+
+    fn sub(self, other: (isize, isize)) -> Self {
+        Self {
+            x: self.x - other.0,
+            y: self.y - other.1,
+        }
+    }
+}
+
+impl Sub<(usize, usize)> for Pos {
+    type Output = Self;
+
+    fn sub(self, other: (usize, usize)) -> Self {
+        Self {
+            x: self.x - other.0 as isize,
+            y: self.y - other.1 as isize,
         }
     }
 }

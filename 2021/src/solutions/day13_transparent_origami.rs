@@ -1,5 +1,6 @@
 use itertools::Itertools;
-use utils::grid::{MapGrid, Pos};
+use utils::grid::Pos;
+use utils::ocr;
 
 type FoldInstruction = (Axis, isize);
 
@@ -58,18 +59,14 @@ fn part1(input: &Origami) -> usize {
 }
 
 #[aoc(day13, part2)]
-fn part2(input: &Origami) -> String {
-    let result = MapGrid::from_iter(
+fn part2(input: &Origami) -> Option<String> {
+    ocr::decode_points(
         input
             .points
             .iter()
             .map(|&pos| input.folds.iter().fold(pos, |pos, x| origami_fold(pos, x)))
-            .unique()
-            .map(|pos| (pos, '█')),
-    );
-    result.print(' ');
-    println!();
-    "↑ Check the printed image ↑".to_owned()
+            .unique(),
+    )
 }
 
 #[cfg(test)]
@@ -104,10 +101,5 @@ mod tests {
     #[test]
     fn test_part1_example() {
         assert_eq!(part1(&gen(EXAMPLE_INPUT)), 17);
-    }
-
-    #[test]
-    fn test_part2_example() {
-        assert_eq!(part2(&gen(EXAMPLE_INPUT)), "↑ Check the printed image ↑");
     }
 }

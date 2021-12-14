@@ -43,6 +43,13 @@ impl From<(usize, usize)> for Pos {
     }
 }
 
+impl TryFrom<Pos> for (usize, usize) {
+    type Error = std::num::TryFromIntError;
+    fn try_from(item: Pos) -> Result<(usize, usize), Self::Error> {
+        Ok((isize::try_into(item.x)?, isize::try_into(item.y)?))
+    }
+}
+
 impl PartialOrd for Pos {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))

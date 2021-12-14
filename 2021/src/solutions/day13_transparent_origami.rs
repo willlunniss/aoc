@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use utils::grid::Pos;
-use utils::ocr::OcrString;
+use utils::ocr::{OcrString, Point};
 
 type FoldInstruction = (Axis, isize);
 
@@ -65,6 +65,7 @@ fn part2(input: &Origami) -> String {
         .iter()
         .map(|&pos| input.folds.iter().fold(pos, |pos, x| origami_fold(pos, x)))
         .unique()
+        .map(|pos| Point::try_from(pos).unwrap())
         .collect::<OcrString>()
         .to_string()
 }

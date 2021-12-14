@@ -1,4 +1,3 @@
-use crate::grid::{Pos, VecGrid};
 use itertools::Itertools;
 use lazy_static;
 use std::collections::HashMap;
@@ -7,6 +6,7 @@ use std::iter::FromIterator;
 use std::{convert::Infallible, str::FromStr};
 
 type CharHash = u32;
+pub type Point = (usize, usize);
 
 const ALPHABET_6_4: [(char, &str); 18] = [
     ('A', ".##.\n#..#\n#..#\n####\n#..#\n#..#"),
@@ -34,7 +34,7 @@ lazy_static! {
         // Pre-compute the hashes for all known letters
         let mut m = HashMap::new();
         for (letter, s) in &ALPHABET_6_4 {
-            let code = hash_char(s.lines().enumerate().flat_map(|(y, line)| line.chars().enumerate().filter(|(_, c)| c == &'#').map(move |(x, _)| Pos::new(x, y))));
+            let code = hash_char(s.lines().enumerate().flat_map(|(y, line)| line.chars().enumerate().filter(|(_, c)| c == &'#').map(move |(x, _)| (x, y))));
             assert!(m.insert(code, *letter).is_none());
         }
         m
@@ -42,29 +42,21 @@ lazy_static! {
 }
 
 pub struct OcrString {
-    points: Vec<Vec<Pos>>,
-}
-
-impl FromIterator<Pos> for OcrString {
-    fn from_iter<I: IntoIterator<Item = Pos>>(iter: I) -> Self {
-        Self {
-            points: group_points(iter.into_iter()),
-        }
-    }
+    points: Vec<Vec<Point>>,
 }
 
 impl FromIterator<(isize, isize)> for OcrString {
     fn from_iter<I: IntoIterator<Item = (isize, isize)>>(iter: I) -> Self {
         Self {
-            points: group_points(iter.into_iter().map(|pos| Pos::from(pos))),
+            points: group_points(iter.into_iter().map(|(x, y)| (x as usize, y as usize))),
         }
     }
 }
 
-impl FromIterator<(usize, usize)> for OcrString {
-    fn from_iter<I: IntoIterator<Item = (usize, usize)>>(iter: I) -> Self {
+impl FromIterator<Point> for OcrString {
+    fn from_iter<I: IntoIterator<Item = Point>>(iter: I) -> Self {
         Self {
-            points: group_points(iter.into_iter().map(|pos| Pos::from(pos))),
+            points: group_points(iter.into_iter()),
         }
     }
 }
@@ -80,7 +72,7 @@ impl FromStr for OcrString {
                 line.chars()
                     .enumerate()
                     .filter(|(_, c)| c == &'#')
-                    .map(move |(x, _)| Pos::new(x, y))
+                    .map(move |(x, _)| (x, y))
             })
             .collect())
     }
@@ -121,21 +113,23 @@ impl OcrString {
                 CHAR_LOOKUP.get(&code).unwrap_or(&'?'),
                 group
             );
-            let mut grid = VecGrid::new_sized(' ', 4, 6);
-            for &point in group {
-                grid[point] = '#';
+            let mut grid = vec![vec![' '; 4]; 6];
+            for &(x, y) in group {
+                grid[y][x] = '#';
             }
-            grid.print();
+            for row in &grid {
+                println!("{}", row.iter().collect::<String>());
+            }
         }
     }
 }
 
 /// Groups points into to per-char groups
-fn group_points(points: impl Iterator<Item = Pos>) -> Vec<Vec<Pos>> {
+fn group_points(points: impl Iterator<Item = Point>) -> Vec<Vec<Point>> {
     let mut max_group = 0;
     let mut grouped_points = vec![Vec::new(); 16];
-    for (group, grouped) in &points.group_by(|point| (point.x / 5) as usize) {
-        grouped_points[group].extend(grouped.map(|pos| Pos::from((pos.x % 5, pos.y))));
+    for (group, grouped) in &points.group_by(|(x, _y)| (x / 5) as usize) {
+        grouped_points[group].extend(grouped.map(|(x, y)| (x % 5, y)));
         if group > max_group {
             max_group = group;
         }
@@ -144,10 +138,8 @@ fn group_points(points: impl Iterator<Item = Pos>) -> Vec<Vec<Pos>> {
 }
 
 /// Generates a uniq hash value for each char in the alphabet
-fn hash_char(points: impl Iterator<Item = Pos>) -> CharHash {
-    points.fold(0, |hash, pos| {
-        hash + (pos.y + 1) * (pos.x + 1) * (pos.x + (pos.y * 4))
-    }) as CharHash
+fn hash_char(points: impl Iterator<Item = Point>) -> CharHash {
+    points.fold(0, |hash, (x, y)| hash + (y + 1) * (x + 1) * (x + (y * 4))) as CharHash
 }
 
 #[cfg(test)]

@@ -1,6 +1,5 @@
 use crate::intcode::Intcode;
 use std::collections::HashMap;
-use utils::grid::Pos;
 use utils::ocr::OcrString;
 
 struct EmergencyHullPainingRobot {
@@ -83,11 +82,11 @@ impl EmergencyHullPainingRobot {
         grid
     }
 
-    fn get_painted_points(&self) -> impl Iterator<Item = Pos> + '_ {
+    fn get_painted_points(&self) -> impl Iterator<Item = (usize, usize)> + '_ {
         self.tiles
             .iter()
             .filter(|(_, &value)| value == 1)
-            .map(|(&(x, y), _)| Pos::from((x - 1, -y)))
+            .map(|(&(x, y), _)| ((x - 1) as usize, -y as usize))
     }
 }
 

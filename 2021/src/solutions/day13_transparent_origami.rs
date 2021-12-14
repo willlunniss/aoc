@@ -59,15 +59,14 @@ fn part1(input: &Origami) -> usize {
 }
 
 #[aoc(day13, part2)]
-fn part2(input: &Origami) -> Option<String> {
-    let ocr: OcrString = input
+fn part2(input: &Origami) -> String {
+    input
         .points
         .iter()
         .map(|&pos| input.folds.iter().fold(pos, |pos, x| origami_fold(pos, x)))
         .unique()
-        .collect();
-
-    ocr.decode()
+        .collect::<OcrString>()
+        .to_string()
 }
 
 #[cfg(test)]

@@ -1,3 +1,5 @@
+use utils::ocr::OcrString;
+
 #[aoc_generator(day8)]
 fn gen(input: &str) -> Vec<usize> {
     return input
@@ -50,19 +52,24 @@ fn part2(input: &[usize]) -> String {
     let height = 6;
     // Build the image
     let image = build_image(input, width, height);
-    // Print the image to the console
-    for row in image.chunks(width) {
-        print!("                  ");
-        for pixel in row.iter() {
-            match pixel {
-                1 => print!("█"),
-                _ => print!(" "),
-            }
-        }
-        println!();
-    }
-    println!();
-    "↑ Check the printed image ↑".to_owned()
+    // Decode the text
+    // Convert to list of points where text is
+    image
+        .chunks(width)
+        .enumerate()
+        .flat_map(|(y, row)| {
+            row.iter().enumerate().filter_map(
+                move |(x, &pixel)| {
+                    if pixel == 1 {
+                        Some((x, y))
+                    } else {
+                        None
+                    }
+                },
+            )
+        })
+        .collect::<OcrString>()
+        .to_string()
 }
 
 #[cfg(test)]

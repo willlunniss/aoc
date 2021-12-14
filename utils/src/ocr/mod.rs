@@ -2,6 +2,7 @@ use crate::grid::{Pos, VecGrid};
 use itertools::Itertools;
 use lazy_static;
 use std::collections::HashMap;
+use std::fmt;
 use std::iter::FromIterator;
 use std::{convert::Infallible, str::FromStr};
 
@@ -85,8 +86,13 @@ impl FromStr for OcrString {
     }
 }
 
+impl fmt::Display for OcrString {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.decode().unwrap())
+    }
+}
+
 impl OcrString {
-    #[must_use]
     /// Decodes the `OcrString` into a `String`
     pub fn decode(&self) -> Option<String> {
         // For each char group, workout what char it is
@@ -108,7 +114,13 @@ impl OcrString {
 
     pub fn debug_print(&self) {
         for (i, group) in self.points.iter().enumerate() {
-            println!("Char {}: {:?}", i, group);
+            let code = hash_char(group.iter().map(|&pos| pos));
+            println!(
+                "{} = {}: {:?}",
+                i,
+                CHAR_LOOKUP.get(&code).unwrap_or(&'?'),
+                group
+            );
             let mut grid = VecGrid::new_sized(' ', 4, 6);
             for &point in group {
                 grid[point] = '#';

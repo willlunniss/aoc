@@ -1,7 +1,7 @@
 use crate::intcode::Intcode;
 use std::collections::HashMap;
-use utils::ocr::OcrString;
 use utils::grid::Pos;
+use utils::ocr::OcrString;
 
 struct EmergencyHullPainingRobot {
     controller: Intcode,
@@ -83,8 +83,11 @@ impl EmergencyHullPainingRobot {
         grid
     }
 
-    fn get_painted_points(&self) -> impl Iterator <Item=Pos> + '_ {
-        self.tiles.iter().filter(|(_, &value)| value == 1).map(|(&(x, y), _)| Pos::from((x - 1, -y)))
+    fn get_painted_points(&self) -> impl Iterator<Item = Pos> + '_ {
+        self.tiles
+            .iter()
+            .filter(|(_, &value)| value == 1)
+            .map(|(&(x, y), _)| Pos::from((x - 1, -y)))
     }
 }
 
@@ -98,7 +101,7 @@ fn part1(input: &str) -> usize {
 }
 
 #[aoc(day11, part2)]
-fn part2(input: &str) -> Option<String> {
+fn part2(input: &str) -> String {
     // Create a new robot
     let mut robot = EmergencyHullPainingRobot::new(input);
     // Set the starting tile to white
@@ -106,6 +109,8 @@ fn part2(input: &str) -> Option<String> {
     // Paint the hull
     robot.paint();
     // Render the output
-    let ocr : OcrString = robot.get_painted_points().collect();
-    ocr.decode()
+    robot
+        .get_painted_points()
+        .collect::<OcrString>()
+        .to_string()
 }

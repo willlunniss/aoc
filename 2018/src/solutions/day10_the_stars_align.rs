@@ -1,5 +1,5 @@
 use std::{convert::Infallible, str::FromStr};
-use utils::grid::{MapGrid, Pos};
+use utils::ocr::OcrString;
 
 #[derive(Debug, Clone)]
 struct Point {
@@ -72,11 +72,12 @@ fn gen(input: &str) -> Vec<Point> {
 fn part1(input: &Vec<Point>) -> String {
     // Align the points
     let (_, aligned) = align(input);
-    // Print to the console
-    let grid = MapGrid::from_iter(aligned.iter().map(|point| (Pos::from(point.position), '█')));
-    grid.print(' ');
-
-    "↑ Check the printed image ↑".to_owned()
+    // Decode as a string
+    aligned
+        .iter()
+        .map(|point| point.position)
+        .collect::<OcrString>()
+        .to_string()
 }
 
 #[aoc(day10, part2)]

@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use lazy_static;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::iter::FromIterator;
 use std::{convert::Infallible, str::FromStr};
@@ -8,47 +8,41 @@ use std::{convert::Infallible, str::FromStr};
 type CharHash = u32;
 pub type Point = (usize, usize);
 
-const ALPHABET_6_4: [(char, &str); 18] = [
-    ('A', ".##.\n#..#\n#..#\n####\n#..#\n#..#"),
-    ('B', "###.\n#..#\n###.\n#..#\n#..#\n###."),
-    ('C', ".##.\n#..#\n#...\n#...\n#..#\n.##."),
-    ('E', "####\n#...\n###.\n#...\n#...\n####"),
-    ('F', "####\n#...\n###.\n#...\n#...\n#..."),
-    ('G', ".##.\n#..#\n#...\n#.##\n#..#\n.###"),
-    ('H', "#..#\n#..#\n####\n#..#\n#..#\n#..#"),
-    ('I', ".###\n..#.\n..#.\n..#.\n..#.\n.###"),
-    ('J', "..##\n...#\n...#\n...#\n#..#\n.##."),
-    ('K', "#..#\n#.#.\n##..\n#.#.\n#.#.\n#..#"),
-    ('L', "#...\n#...\n#...\n#...\n#...\n####"),
-    ('O', ".##.\n#..#\n#..#\n#..#\n#..#\n.##."),
-    ('P', "###.\n#..#\n#..#\n###.\n#...\n#..."),
-    ('R', "###.\n#..#\n#..#\n###.\n#.#.\n#..#"),
-    ('S', ".###\n#...\n#...\n.##.\n...#\n###."),
-    ('U', "#..#\n#..#\n#..#\n#..#\n#..#\n.##."),
-    ('Y', "#...\n#...\n.#.#\n..#.\n..#.\n..#."),
-    ('Z', "####\n...#\n..#.\n.#..\n#...\n####"),
+#[derive(Clone)]
+enum Font {
+    Mode6x4,
+    Mode10x6,
+}
+
+const ALPHABETS: [(Font, &str, &str); 2] = [
+    (Font::Mode6x4, "ABCEFGHIJKLOPRSUYZ", include_str!("6x4.txt")),
+    (Font::Mode10x6, "ABCEFGHJKLNPRXZ", include_str!("10x6.txt")),
 ];
 
 lazy_static! {
     static ref CHAR_LOOKUP: HashMap<CharHash, char> = {
         // Pre-compute the hashes for all known letters
         let mut m = HashMap::new();
-        for (letter, s) in &ALPHABET_6_4 {
-            let code = hash_char(s.lines().enumerate().flat_map(|(y, line)| line.chars().enumerate().filter(|(_, c)| c == &'#').map(move |(x, _)| (x, y))));
-            assert!(m.insert(code, *letter).is_none());
+        for (_font, chars, dictionary) in ALPHABETS {
+            // Parse the dictionary which will group points
+            let ocr = dictionary.parse::<OcrString>().unwrap();
+            for (points, letter) in ocr.grouped.iter().zip(chars.chars()) {
+                let code = hash_char(points.iter());
+                assert!(m.insert(code, letter).is_none());
+            }
         }
         m
     };
 }
 
 pub struct OcrString {
-    points: Vec<Vec<Point>>,
+    grouped: Vec<HashSet<Point>>,
 }
 
 impl FromIterator<(isize, isize)> for OcrString {
     fn from_iter<I: IntoIterator<Item = (isize, isize)>>(iter: I) -> Self {
         Self {
-            points: group_points(iter.into_iter().map(|(x, y)| (x as usize, y as usize))),
+            grouped: group_points(iter.into_iter().map(|(x, y)| (x as usize, y as usize))),
         }
     }
 }
@@ -56,7 +50,7 @@ impl FromIterator<(isize, isize)> for OcrString {
 impl FromIterator<Point> for OcrString {
     fn from_iter<I: IntoIterator<Item = Point>>(iter: I) -> Self {
         Self {
-            points: group_points(iter.into_iter()),
+            grouped: group_points(iter.into_iter()),
         }
     }
 }
@@ -89,31 +83,30 @@ impl OcrString {
     pub fn decode(&self) -> Option<String> {
         // For each char group, workout what char it is
         let mut result: Vec<char> = Vec::new();
-        for group in self.points.iter() {
-            let code = hash_char(group.iter().map(|&pos| pos));
-            result.push(*CHAR_LOOKUP.get(&code)?);
-        }
-        if result.len() != self.len() {
-            return None;
+        for group in self.grouped.iter() {
+            let code = hash_char(group.iter());
+            result.push(*CHAR_LOOKUP.get(&code).unwrap_or(&'?'));
         }
         Some(result.iter().collect())
     }
 
     /// Gets the number of chars that make up this `OcrString`
     pub fn len(&self) -> usize {
-        self.points.len()
+        self.grouped.len()
     }
 
     pub fn debug_print(&self) {
-        for (i, group) in self.points.iter().enumerate() {
-            let code = hash_char(group.iter().map(|&pos| pos));
+        for (i, group) in self.grouped.iter().enumerate() {
+            let code = hash_char(group.iter());
             println!(
-                "{} = {}: {:?}",
+                "{}: {} = {}: {} {:?}",
                 i,
+                code,
                 CHAR_LOOKUP.get(&code).unwrap_or(&'?'),
+                group.len(),
                 group
             );
-            let mut grid = vec![vec![' '; 4]; 6];
+            let mut grid = vec![vec![' '; 6]; 10];
             for &(x, y) in group {
                 grid[y][x] = '#';
             }
@@ -125,11 +118,31 @@ impl OcrString {
 }
 
 /// Groups points into to per-char groups
-fn group_points(points: impl Iterator<Item = Point>) -> Vec<Vec<Point>> {
+fn group_points(points: impl Iterator<Item = Point>) -> Vec<HashSet<Point>> {
+    // FIXME: Do this in a lot fewer passes over the points
+    // May just get rid of automatic detection and require 6x4 vs 10x6 to be specified
+    // First phase - work out the font type
+    let points = points.collect::<Vec<_>>();
+    let (_, min_y) = points.iter().min_by_key(|(_w, h)| h).unwrap();
+    let (min_x, _) = points.iter().min_by_key(|(w, _h)| w).unwrap();
+    let (_, max_y) = points.iter().max_by_key(|(_w, h)| h).unwrap();
+    let split = match max_y - min_y {
+        5 => 5,
+        9 => 8,
+        height => panic!(
+            "Unexpected font size - detected height as {} with min {:?}",
+            height,
+            (min_x, min_y),
+        ),
+    };
+    // Second phase, group the points
     let mut max_group = 0;
-    let mut grouped_points = vec![Vec::new(); 16];
-    for (group, grouped) in &points.group_by(|(x, _y)| (x / 5) as usize) {
-        grouped_points[group].extend(grouped.map(|(x, y)| (x % 5, y)));
+    let mut grouped_points = vec![HashSet::new(); 26];
+    for (group, grouped) in &points
+        .iter()
+        .group_by(|(x, _y)| ((x - min_x) / split) as usize)
+    {
+        grouped_points[group].extend(grouped.map(|(x, y)| ((x - min_x) % split, *y - min_y)));
         if group > max_group {
             max_group = group;
         }
@@ -138,8 +151,8 @@ fn group_points(points: impl Iterator<Item = Point>) -> Vec<Vec<Point>> {
 }
 
 /// Generates a uniq hash value for each char in the alphabet
-fn hash_char(points: impl Iterator<Item = Point>) -> CharHash {
-    points.fold(0, |hash, (x, y)| hash + (y + 1) * (x + 1) * (x + (y * 4))) as CharHash
+fn hash_char<'a>(points: impl Iterator<Item = &'a Point>) -> CharHash {
+    points.fold(0, |hash, (x, y)| hash + ((y + 1) * (x + 1) * (x + (y * 4)))) as CharHash
 }
 
 #[cfg(test)]
@@ -148,7 +161,7 @@ mod tests {
     use indoc::indoc;
 
     #[test]
-    fn test_generated_hashes() {
+    fn test_6x4() {
         static SAMPLE: &str = indoc! {"
         .##..###..#..#...##.####.###...##...##.
         #..#.#..#.#.#.....#.#....#..#.#..#.#..#
@@ -158,7 +171,27 @@ mod tests {
         #..#.###..#..#..##..#....###...###..##.
         "};
         let ocr: OcrString = SAMPLE.parse().unwrap();
+        ocr.debug_print();
         assert_eq!(ocr.len(), 8);
         assert_eq!(ocr.decode(), Some("ABKJFBGC".to_owned()));
+    }
+
+    #[test]
+    fn test_10x6() {
+        static SAMPLE: &str = indoc! {"
+        #....#..######...####...#....#..#####...#####...######..#####.
+        #....#..#.......#....#..#....#..#....#..#....#.......#..#....#
+        .#..#...#.......#........#..#...#....#..#....#.......#..#....#
+        .#..#...#.......#........#..#...#....#..#....#......#...#....#
+        ..##....#####...#.........##....#####...#####......#....#####
+        ..##....#.......#.........##....#....#..#.........#.....#....#
+        .#..#...#.......#........#..#...#....#..#........#......#....#
+        .#..#...#.......#........#..#...#....#..#.......#.......#....#
+        #....#..#.......#....#..#....#..#....#..#.......#.......#....#
+        #....#..######...####...#....#..#####...#.......######..#####.
+        "};
+        let ocr: OcrString = SAMPLE.parse().unwrap();
+        assert_eq!(ocr.len(), 8);
+        assert_eq!(ocr.decode(), Some("XECXBPZB".to_owned()));
     }
 }

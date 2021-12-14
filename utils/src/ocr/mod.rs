@@ -1,7 +1,9 @@
-use crate::grid::Pos;
+use crate::grid::{Pos, VecGrid};
 use itertools::Itertools;
 use lazy_static;
 use std::collections::HashMap;
+use std::iter::FromIterator;
+use std::{convert::Infallible, str::FromStr};
 
 type CharHash = u32;
 
@@ -38,38 +40,95 @@ lazy_static! {
     };
 }
 
-/// Decodes an ASCII art string where '#' is used to draw the letters
-pub fn decode(ascii_art: &str) -> Option<String> {
-    decode_points(ascii_art.lines().enumerate().flat_map(|(y, line)| {
-        line.chars()
-            .enumerate()
-            .filter(|(_, c)| c == &'#')
-            .map(move |(x, _)| Pos::new(x, y))
-    }))
+pub struct OcrString {
+    points: Vec<Vec<Pos>>,
 }
 
-/// Decodes a Iterator of points
-pub fn decode_points(points: impl Iterator<Item = Pos>) -> Option<String> {
-    // Group points into separate per-char groups
-    let mut grouped_points = vec![Vec::new(); 16];
-    for (group, grouped) in &points.group_by(|point| point.x / 5) {
-        grouped_points[group as usize].extend(grouped);
+impl FromIterator<Pos> for OcrString {
+    fn from_iter<I: IntoIterator<Item = Pos>>(iter: I) -> Self {
+        Self {
+            points: group_points(iter.into_iter()),
+        }
+    }
+}
+
+impl FromIterator<(isize, isize)> for OcrString {
+    fn from_iter<I: IntoIterator<Item = (isize, isize)>>(iter: I) -> Self {
+        Self {
+            points: group_points(iter.into_iter().map(|pos| Pos::from(pos))),
+        }
+    }
+}
+
+impl FromIterator<(usize, usize)> for OcrString {
+    fn from_iter<I: IntoIterator<Item = (usize, usize)>>(iter: I) -> Self {
+        Self {
+            points: group_points(iter.into_iter().map(|pos| Pos::from(pos))),
+        }
+    }
+}
+
+impl FromStr for OcrString {
+    type Err = Infallible;
+
+    /// Builds an `OcrString` from ASCII art string where '#' is used to draw the letters
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(s.lines()
+            .enumerate()
+            .flat_map(|(y, line)| {
+                line.chars()
+                    .enumerate()
+                    .filter(|(_, c)| c == &'#')
+                    .map(move |(x, _)| Pos::new(x, y))
+            })
+            .collect())
+    }
+}
+
+impl OcrString {
+    #[must_use]
+    /// Decodes the `OcrString` into a `String`
+    pub fn decode(&self) -> Option<String> {
+        // For each char group, workout what char it is
+        let mut result: Vec<char> = Vec::new();
+        for group in self.points.iter() {
+            let code = hash_char(group.iter().map(|&pos| pos));
+            result.push(*CHAR_LOOKUP.get(&code)?);
+        }
+        if result.len() != self.len() {
+            return None;
+        }
+        Some(result.iter().collect())
     }
 
-    // For each char group, workout what char it is
-    let mut result: Vec<char> = Vec::new();
-    for (char_index, grouped) in grouped_points
-        .iter()
-        .enumerate()
-        .filter(|(_, x)| !x.is_empty())
-    {
-        let code = hash_char(grouped.iter().map(|&pos| pos - (5 * char_index, 0)));
-        result.push(*CHAR_LOOKUP.get(&code)?);
+    /// Gets the number of chars that make up this `OcrString`
+    pub fn len(&self) -> usize {
+        self.points.len()
     }
-    if result.is_empty() {
-        return None;
+
+    pub fn debug_print(&self) {
+        for (i, group) in self.points.iter().enumerate() {
+            println!("Char {}: {:?}", i, group);
+            let mut grid = VecGrid::new_sized(' ', 4, 6);
+            for &point in group {
+                grid[point] = '#';
+            }
+            grid.print();
+        }
     }
-    Some(result.iter().collect())
+}
+
+/// Groups points into to per-char groups
+fn group_points(points: impl Iterator<Item = Pos>) -> Vec<Vec<Pos>> {
+    let mut max_group = 0;
+    let mut grouped_points = vec![Vec::new(); 16];
+    for (group, grouped) in &points.group_by(|point| (point.x / 5) as usize) {
+        grouped_points[group].extend(grouped.map(|pos| Pos::from((pos.x % 5, pos.y))));
+        if group > max_group {
+            max_group = group;
+        }
+    }
+    return grouped_points.drain(0..=max_group).collect();
 }
 
 /// Generates a uniq hash value for each char in the alphabet
@@ -94,6 +153,8 @@ mod tests {
         #..#.#..#.#.#..#..#.#....#..#.#..#.#..#
         #..#.###..#..#..##..#....###...###..##.
         "};
-        assert_eq!(decode(SAMPLE), Some("ABKJFBGC".to_owned()));
+        let ocr: OcrString = SAMPLE.parse().unwrap();
+        assert_eq!(ocr.len(), 8);
+        assert_eq!(ocr.decode(), Some("ABKJFBGC".to_owned()));
     }
 }

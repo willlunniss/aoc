@@ -1,5 +1,7 @@
 use crate::intcode::Intcode;
 use std::collections::HashMap;
+use utils::ocr::OcrString;
+use utils::grid::Pos;
 
 struct EmergencyHullPainingRobot {
     controller: Intcode,
@@ -57,6 +59,7 @@ impl EmergencyHullPainingRobot {
     }
 
     /// Returns a nested vector represented what has been painted
+    #[allow(dead_code)]
     fn get_painted(&self) -> Vec<Vec<isize>> {
         // 1st pass: Find the size of the grid needed
         let (mut min_x, mut max_x, mut min_y, mut max_y) = (0, 0, 0, 0);
@@ -79,6 +82,10 @@ impl EmergencyHullPainingRobot {
         }
         grid
     }
+
+    fn get_painted_points(&self) -> impl Iterator <Item=Pos> + '_ {
+        self.tiles.iter().filter(|(_, &value)| value == 1).map(|(&(x, y), _)| Pos::from((x - 1, -y)))
+    }
 }
 
 #[aoc(day11, part1)]
@@ -91,7 +98,7 @@ fn part1(input: &str) -> usize {
 }
 
 #[aoc(day11, part2)]
-fn part2(input: &str) -> String {
+fn part2(input: &str) -> Option<String> {
     // Create a new robot
     let mut robot = EmergencyHullPainingRobot::new(input);
     // Set the starting tile to white
@@ -99,17 +106,6 @@ fn part2(input: &str) -> String {
     // Paint the hull
     robot.paint();
     // Render the output
-    let grid = robot.get_painted();
-    for row in grid.iter() {
-        print!("           ");
-        for pixel in row.iter() {
-            match pixel {
-                1 => print!("█"),
-                _ => print!(" "),
-            }
-        }
-        println!();
-    }
-    println!();
-    "↑ Check the printed image ↑".to_owned()
+    let ocr : OcrString = robot.get_painted_points().collect();
+    ocr.decode()
 }

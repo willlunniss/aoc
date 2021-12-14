@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use utils::grid::Pos;
-use utils::ocr;
+use utils::ocr::OcrString;
 
 type FoldInstruction = (Axis, isize);
 
@@ -60,13 +60,14 @@ fn part1(input: &Origami) -> usize {
 
 #[aoc(day13, part2)]
 fn part2(input: &Origami) -> Option<String> {
-    ocr::decode_points(
-        input
-            .points
-            .iter()
-            .map(|&pos| input.folds.iter().fold(pos, |pos, x| origami_fold(pos, x)))
-            .unique(),
-    )
+    let ocr: OcrString = input
+        .points
+        .iter()
+        .map(|&pos| input.folds.iter().fold(pos, |pos, x| origami_fold(pos, x)))
+        .unique()
+        .collect();
+
+    ocr.decode()
 }
 
 #[cfg(test)]

@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use lazy_static;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
@@ -37,21 +36,19 @@ lazy_static! {
 
 pub struct OcrString {
     grouped: Vec<HashSet<Point>>,
+    height: usize,
 }
 
 impl FromIterator<(isize, isize)> for OcrString {
     fn from_iter<I: IntoIterator<Item = (isize, isize)>>(iter: I) -> Self {
-        Self {
-            grouped: group_points(iter.into_iter().map(|(x, y)| (x as usize, y as usize))),
-        }
+        OcrString::new_without_bounds(iter.into_iter().map(|(x, y)| (x as usize, y as usize)))
+            .unwrap()
     }
 }
 
 impl FromIterator<Point> for OcrString {
     fn from_iter<I: IntoIterator<Item = Point>>(iter: I) -> Self {
-        Self {
-            grouped: group_points(iter.into_iter()),
-        }
+        OcrString::new_without_bounds(iter.into_iter()).unwrap()
     }
 }
 
@@ -60,25 +57,66 @@ impl FromStr for OcrString {
 
     /// Builds an `OcrString` from ASCII art string where '#' is used to draw the letters
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(s.lines()
-            .enumerate()
-            .flat_map(|(y, line)| {
-                line.chars()
-                    .enumerate()
-                    .filter(|(_, c)| c == &'#')
-                    .map(move |(x, _)| (x, y))
-            })
-            .collect())
-    }
-}
-
-impl fmt::Display for OcrString {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.decode().unwrap())
+        let height = s.lines().count();
+        let points = s.lines().enumerate().flat_map(|(y, line)| {
+            line.chars()
+                .enumerate()
+                .filter(|(_, c)| c == &'#')
+                .map(move |(x, _)| (x, y))
+        });
+        Ok(OcrString::new(points, (0, 0), height).unwrap())
     }
 }
 
 impl OcrString {
+    /// Creates a new `OcrString` from Points with a known top left corner `origin` and font `height`
+    fn new(points: impl Iterator<Item = Point>, origin: Point, height: usize) -> Option<Self> {
+        let (min_x, min_y) = origin;
+        let split = match height {
+            6 => 5,
+            10 => 8,
+            _ => {
+                panic!("Unexpected font size using height of {}", height);
+            }
+        };
+        // Group the points - shifting their coordinates as needed
+        let mut grouped = Vec::new();
+        for (x_orig, y_orig) in points {
+            // First shift to give an effective origin of (0, 0)
+            let (x, y) = (x_orig - min_x, y_orig - min_y);
+            // Then group by the char they are part of
+            let group = x / split;
+            while group >= grouped.len() {
+                grouped.push(HashSet::new());
+            }
+            grouped[group].insert((x % split, y));
+        }
+
+        Some(Self { grouped, height })
+    }
+
+    /// Creates a new `OcrString` from Points without any prior knowledge about where they are and what font is used
+    fn new_without_bounds(points: impl Iterator<Item = Point>) -> Option<Self> {
+        // First work out where the chars start (in terms of the top left of the first char) and how heigh they are
+        let points = points.collect::<Vec<_>>();
+        let mut min_x = usize::MAX;
+        let mut min_y = usize::MAX;
+        let mut max_y = 0;
+        for &(x, y) in points.iter() {
+            if x < min_x {
+                min_x = x;
+            }
+            if y < min_y {
+                min_y = y;
+            } else if y > max_y {
+                max_y = y;
+            }
+        }
+        let height = max_y - min_y + 1;
+        // Now create a new `OcrString`
+        OcrString::new(points.into_iter(), (min_x, min_y), height)
+    }
+
     /// Decodes the `OcrString` into a `String`
     pub fn decode(&self) -> Option<String> {
         // For each char group, workout what char it is
@@ -96,6 +134,7 @@ impl OcrString {
     }
 
     pub fn debug_print(&self) {
+        println!("OcrString: Font height: {}", self.height);
         for (i, group) in self.grouped.iter().enumerate() {
             let code = hash_char(group.iter());
             println!(
@@ -106,7 +145,7 @@ impl OcrString {
                 group.len(),
                 group
             );
-            let mut grid = vec![vec![' '; 6]; 10];
+            let mut grid = vec![vec![' '; 6]; self.height];
             for &(x, y) in group {
                 grid[y][x] = '#';
             }
@@ -117,37 +156,10 @@ impl OcrString {
     }
 }
 
-/// Groups points into to per-char groups
-fn group_points(points: impl Iterator<Item = Point>) -> Vec<HashSet<Point>> {
-    // FIXME: Do this in a lot fewer passes over the points
-    // May just get rid of automatic detection and require 6x4 vs 10x6 to be specified
-    // First phase - work out the font type
-    let points = points.collect::<Vec<_>>();
-    let (_, min_y) = points.iter().min_by_key(|(_w, h)| h).unwrap();
-    let (min_x, _) = points.iter().min_by_key(|(w, _h)| w).unwrap();
-    let (_, max_y) = points.iter().max_by_key(|(_w, h)| h).unwrap();
-    let split = match max_y - min_y {
-        5 => 5,
-        9 => 8,
-        height => panic!(
-            "Unexpected font size - detected height as {} with min {:?}",
-            height,
-            (min_x, min_y),
-        ),
-    };
-    // Second phase, group the points
-    let mut max_group = 0;
-    let mut grouped_points = vec![HashSet::new(); 26];
-    for (group, grouped) in &points
-        .iter()
-        .group_by(|(x, _y)| ((x - min_x) / split) as usize)
-    {
-        grouped_points[group].extend(grouped.map(|(x, y)| ((x - min_x) % split, *y - min_y)));
-        if group > max_group {
-            max_group = group;
-        }
+impl fmt::Display for OcrString {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.decode().unwrap())
     }
-    return grouped_points.drain(0..=max_group).collect();
 }
 
 /// Generates a uniq hash value for each char in the alphabet
@@ -161,7 +173,7 @@ mod tests {
     use indoc::indoc;
 
     #[test]
-    fn test_6x4() {
+    fn test_6x4_str() {
         static SAMPLE: &str = indoc! {"
         .##..###..#..#...##.####.###...##...##.
         #..#.#..#.#.#.....#.#....#..#.#..#.#..#
@@ -171,13 +183,44 @@ mod tests {
         #..#.###..#..#..##..#....###...###..##.
         "};
         let ocr: OcrString = SAMPLE.parse().unwrap();
-        ocr.debug_print();
         assert_eq!(ocr.len(), 8);
+        assert_eq!(ocr.height, 6);
         assert_eq!(ocr.decode(), Some("ABKJFBGC".to_owned()));
     }
 
     #[test]
-    fn test_10x6() {
+    fn test_6x4_points() {
+        static SAMPLE: &str = indoc! {"
+        .............................................
+        .............................................
+        .............................................
+        ....##..###..#..#...##.####.###...##...##....
+        ...#..#.#..#.#.#.....#.#....#..#.#..#.#..#...
+        ...#..#.###..##......#.###..###..#....#......
+        ...####.#..#.#.#.....#.#....#..#.#.##.#......
+        ...#..#.#..#.#.#..#..#.#....#..#.#..#.#..#...
+        ...#..#.###..#..#..##..#....###...###..##....
+        .............................................
+        .............................................
+        .............................................
+        "};
+        let ocr: OcrString = SAMPLE
+            .lines()
+            .enumerate()
+            .flat_map(|(y, line)| {
+                line.chars()
+                    .enumerate()
+                    .filter(|(_, c)| c == &'#')
+                    .map(move |(x, _)| (x, y))
+            })
+            .collect();
+        assert_eq!(ocr.len(), 8);
+        assert_eq!(ocr.height, 6);
+        assert_eq!(ocr.decode(), Some("ABKJFBGC".to_owned()));
+    }
+
+    #[test]
+    fn test_10x6_str() {
         static SAMPLE: &str = indoc! {"
         #....#..######...####...#....#..#####...#####...######..#####.
         #....#..#.......#....#..#....#..#....#..#....#.......#..#....#
@@ -192,6 +235,7 @@ mod tests {
         "};
         let ocr: OcrString = SAMPLE.parse().unwrap();
         assert_eq!(ocr.len(), 8);
+        assert_eq!(ocr.height, 10);
         assert_eq!(ocr.decode(), Some("XECXBPZB".to_owned()));
     }
 }

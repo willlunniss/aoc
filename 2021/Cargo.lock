@@ -13,6 +13,7 @@ dependencies = [
  "itertools",
  "lazy_static",
  "nalgebra",
+ "num-integer",
  "rayon",
  "strum",
  "strum_macros",

@@ -1,3 +1,4 @@
+use num_integer::Integer;
 use std::collections::{HashMap, HashSet};
 use utils::grid::Pos;
 use utils::grid::VecGrid;
@@ -21,8 +22,8 @@ fn gen(input: &str) -> VecGrid<u8> {
 fn dijkstra(map: &VecGrid<u8>) -> Option<usize> {
     let target = Pos::from((map.width() - 1, map.height() - 1));
 
-    // Initialise to max cost for each point
-    let mut costs = VecGrid::new_sized(usize::MAX, map.width(), map.height());
+    // Initialise to max risk for each point
+    let mut risks = VecGrid::new_sized(usize::MAX, map.width(), map.height());
     // Not having visited anywhere
     let mut unvisisted = map.indexes().collect::<HashSet<_>>();
 
@@ -43,9 +44,9 @@ fn dijkstra(map: &VecGrid<u8>) -> Option<usize> {
                 if unvisisted.contains(&next) {
                     // Not explored yet
                     let new_risk = total_risk + risk as usize;
-                    if costs[next] > new_risk {
+                    if risks[next] > new_risk {
                         // Got here with a better risk level
-                        costs[next] = new_risk;
+                        risks[next] = new_risk;
                         candidates.insert(next, new_risk);
                     }
                 }
@@ -71,12 +72,9 @@ fn part2(input: &VecGrid<u8>) -> usize {
         for col in 0..5_u8 {
             let shift = (row as usize * input.width(), col as usize * input.height());
             for (pos, value) in input {
-                let new_value = if value + row + col > 9 {
-                    ((value + row + col) % 10) + 1
-                } else {
-                    value + row + col
-                };
-                map.insert(pos + shift, new_value);
+                // Increase the value, wrapping back around to 1 when it gets above 9
+                let (div, rem) = (value + row + col).div_mod_floor(&10);
+                map.insert(pos + shift, div + rem);
             }
         }
     }

@@ -25,6 +25,15 @@ impl FromStr for Pos {
     }
 }
 
+impl From<(i32, i32)> for Pos {
+    fn from(item: (i32, i32)) -> Self {
+        Self {
+            x: item.0 as isize,
+            y: item.1 as isize,
+        }
+    }
+}
+
 impl From<(isize, isize)> for Pos {
     fn from(item: (isize, isize)) -> Self {
         Self {

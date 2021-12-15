@@ -1,5 +1,5 @@
 use num_integer::Integer;
-use std::collections::{HashMap, HashSet};
+use pathfinding::prelude::dijkstra;
 use utils::grid::Pos;
 use utils::grid::VecGrid;
 
@@ -19,49 +19,26 @@ fn gen(input: &str) -> VecGrid<u8> {
 }
 
 /// Find the 'lowest risk' path from top left to bottom right corner based
-fn dijkstra(map: &VecGrid<u8>) -> Option<usize> {
-    let target = Pos::from((map.width() - 1, map.height() - 1));
-
-    // Initialise to max risk for each point
-    let mut risks = VecGrid::new_sized(usize::MAX, map.width(), map.height());
-    // Not having visited anywhere
-    let mut unvisisted = map.indexes().collect::<HashSet<_>>();
-
-    // Places to consider exploring next, starting at (0,0)
-    let mut candidates: HashMap<Pos, usize> = HashMap::new();
-    candidates.insert(Pos::new(0, 0), 0);
-    while !candidates.is_empty() {
-        // Explore the candidate with the lowest risk next
-        let (&pos, &total_risk) = candidates.iter().min_by_key(|(_, &risk)| risk).unwrap();
-        candidates.remove(&pos);
-
-        if pos == target {
-            // Done!
-            return Some(total_risk);
-        }
-        for (_, next, risk) in map.neighbours_ex(pos) {
-            if let Some(risk) = risk {
-                if unvisisted.contains(&next) {
-                    // Not explored yet
-                    let new_risk = total_risk + risk as usize;
-                    if risks[next] > new_risk {
-                        // Got here with a better risk level
-                        risks[next] = new_risk;
-                        candidates.insert(next, new_risk);
-                    }
-                }
-            }
-        }
-        // Finished visiting this position
-        unvisisted.remove(&pos);
-    }
-    None
+/// using pathfinding's dijkstra implementation
+fn lowest_risk_path(map: &VecGrid<u8>) -> Option<(Vec<Pos>, usize)> {
+    let target = Pos::new(map.width() - 1, map.height() - 1);
+    dijkstra(
+        &Pos::new(0, 0),
+        |&p| {
+            map.neighbours_ex(p)
+                .filter(|(_, _, risk)| risk.is_some())
+                .map(|(_, pos, risk)| (pos, risk.unwrap() as usize))
+                .collect::<Vec<(Pos, usize)>>()
+        },
+        |p| *p == target,
+    )
 }
 
 #[aoc(day15, part1)]
 fn part1(input: &VecGrid<u8>) -> usize {
     // Find the lowest risk path
-    dijkstra(input).unwrap()
+    let (_path, risk) = lowest_risk_path(input).unwrap();
+    risk
 }
 
 #[aoc(day15, part2)]
@@ -78,9 +55,9 @@ fn part2(input: &VecGrid<u8>) -> usize {
             }
         }
     }
-
     // Find the lowest risk path
-    dijkstra(&map).unwrap()
+    let (_path, risk) = lowest_risk_path(&map).unwrap();
+    risk
 }
 
 #[cfg(test)]

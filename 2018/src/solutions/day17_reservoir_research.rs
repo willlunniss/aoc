@@ -101,28 +101,27 @@ fn fill(map: &mut MapGrid<char>, from: &Pos, max_y: isize) -> usize {
 
 #[aoc_generator(day17)]
 fn gen(input: &str) -> MapGrid<char> {
-    MapGrid::from_iter(
-        input
-            .lines()
-            .flat_map(|line| {
-                // Turn x=495, y=2..7 or y=7, x=495..501 into a Vec of points where there is clay
-                // Get the parts e.g. for x=495, y=2..7 we get (x, 495, y, 2, 7)
-                let (fixed_axis, fixed_value, _range_axis, range_start, range_end) = line
-                    .split(&['=', ',', ' ', '.'][..])
-                    .filter(|p| !p.is_empty())
-                    .collect_tuple()
-                    .unwrap();
-                let range = range_start.parse().unwrap()..=range_end.parse().unwrap();
-                if fixed_axis == "x" {
-                    let x: usize = fixed_value.parse().unwrap();
-                    range.map(|y| Pos::new(x, y)).collect::<Vec<Pos>>()
-                } else {
-                    let y: usize = fixed_value.parse().unwrap();
-                    range.map(|x| Pos::new(x, y)).collect::<Vec<Pos>>()
-                }
-            })
-            .map(move |pos| (pos, '#')), // Represent each point as # for clay
-    )
+    input
+        .lines()
+        .flat_map(|line| {
+            // Turn x=495, y=2..7 or y=7, x=495..501 into a Vec of points where there is clay
+            // Get the parts e.g. for x=495, y=2..7 we get (x, 495, y, 2, 7)
+            let (fixed_axis, fixed_value, _range_axis, range_start, range_end) = line
+                .split(&['=', ',', ' ', '.'][..])
+                .filter(|p| !p.is_empty())
+                .collect_tuple()
+                .unwrap();
+            let range = range_start.parse().unwrap()..=range_end.parse().unwrap();
+            if fixed_axis == "x" {
+                let x: usize = fixed_value.parse().unwrap();
+                range.map(|y| Pos::new(x, y)).collect::<Vec<Pos>>()
+            } else {
+                let y: usize = fixed_value.parse().unwrap();
+                range.map(|x| Pos::new(x, y)).collect::<Vec<Pos>>()
+            }
+        })
+        .map(move |pos| (pos, '#')) // Represent each point as # for clay
+        .collect()
 }
 
 #[aoc(day17, part1)]

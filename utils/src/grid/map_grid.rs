@@ -16,18 +16,20 @@ impl<V: Clone> Default for MapGrid<V> {
     }
 }
 
+impl<V> FromIterator<(Pos, V)> for MapGrid<V> {
+    /// Creates a new `MapGrid` from an iterator
+    fn from_iter<I: IntoIterator<Item = (Pos, V)>>(iter: I) -> Self {
+        Self {
+            data: HashMap::from_iter(iter),
+        }
+    }
+}
+
 impl<V: Clone> MapGrid<V> {
     /// Creates a new empty `MapGrid`
     pub fn new() -> Self {
         Self {
             data: HashMap::new(),
-        }
-    }
-
-    /// Creates a new `MapGrid` from an iterator
-    pub fn from_iter(iter: impl IntoIterator<Item = (Pos, V)>) -> Self {
-        Self {
-            data: HashMap::from_iter(iter),
         }
     }
 

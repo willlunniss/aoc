@@ -12,3 +12,4 @@ mod day11_dumbo_octopus;
 mod day12_passage_pathing;
 mod day13_transparent_origami;
 mod day14_extended_polymerization;
+mod day15_chiton;

@@ -177,6 +177,39 @@ impl Add<(isize, isize)> for Pos {
     }
 }
 
+impl Add<(usize, usize)> for Pos {
+    type Output = Self;
+
+    fn add(self, other: (usize, usize)) -> Self {
+        Self {
+            x: self.x + other.0 as isize,
+            y: self.y + other.1 as isize,
+        }
+    }
+}
+
+impl Add<(u32, u32)> for Pos {
+    type Output = Self;
+
+    fn add(self, other: (u32, u32)) -> Self {
+        Self {
+            x: self.x + other.0 as isize,
+            y: self.y + other.1 as isize,
+        }
+    }
+}
+
+impl Add<(i32, i32)> for Pos {
+    type Output = Self;
+
+    fn add(self, other: (i32, i32)) -> Self {
+        Self {
+            x: self.x + other.0 as isize,
+            y: self.y + other.1 as isize,
+        }
+    }
+}
+
 impl Sub<(isize, isize)> for Pos {
     type Output = Self;
 

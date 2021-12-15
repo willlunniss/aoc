@@ -4,16 +4,7 @@ use utils::grid::VecGrid;
 #[aoc_generator(day11)]
 fn gen(input: &str) -> VecGrid<u8> {
     // Read in the grid, treating each char as a u8
-    VecGrid::from(
-        input
-            .lines()
-            .map(|line| {
-                line.chars()
-                    .map(|c| char::to_digit(c, 10).unwrap() as u8)
-                    .collect::<Vec<_>>()
-            })
-            .collect(),
-    )
+    input.parse().unwrap()
 }
 
 fn step(grid: &mut VecGrid<u8>) -> usize {

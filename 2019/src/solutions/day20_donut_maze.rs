@@ -113,7 +113,7 @@ fn solve_maze(map: &VecGrid<char>, recursive: bool) -> usize {
 
 #[aoc_generator(day20)]
 fn gen(input: &str) -> VecGrid<char> {
-    VecGrid::from(input.lines().map(|line| line.chars().collect()).collect())
+    input.parse().unwrap()
 }
 
 #[aoc(day20, part1)]

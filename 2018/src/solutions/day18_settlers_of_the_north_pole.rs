@@ -68,7 +68,7 @@ fn simulate(input: &VecGrid<char>, minutes: usize) -> usize {
 
 #[aoc_generator(day18)]
 fn gen(input: &str) -> VecGrid<char> {
-    VecGrid::from(input.lines().map(|line| line.chars().collect()).collect())
+    input.parse().unwrap()
 }
 
 #[aoc(day18, part1)]

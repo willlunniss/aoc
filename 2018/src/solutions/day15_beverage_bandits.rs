@@ -211,7 +211,7 @@ fn fight(input: &VecGrid<char>, elf_attack: usize, abort_on_elf_death: bool) -> 
 
 #[aoc_generator(day15)]
 fn gen(input: &str) -> VecGrid<char> {
-    VecGrid::from(input.lines().map(|line| line.chars().collect()).collect())
+    input.parse().unwrap()
 }
 
 #[aoc(day15, part1)]

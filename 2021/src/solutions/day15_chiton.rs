@@ -6,16 +6,7 @@ use utils::grid::VecGrid;
 #[aoc_generator(day15)]
 fn gen(input: &str) -> VecGrid<u8> {
     // Read in the grid, treating each char as a u8
-    VecGrid::from(
-        input
-            .lines()
-            .map(|line| {
-                line.chars()
-                    .map(|c| char::to_digit(c, 10).unwrap() as u8)
-                    .collect::<Vec<_>>()
-            })
-            .collect(),
-    )
+    input.parse().unwrap()
 }
 
 /// Find the 'lowest risk' path from top left to bottom right corner based

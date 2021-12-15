@@ -3,6 +3,7 @@ use crate::grid::pos::Pos;
 use itertools::Itertools;
 use std::fmt::Display;
 use std::ops::{Index, IndexMut};
+use std::{convert::Infallible, str::FromStr};
 use strum::IntoEnumIterator;
 
 /// Grid that uses nested vectors to store data of a known and fixed size
@@ -115,6 +116,45 @@ impl<V> IndexMut<Pos> for VecGrid<V> {
     }
 }
 
+impl FromStr for VecGrid<char> {
+    type Err = Infallible;
+
+    /// Creates a new `VecGrid` from an ASCII grid
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self {
+            data: s
+                .lines()
+                .map(|line| line.chars().collect::<Vec<_>>())
+                .collect(),
+        })
+    }
+}
+
+impl FromStr for VecGrid<u8> {
+    type Err = Infallible;
+
+    /// Creates a new `VecGrid` from an ASCII grid, treating each char as a digit
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self {
+            data: s
+                .lines()
+                .map(|line| {
+                    line.chars()
+                        .map(|c| char::to_digit(c, 10).unwrap() as u8)
+                        .collect::<Vec<_>>()
+                })
+                .collect(),
+        })
+    }
+}
+
+impl<V> From<Vec<Vec<V>>> for VecGrid<V> {
+    /// Creates a new `VecGrid` from an existing nested vector
+    fn from(data: Vec<Vec<V>>) -> Self {
+        Self { data }
+    }
+}
+
 impl<V: Clone> VecGrid<V> {
     /// Creates a new empty `VecGrid`
     pub fn new() -> Self {
@@ -126,11 +166,6 @@ impl<V: Clone> VecGrid<V> {
         Self {
             data: vec![vec![default; width]; height],
         }
-    }
-
-    /// Creates a new `VecGrid` from an existing nested vector
-    pub fn from(data: Vec<Vec<V>>) -> Self {
-        Self { data }
     }
 
     /// Returns an iterator with all indexes to valid items in the grid

@@ -112,7 +112,7 @@ fn simulate(carts: &BTreeMap<Pos, Cart>, tracks: &VecGrid<char>, remove_on_crash
 #[aoc_generator(day13)]
 fn gen(input: &str) -> (BTreeMap<Pos, Cart>, VecGrid<char>) {
     // Load the input into a map
-    let mut tracks = VecGrid::from(input.lines().map(|line| line.chars().collect()).collect());
+    let mut tracks = input.parse::<VecGrid<char>>().unwrap();
     // Find all the carts and store in a map sorted by position
     let carts = tracks
         .into_iter()

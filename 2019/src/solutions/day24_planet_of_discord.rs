@@ -26,7 +26,7 @@ const fn next_state(current: char, adjacent_bugs: usize) -> char {
 
 #[aoc_generator(day24)]
 fn gen(input: &str) -> VecGrid<char> {
-    VecGrid::from(input.lines().map(|line| line.chars().collect()).collect())
+    input.parse().unwrap()
 }
 
 #[aoc(day24, part1)]
@@ -54,7 +54,7 @@ fn part1(input: &VecGrid<char>) -> usize {
 #[aoc(day24, part2)]
 fn part2(input: &VecGrid<char>) -> usize {
     // Create a default (empty) grid for use when moving into new levels
-    let mut default = VecGrid::from(vec![vec!['.'; 5]; 5]);
+    let mut default = VecGrid::new_sized('.', 5, 5);
 
     // Mark the center tile in the default and our initial input as recursing
     let center = Pos::new(2, 2);

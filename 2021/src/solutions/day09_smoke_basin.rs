@@ -6,16 +6,7 @@ use utils::grid::{Pos, VecGrid};
 #[aoc_generator(day9)]
 fn gen(input: &str) -> VecGrid<u8> {
     // Read in the grid, treating each char as a u8
-    VecGrid::from(
-        input
-            .lines()
-            .map(|line| {
-                line.chars()
-                    .map(|c| char::to_digit(c, 10).unwrap() as u8)
-                    .collect::<Vec<_>>()
-            })
-            .collect(),
-    )
+    input.parse().unwrap()
 }
 
 /// Finds all of the low points defined by having a value that is less than each

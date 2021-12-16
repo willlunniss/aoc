@@ -13,3 +13,4 @@ mod day12_passage_pathing;
 mod day13_transparent_origami;
 mod day14_extended_polymerization;
 mod day15_chiton;
+mod day16_packet_decoder;

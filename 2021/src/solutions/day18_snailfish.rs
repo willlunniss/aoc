@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use std::fmt;
 
 #[derive(Clone, PartialEq)]
-struct SailFishNumber {
+struct Number {
     x: Element,
     y: Element,
 }
@@ -18,7 +18,7 @@ enum ReduceResult {
 #[derive(Clone, PartialEq)]
 enum Element {
     Regular(u32),
-    Pair(Box<SailFishNumber>),
+    Pair(Box<Number>),
 }
 
 impl fmt::Debug for Element {
@@ -30,13 +30,13 @@ impl fmt::Debug for Element {
     }
 }
 
-impl fmt::Debug for SailFishNumber {
+impl fmt::Debug for Number {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "[{:?},{:?}]", self.x, self.y)
     }
 }
 
-impl SailFishNumber {
+impl Number {
     /// Adds a number and reduces the result
     fn add(self, added: Self) -> Self {
         let mut number = Self {
@@ -55,27 +55,17 @@ impl SailFishNumber {
     }
 
     fn magnitude(&self) -> u32 {
-        let x = match &self.x {
-            Element::Regular(value) => *value,
-            Element::Pair(number) => number.magnitude(),
-        };
-        let y = match &self.y {
-            Element::Regular(value) => *value,
-            Element::Pair(number) => number.magnitude(),
-        };
-        (3 * x) + (2 * y)
+        (3 * self.x.magnitude()) + (2 * self.y.magnitude())
     }
 
     fn allocate_exploded_y(&mut self, leftover: u32) -> u32 {
-        match &self.x {
-            Element::Regular(value) => {
-                self.x = Element::Regular(*value + leftover);
+        match self.x {
+            Element::Regular(ref mut value) => {
+                *value += leftover;
                 return 0;
             }
-            Element::Pair(number) => {
-                let mut number = *number.clone();
+            Element::Pair(ref mut number) => {
                 let remaining = number.allocate_exploded_y(leftover);
-                self.x = Element::Pair(Box::new(number));
                 if remaining == 0 {
                     return 0;
                 }
@@ -85,15 +75,13 @@ impl SailFishNumber {
     }
 
     fn allocate_exploded_x(&mut self, leftover: u32) -> u32 {
-        match &self.y {
-            Element::Regular(value) => {
-                self.y = Element::Regular(*value + leftover);
+        match self.y {
+            Element::Regular(ref mut value) => {
+                *value += leftover;
                 return 0;
             }
-            Element::Pair(number) => {
-                let mut number = *number.clone();
+            Element::Pair(ref mut number) => {
                 let remaining = number.allocate_exploded_x(leftover);
-                self.y = Element::Pair(Box::new(number));
                 if remaining == 0 {
                     return 0;
                 }
@@ -111,43 +99,15 @@ impl SailFishNumber {
     }
 
     fn split(&mut self) -> ReduceResult {
-        match &self.x {
-            Element::Regular(value) => {
-                if *value >= 10 {
-                    self.x = Element::split(*value);
-                    return ReduceResult::Split;
-                }
-            }
-            Element::Pair(number) => {
-                let mut number = *number.clone();
-                let reduced = number.split();
-                self.x = Element::Pair(Box::new(number));
-                if let ReduceResult::Split = reduced {
-                    return reduced;
-                }
-            }
+        if self.x.split() || self.y.split() {
+            ReduceResult::Split
+        } else {
+            ReduceResult::Reduced
         }
-        match &self.y {
-            Element::Regular(value) => {
-                if *value >= 10 {
-                    self.y = Element::split(*value);
-                    return ReduceResult::Split;
-                }
-            }
-            Element::Pair(number) => {
-                let mut number = *number.clone();
-                let reduced = number.split();
-                self.y = Element::Pair(Box::new(number));
-                if let ReduceResult::Split = reduced {
-                    return reduced;
-                }
-            }
-        }
-        ReduceResult::Reduced
     }
 
     fn explode(&mut self, depth: usize) -> ReduceResult {
-        if let Element::Pair(number) = &self.x {
+        if let Element::Pair(ref mut number) = self.x {
             if depth == 3 {
                 // Explode
                 let mut y = 0;
@@ -160,54 +120,28 @@ impl SailFishNumber {
                 };
                 self.x = Element::Regular(0);
                 // Try to allocate y to the right
-                match &self.y {
-                    Element::Regular(has) => {
-                        //println!("Allocating {} right to {}", y, has);
-                        self.y = Element::Regular(has + y);
-                        return ReduceResult::Exploded((x, 0));
-                    }
-                    Element::Pair(other_number) => {
-                        let mut other_number = *other_number.clone();
-                        let remaining = other_number.allocate_exploded_y(y);
-                        self.y = Element::Pair(Box::new(other_number));
-                        if remaining == 0 {
+                if self.y.try_allocate_right(y) {
+                    return ReduceResult::Exploded((x, 0));
+                }
+                // Failed to allocate, pass up the chain
+                return ReduceResult::Exploded((x, y));
+            }
+            let reduced = number.explode(depth + 1);
+            if reduced != ReduceResult::Reduced {
+                if let ReduceResult::Exploded((x, y)) = reduced {
+                    if y > 0 {
+                        // Try to allocate y to the right
+                        if self.y.try_allocate_right(y) {
                             return ReduceResult::Exploded((x, 0));
                         }
                         // Failed to allocate, pass up the chain
                         return ReduceResult::Exploded((x, y));
                     }
                 }
-            }
-            let mut number = *number.clone();
-            let reduced = number.explode(depth + 1);
-            self.x = Element::Pair(Box::new(number));
-            if reduced != ReduceResult::Reduced {
-                if let ReduceResult::Exploded((x, y)) = reduced {
-                    if y > 0 {
-                        // Try to allocate y to the right
-                        match &self.y {
-                            Element::Regular(has) => {
-                                //println!("Allocating {} right to {}", y, has);
-                                self.y = Element::Regular(has + y);
-                                return ReduceResult::Exploded((x, 0));
-                            }
-                            Element::Pair(other_number) => {
-                                let mut other_number = *other_number.clone();
-                                let remaining = other_number.allocate_exploded_y(y);
-                                self.y = Element::Pair(Box::new(other_number));
-                                if remaining == 0 {
-                                    return ReduceResult::Exploded((x, 0));
-                                }
-                                // Failed to allocate, pass up the chain
-                                return ReduceResult::Exploded((x, y));
-                            }
-                        }
-                    }
-                }
                 return reduced;
             }
         }
-        if let Element::Pair(number) = &self.y {
+        if let Element::Pair(ref mut number) = self.y {
             if depth == 3 {
                 // Explode
                 let mut y = 0;
@@ -220,46 +154,22 @@ impl SailFishNumber {
                 };
                 self.y = Element::Regular(0);
                 // Try to allocate x to the left
-                match &self.x {
-                    Element::Regular(has) => {
-                        self.x = Element::Regular(has + x);
-                        return ReduceResult::Exploded((0, y));
-                    }
-                    Element::Pair(other_number) => {
-                        let mut other_number = *other_number.clone();
-                        let remaining = other_number.allocate_exploded_x(x);
-                        self.x = Element::Pair(Box::new(other_number));
-                        if remaining == 0 {
-                            return ReduceResult::Exploded((0, y));
-                        }
-                        // Failed to allocate, pass up the chain
-                        return ReduceResult::Exploded((x, y));
-                    }
+                if self.x.try_allocate_left(x) {
+                    return ReduceResult::Exploded((0, y));
                 }
+                // Failed to allocate, pass up the chain
+                return ReduceResult::Exploded((x, y));
             }
-            let mut number = *number.clone();
             let reduced = number.explode(depth + 1);
-            self.y = Element::Pair(Box::new(number));
             if reduced != ReduceResult::Reduced {
                 if let ReduceResult::Exploded((x, y)) = reduced {
                     if x > 0 {
                         // Try to allocate x to the left
-                        match &self.x {
-                            Element::Regular(has) => {
-                                self.x = Element::Regular(has + x);
-                                return ReduceResult::Exploded((0, y));
-                            }
-                            Element::Pair(other_number) => {
-                                let mut other_number = *other_number.clone();
-                                let remaining = other_number.allocate_exploded_x(x);
-                                if remaining == 0 {
-                                    self.x = Element::Pair(Box::new(other_number));
-                                    return ReduceResult::Exploded((0, y));
-                                }
-                                // Failed to allocate, pass up the chain
-                                return ReduceResult::Exploded((x, y));
-                            }
+                        if self.x.try_allocate_left(x) {
+                            return ReduceResult::Exploded((0, y));
                         }
+                        // Failed to allocate, pass up the chain
+                        return ReduceResult::Exploded((x, y));
                     }
                 }
                 return reduced;
@@ -271,18 +181,66 @@ impl SailFishNumber {
 
 impl Element {
     /// Split's a Regular Element into a Pair of elements
-    fn split(value: u32) -> Self {
+    fn split_value(value: u32) -> Self {
         let v1 = value / 2;
         let v2 = (value / 2) + (value % 2);
-        Self::Pair(Box::new(SailFishNumber {
+        Self::Pair(Box::new(Number {
             x: Self::Regular(v1),
             y: Self::Regular(v2),
         }))
     }
+
+    fn try_allocate_left(&mut self, amount: u32) -> bool {
+        // Try to allocate to the left
+        match self {
+            Element::Regular(value) => {
+                *value += amount;
+                true
+            }
+            Element::Pair(number) => {
+                let remaining = number.allocate_exploded_x(amount);
+                remaining == 0
+            }
+        }
+    }
+
+    fn try_allocate_right(&mut self, amount: u32) -> bool {
+        // Try to allocate to the left
+        match self {
+            Element::Regular(value) => {
+                *value += amount;
+                true
+            }
+            Element::Pair(number) => {
+                let remaining = number.allocate_exploded_y(amount);
+                remaining == 0
+            }
+        }
+    }
+
+    fn split(&mut self) -> bool {
+        match self {
+            Element::Regular(value) => {
+                if *value >= 10 {
+                    *self = Self::split_value(*value);
+                    return true;
+                }
+                false
+            }
+            Element::Pair(number) => number.split() == ReduceResult::Split,
+        }
+    }
+
+    fn magnitude(&self) -> u32 {
+        match self {
+            Element::Regular(value) => *value,
+            Element::Pair(number) => number.magnitude(),
+        }
+    }
 }
 
-/// Recursively parse a `SailFishNumber`
-fn parse(iter: &mut std::iter::Peekable<impl Iterator<Item = char>>) -> SailFishNumber {
+/// Recursively parse a `Number`
+fn parse(iter: &mut std::iter::Peekable<impl Iterator<Item = char>>) -> Number {
     assert_eq!(iter.next().unwrap(), '[');
     let x = if let Some('[') = iter.peek() {
         Element::Pair(Box::new(parse(iter)))
@@ -296,11 +254,11 @@ fn parse(iter: &mut std::iter::Peekable<impl Iterator<Item = char>>) -> SailFish
         Element::Regular(iter.next().unwrap().to_digit(10).unwrap())
     };
     assert_eq!(iter.next().unwrap(), ']');
-    SailFishNumber { x, y }
+    Number { x, y }
 }
 
 #[aoc_generator(day18)]
-fn gen(input: &str) -> VecDeque<SailFishNumber> {
+fn gen(input: &str) -> VecDeque<Number> {
     input
         .lines()
         .map(|line| parse(&mut line.chars().peekable()))
@@ -308,7 +266,7 @@ fn gen(input: &str) -> VecDeque<SailFishNumber> {
 }
 
 #[aoc(day18, part1)]
-fn part1(input: &VecDeque<SailFishNumber>) -> u32 {
+fn part1(input: &VecDeque<Number>) -> u32 {
     let mut numbers = input.clone();
 
     // Add all numbers together
@@ -321,7 +279,7 @@ fn part1(input: &VecDeque<SailFishNumber>) -> u32 {
 }
 
 #[aoc(day18, part2)]
-fn part2(input: &VecDeque<SailFishNumber>) -> u32 {
+fn part2(input: &VecDeque<Number>) -> u32 {
     // Find which permutation of two numbers results in the biggest magnitude
     input
         .iter()

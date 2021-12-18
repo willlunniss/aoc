@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use rayon::prelude::*;
 use std::collections::VecDeque;
 use std::fmt;
 
@@ -58,38 +59,6 @@ impl Number {
         (3 * self.x.magnitude()) + (2 * self.y.magnitude())
     }
 
-    fn allocate_exploded_y(&mut self, leftover: u32) -> u32 {
-        match self.x {
-            Element::Regular(ref mut value) => {
-                *value += leftover;
-                return 0;
-            }
-            Element::Pair(ref mut number) => {
-                let remaining = number.allocate_exploded_y(leftover);
-                if remaining == 0 {
-                    return 0;
-                }
-            }
-        }
-        leftover
-    }
-
-    fn allocate_exploded_x(&mut self, leftover: u32) -> u32 {
-        match self.y {
-            Element::Regular(ref mut value) => {
-                *value += leftover;
-                return 0;
-            }
-            Element::Pair(ref mut number) => {
-                let remaining = number.allocate_exploded_x(leftover);
-                if remaining == 0 {
-                    return 0;
-                }
-            }
-        }
-        leftover
-    }
-
     fn reduce(&mut self) -> ReduceResult {
         let result = self.explode(0);
         if let ReduceResult::Reduced = result {
@@ -99,7 +68,7 @@ impl Number {
     }
 
     fn split(&mut self) -> ReduceResult {
-        if self.x.split() || self.y.split() {
+        if self.x.split_if_needed() || self.y.split_if_needed() {
             ReduceResult::Split
         } else {
             ReduceResult::Reduced
@@ -190,35 +159,40 @@ impl Element {
         }))
     }
 
+    /// Try to allocate an `amount` to the left (of an explosion)
+    ///
+    /// Returns `true` if it is allocated, `false` if not
     fn try_allocate_left(&mut self, amount: u32) -> bool {
-        // Try to allocate to the left
         match self {
             Element::Regular(value) => {
                 *value += amount;
                 true
             }
             Element::Pair(number) => {
-                let remaining = number.allocate_exploded_x(amount);
-                remaining == 0
+                number.y.try_allocate_left(amount) || number.x.try_allocate_left(amount)
             }
         }
     }
 
+    /// Try to allocate an `amount` to the right (of an explosion)
+    ///
+    /// Returns `true` if it is allocated, `false` if not
     fn try_allocate_right(&mut self, amount: u32) -> bool {
-        // Try to allocate to the left
         match self {
             Element::Regular(value) => {
                 *value += amount;
                 true
             }
             Element::Pair(number) => {
-                let remaining = number.allocate_exploded_y(amount);
-                remaining == 0
+                number.x.try_allocate_right(amount) || number.y.try_allocate_right(amount)
             }
         }
     }
 
-    fn split(&mut self) -> bool {
+    /// Recursively splits elements if needed
+    ///
+    /// Returns `true` if or any sub ones were split, `false` if it was not
+    fn split_if_needed(&mut self) -> bool {
         match self {
             Element::Regular(value) => {
                 if *value >= 10 {
@@ -231,6 +205,7 @@ impl Element {
         }
     }
 
+    /// Recursively calculates the magnitude of the number
     fn magnitude(&self) -> u32 {
         match self {
             Element::Regular(value) => *value,
@@ -281,9 +256,9 @@ fn part1(input: &VecDeque<Number>) -> u32 {
 #[aoc(day18, part2)]
 fn part2(input: &VecDeque<Number>) -> u32 {
     // Find which permutation of two numbers results in the biggest magnitude
-    input
-        .iter()
-        .permutations(2)
+    let permutations = input.iter().permutations(2).collect::<Vec<_>>();
+    permutations
+        .par_iter()
         .map(|numbers| {
             let (&a, &b) = numbers.iter().collect_tuple().unwrap();
             a.clone().add(b.clone()).magnitude()

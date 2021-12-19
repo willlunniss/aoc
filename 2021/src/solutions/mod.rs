@@ -16,3 +16,4 @@ mod day15_chiton;
 mod day16_packet_decoder;
 mod day17_trick_shot;
 mod day18_snailfish;
+mod day19_beacon_scanner;

@@ -38,28 +38,27 @@ impl fmt::Debug for Number {
 }
 
 impl Number {
-    /// Adds a number and reduces the result
+    /// Adds a number, reduces the result, and then returns it
     fn add(self, added: Self) -> Self {
         let mut number = Self {
             x: Element::Pair(Box::new(self)),
             y: Element::Pair(Box::new(added)),
         };
 
-        loop {
-            let outcome = number.reduce();
-            if let ReduceResult::Reduced = outcome {
-                break;
-            }
-        }
+        // Keep reducing the number until it's reduced
+        while number.attempt_reduce() != ReduceResult::Reduced {}
 
         number
     }
 
+    /// Calculates the magnitude of a number
     fn magnitude(&self) -> u32 {
         (3 * self.x.magnitude()) + (2 * self.y.magnitude())
     }
 
-    fn reduce(&mut self) -> ReduceResult {
+    /// Performs a single pass over the number attempting to reduce it
+    /// May need to be called multiple times until fully reduced
+    fn attempt_reduce(&mut self) -> ReduceResult {
         let result = self.explode(0);
         if let ReduceResult::Reduced = result {
             return self.split();
@@ -68,6 +67,7 @@ impl Number {
     }
 
     fn split(&mut self) -> ReduceResult {
+        // Split a number if needed left -> right
         if self.x.split_if_needed() || self.y.split_if_needed() {
             ReduceResult::Split
         } else {
@@ -76,73 +76,27 @@ impl Number {
     }
 
     fn explode(&mut self, depth: usize) -> ReduceResult {
-        if let Element::Pair(ref mut number) = self.x {
-            if depth == 3 {
-                // Explode
-                let mut y = 0;
-                let mut x = 0;
-                if let Element::Regular(exploded) = number.x {
-                    x = exploded;
-                };
-                if let Element::Regular(exploded) = number.y {
-                    y = exploded;
-                };
-                self.x = Element::Regular(0);
+        // Explode a number if needed left -> right
+        // Allocate the result 'left <- x  y -> right' where possible
+        if let ReduceResult::Exploded((x, y)) = self.x.explode_if_needed(depth + 1) {
+            if y > 0 {
                 // Try to allocate y to the right
                 if self.y.try_allocate_right(y) {
                     return ReduceResult::Exploded((x, 0));
                 }
-                // Failed to allocate, pass up the chain
-                return ReduceResult::Exploded((x, y));
             }
-            let reduced = number.explode(depth + 1);
-            if reduced != ReduceResult::Reduced {
-                if let ReduceResult::Exploded((x, y)) = reduced {
-                    if y > 0 {
-                        // Try to allocate y to the right
-                        if self.y.try_allocate_right(y) {
-                            return ReduceResult::Exploded((x, 0));
-                        }
-                        // Failed to allocate, pass up the chain
-                        return ReduceResult::Exploded((x, y));
-                    }
-                }
-                return reduced;
-            }
+            // Pass up the chain
+            return ReduceResult::Exploded((x, y));
         }
-        if let Element::Pair(ref mut number) = self.y {
-            if depth == 3 {
-                // Explode
-                let mut y = 0;
-                let mut x = 0;
-                if let Element::Regular(exploded) = number.x {
-                    x = exploded;
-                };
-                if let Element::Regular(exploded) = number.y {
-                    y = exploded;
-                };
-                self.y = Element::Regular(0);
+        if let ReduceResult::Exploded((x, y)) = self.y.explode_if_needed(depth + 1) {
+            if x > 0 {
                 // Try to allocate x to the left
                 if self.x.try_allocate_left(x) {
                     return ReduceResult::Exploded((0, y));
                 }
-                // Failed to allocate, pass up the chain
-                return ReduceResult::Exploded((x, y));
             }
-            let reduced = number.explode(depth + 1);
-            if reduced != ReduceResult::Reduced {
-                if let ReduceResult::Exploded((x, y)) = reduced {
-                    if x > 0 {
-                        // Try to allocate x to the left
-                        if self.x.try_allocate_left(x) {
-                            return ReduceResult::Exploded((0, y));
-                        }
-                        // Failed to allocate, pass up the chain
-                        return ReduceResult::Exploded((x, y));
-                    }
-                }
-                return reduced;
-            }
+            // Pass up the chain
+            return ReduceResult::Exploded((x, y));
         }
         ReduceResult::Reduced
     }
@@ -157,6 +111,33 @@ impl Element {
             x: Self::Regular(v1),
             y: Self::Regular(v2),
         }))
+    }
+
+    /// Recursively explodes that first element that needs it and attempts to allocate
+    /// the exploded x,y values left/right
+    ///
+    /// Returns the x,y values that still need to be allocates left and right
+    fn explode_if_needed(&mut self, depth: usize) -> ReduceResult {
+        if let Element::Pair(number) = self {
+            if depth >= 4 {
+                // Explode
+                let mut y = 0;
+                let mut x = 0;
+                if let Element::Regular(exploded) = number.x {
+                    x = exploded;
+                };
+                if let Element::Regular(exploded) = number.y {
+                    y = exploded;
+                };
+                // Replace self with 0
+                *self = Self::Regular(0);
+                // and return the exploded values
+                return ReduceResult::Exploded((x, y));
+            }
+            // Not deep enough to need to explode, recurse in
+            return number.explode(depth);
+        }
+        ReduceResult::Reduced
     }
 
     /// Try to allocate an `amount` to the left (of an explosion)
@@ -189,7 +170,7 @@ impl Element {
         }
     }
 
-    /// Recursively splits elements if needed
+    /// Recursively splits the first element that needs it
     ///
     /// Returns `true` if or any sub ones were split, `false` if it was not
     fn split_if_needed(&mut self) -> bool {
@@ -293,19 +274,19 @@ mod tests {
     #[test]
     fn test_explode_1() {
         let mut sfn = parse(&mut "[[[[[9,8],1],2],3],4]".chars().peekable());
-        let result = sfn.reduce();
+        let result = sfn.attempt_reduce();
         assert_eq!(result, ReduceResult::Exploded((9, 0)));
-        let result = sfn.reduce();
+        let result = sfn.attempt_reduce();
         assert_eq!(result, ReduceResult::Reduced);
     }
     #[test]
     fn test_explode_2() {
         let mut sfn = parse(&mut "[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]".chars().peekable());
-        let result = sfn.reduce();
+        let result = sfn.attempt_reduce();
         assert_eq!(result, ReduceResult::Exploded((0, 0)));
-        let result = sfn.reduce();
+        let result = sfn.attempt_reduce();
         assert_eq!(result, ReduceResult::Exploded((0, 2)));
-        let result = sfn.reduce();
+        let result = sfn.attempt_reduce();
         assert_eq!(result, ReduceResult::Reduced);
         assert_eq!(
             sfn,

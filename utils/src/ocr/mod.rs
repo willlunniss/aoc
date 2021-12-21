@@ -2,7 +2,14 @@ use lazy_static;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::iter::FromIterator;
-use std::{convert::Infallible, str::FromStr};
+use std::str::FromStr;
+use thiserror::Error;
+
+#[derive(Error, Debug, PartialEq)]
+pub enum OcrStringError {
+    #[error("invalid font height (expected 6 or 10, found {height})")]
+    InvalidHeight { height: usize },
+}
 
 type CharHash = u32;
 pub type Point = (usize, usize);
@@ -34,6 +41,7 @@ lazy_static! {
     };
 }
 
+#[derive(Debug)]
 pub struct OcrString {
     grouped: Vec<HashSet<Point>>,
     height: usize,
@@ -53,7 +61,7 @@ impl FromIterator<Point> for OcrString {
 }
 
 impl FromStr for OcrString {
-    type Err = Infallible;
+    type Err = OcrStringError;
 
     /// Builds an `OcrString` from ASCII art string where '#' is used to draw the letters
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -64,19 +72,23 @@ impl FromStr for OcrString {
                 .filter(|(_, c)| c == &'#')
                 .map(move |(x, _)| (x, y))
         });
-        Ok(OcrString::new(points, (0, 0), height).unwrap())
+        OcrString::new(points, (0, 0), height)
     }
 }
 
 impl OcrString {
     /// Creates a new `OcrString` from Points with a known top left corner `origin` and font `height`
-    fn new(points: impl Iterator<Item = Point>, origin: Point, height: usize) -> Option<Self> {
+    fn new(
+        points: impl Iterator<Item = Point>,
+        origin: Point,
+        height: usize,
+    ) -> Result<Self, OcrStringError> {
         let (min_x, min_y) = origin;
         let split = match height {
             6 => 5,
             10 => 8,
             _ => {
-                panic!("Unexpected font size using height of {}", height);
+                return Err(OcrStringError::InvalidHeight { height });
             }
         };
         // Group the points - shifting their coordinates as needed
@@ -92,11 +104,11 @@ impl OcrString {
             grouped[group].insert((x % split, y));
         }
 
-        Some(Self { grouped, height })
+        Ok(Self { grouped, height })
     }
 
     /// Creates a new `OcrString` from Points without any prior knowledge about where they are and what font is used
-    fn new_without_bounds(points: impl Iterator<Item = Point>) -> Option<Self> {
+    fn new_without_bounds(points: impl Iterator<Item = Point>) -> Result<Self, OcrStringError> {
         // First work out where the chars start (in terms of the top left of the first char) and how heigh they are
         let points = points.collect::<Vec<_>>();
         let mut min_x = usize::MAX;
@@ -186,6 +198,18 @@ mod tests {
         assert_eq!(ocr.len(), 8);
         assert_eq!(ocr.height, 6);
         assert_eq!(ocr.decode(), Some("ABKJFBGC".to_owned()));
+    }
+
+    #[test]
+    fn test_invalid_str() {
+        static SAMPLE: &str = indoc! {"
+        .##..###..#..#...##.####.###...##...##.
+        #..#.#..#.#.#.....#.#....#..#.#..#.#..#
+        "};
+        assert_eq!(
+            SAMPLE.parse::<OcrString>().err(),
+            Some(OcrStringError::InvalidHeight { height: 2 })
+        );
     }
 
     #[test]

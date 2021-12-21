@@ -66,21 +66,26 @@ impl DeterministicDice {
 
 lazy_static! {
     /// Possible outcomes of rolling dirac die 3 times
-    static ref DIRAC_ROLL_3_SUMS: Vec<u8> = [1, 2, 3, 1, 2, 3, 1, 2, 3]
+    static ref DIRAC_ROLL_3_SUMS: Vec<(u8, u128)> =  {
+        [1, 2, 3, 1, 2, 3, 1, 2, 3]
         .iter()
         .combinations(3)
         .unique()
         .map(|x| { x.iter().copied().sum() })
-        .collect();
+        .counts()
+        .iter()
+        .map(|(&k, &v)| (k, v as u128))
+        .collect()
+    };
 }
 
 #[cached]
 fn dirac_winner(p1_pos: u8, p1_score: u8, p2_pos: u8, p2_score: u8) -> (u128, u128) {
     let mut wins = (0, 0);
-    // For each possible outcome of player 1 rolling
-    for p1_roll in DIRAC_ROLL_3_SUMS.iter() {
-        // For each possible outcome of player 2 rolling
-        for p2_roll in DIRAC_ROLL_3_SUMS.iter() {
+    // For each possible unique outcome and the number of times it happens of player 1 rolling
+    for (p1_roll, p1_roll_count) in DIRAC_ROLL_3_SUMS.iter() {
+        // For each possible unique outcome and the number of times it happens of player 2 rolling
+        for (p2_roll, p2_roll_count) in DIRAC_ROLL_3_SUMS.iter() {
             // Create new parallel players for each outcome by purposefully re-defining passed in values
             // Move players based on their rolls
             let mut p1_pos = p1_pos + p1_roll;
@@ -98,16 +103,18 @@ fn dirac_winner(p1_pos: u8, p1_score: u8, p2_pos: u8, p2_score: u8) -> (u128, u1
 
             // See if someone won
             if p1_score >= 21 {
-                wins.0 += 1;
+                // Player 1 wins for all times that they get this roll
+                wins.0 += p1_roll_count;
                 // This game and all parallel games for this roll of player 1 end
                 break;
             } else if p2_score >= 21 {
-                wins.1 += 1;
+                // Player 2 won for all times that they get this roll and all parallel games for this roll of player 1
+                wins.1 += p2_roll_count * p1_roll_count;
             } else {
-                // No one won - game continues
+                // No one won - games continues
                 let new_wins = dirac_winner(p1_pos, p1_score, p2_pos, p2_score);
-                wins.0 += new_wins.0;
-                wins.1 += new_wins.1;
+                wins.0 += p1_roll_count * p2_roll_count * new_wins.0;
+                wins.1 += p2_roll_count * p1_roll_count * new_wins.1;
             }
         }
     }

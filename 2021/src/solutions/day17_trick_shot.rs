@@ -21,12 +21,14 @@ impl Probe {
         // Move the probe
         self.position.0 += self.velocity.0;
         self.position.1 += self.velocity.1;
+
         // Apply drag
         if self.velocity.0 > 0 {
             self.velocity.0 -= 1;
         } else if self.velocity.0 < 0 {
             self.velocity.0 += 1;
         }
+
         // Apply gravity
         self.velocity.1 -= 1;
 

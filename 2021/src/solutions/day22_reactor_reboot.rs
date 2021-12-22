@@ -1,11 +1,59 @@
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 struct Step {
     on: bool,
-    x_range: (isize, isize),
-    y_range: (isize, isize),
-    z_range: (isize, isize),
+    cube: Cube,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct Cube {
+    x: (isize, isize),
+    y: (isize, isize),
+    z: (isize, isize),
+}
+
+impl Cube {
+    /// Tests whether this cube is fully within the initialisation area
+    const fn within_initialisation_area(&self) -> bool {
+        self.z.0 >= -50
+            && self.z.1 <= 50
+            && self.y.0 >= -50
+            && self.y.1 <= 50
+            && self.x.0 >= -50
+            && self.x.1 <= 50
+    }
+
+    /// Calculates the intersection of this `Cube` with another
+    ///
+    /// Returns a new `Cube` if they intersect or None if they don't
+    fn intersection(&self, other: &Self) -> Option<Self> {
+        let x = (
+            isize::max(self.x.0, other.x.0),
+            isize::min(self.x.1, other.x.1),
+        );
+        let y = (
+            isize::max(self.y.0, other.y.0),
+            isize::min(self.y.1, other.y.1),
+        );
+        let z = (
+            isize::max(self.z.0, other.z.0),
+            isize::min(self.z.1, other.z.1),
+        );
+
+        if x.0 <= x.1 && y.0 <= y.1 && z.0 <= z.1 {
+            // Cubes intersect, return the intersection
+            Some(Self { x, y, z })
+        } else {
+            // Cubes don't intersect
+            None
+        }
+    }
+
+    /// Calculates the volume of this cube
+    const fn volume(&self) -> isize {
+        (self.x.1 - self.x.0 + 1) * (self.y.1 - self.y.0 + 1) * (self.z.1 - self.z.0 + 1)
+    }
 }
 
 impl Step {
@@ -13,11 +61,67 @@ impl Step {
         let parts = s.split(&[' ', '=', '.', ','][..]).collect::<Vec<_>>();
         Self {
             on: parts[0] == "on",
-            x_range: (parts[2].parse().unwrap(), parts[4].parse().unwrap()),
-            y_range: (parts[6].parse().unwrap(), parts[8].parse().unwrap()),
-            z_range: (parts[10].parse().unwrap(), parts[12].parse().unwrap()),
+            cube: Cube {
+                x: (parts[2].parse().unwrap(), parts[4].parse().unwrap()),
+                y: (parts[6].parse().unwrap(), parts[8].parse().unwrap()),
+                z: (parts[10].parse().unwrap(), parts[12].parse().unwrap()),
+            },
         }
     }
+
+    /// Checks if this step is part of the initialization process
+    const fn initialization_step(&self) -> bool {
+        self.cube.within_initialisation_area()
+    }
+}
+
+/// From a list of `steps`, calculates how many cubes will be on at the end
+fn on_cubes<'a>(steps: impl Iterator<Item = &'a Step>) -> isize {
+    // Track on/off (sub-)cubes in a HashMap of <Cube, +/- counts>
+    // where counts is 1 for on, -1 for off
+    let mut cubes: HashMap<Cube, isize> = HashMap::new();
+    for step in steps {
+        let mut updates = HashMap::new();
+        let mut removals = Vec::new();
+        // For each step, work out what impact it has on the existing cubes
+        for (cube, counts) in &cubes {
+            // See if this new step intersects with an existing one
+            if let Some(intersection) = cube.intersection(&step.cube) {
+                if intersection == *cube {
+                    // The new cube fully contains the existing one, remove it
+                    removals.push(cube.clone());
+                } else {
+                    // The new cube partially intersects the existing one
+                    // Cancel out the pixels representing the intersection by inverting their count
+                    *updates.entry(intersection).or_insert(0) -= counts;
+                }
+            }
+        }
+        // If this is an on step, add a new cube representing it
+        if step.on {
+            *updates.entry(step.cube.clone()).or_insert(0) += 1;
+        }
+        // Remove all existing cubes that where fully contained within the new cube
+        for cube in removals {
+            cubes.remove(&cube);
+        }
+        // Add all of the new cubes we generated (and update existing ones if applicable) ready for the next step
+        for (cube, count) in updates {
+            if count == 0 {
+                // Cube has been canceled out (turned on then off again)
+                // Stop tracking it
+                cubes.remove(&cube);
+            } else {
+                // Cube is on or off, update
+                *cubes.entry(cube).or_insert(0) += count;
+            }
+        }
+    }
+    // Final result is the sum of the volumes * on/off state
+    cubes
+        .iter()
+        .map(|(cube, count)| cube.volume() * count)
+        .sum()
 }
 
 #[aoc_generator(day22)]
@@ -26,37 +130,13 @@ fn gen(input: &str) -> Vec<Step> {
 }
 
 #[aoc(day22, part1)]
-fn part1(input: &[Step]) -> usize {
-    let mut grid = HashSet::new();
-    for step in input {
-        if step.z_range.0 < -50
-            || step.z_range.1 > 50
-            || step.y_range.0 < -50
-            || step.y_range.1 > 50
-            || step.x_range.0 < -50
-            || step.x_range.1 > 50
-        {
-            // Outside of initialisation return number of on cubes
-            return grid.len();
-        }
-        for z in step.z_range.0..=step.z_range.1 {
-            for y in step.y_range.0..=step.y_range.1 {
-                for x in step.x_range.0..=step.x_range.1 {
-                    if step.on {
-                        grid.insert((x, y, z));
-                    } else {
-                        grid.remove(&(x, y, z));
-                    }
-                }
-            }
-        }
-    }
-    0
+fn part1(input: &[Step]) -> isize {
+    on_cubes(input.iter().filter(|step| step.initialization_step()))
 }
 
 #[aoc(day22, part2)]
-fn part2(input: &Vec<Step>) -> usize {
-    0
+fn part2(input: &[Step]) -> isize {
+    on_cubes(input.iter())
 }
 
 #[cfg(test)]

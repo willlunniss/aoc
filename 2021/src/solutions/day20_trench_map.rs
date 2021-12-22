@@ -30,9 +30,9 @@ fn gen(input: &str) -> (Vec<u8>, MapGrid<u8>) {
     (algorithm, grid)
 }
 
-/// Retruns the default value for a pixel beyond what we have so far considered
+/// Returns the default value for a pixel beyond what we have so far considered
 const fn get_default(algorithm: &[u8], step: usize) -> u8 {
-    // Some algorithms cause the infinate pixels to flash on/off
+    // Some algorithms cause the infinite pixels to flash on/off
     if algorithm[0] == 1 {
         // If the 0 indexed pixel is 1, this means that a 3x3 grid of 0
         // will transition to a 1 on the next step

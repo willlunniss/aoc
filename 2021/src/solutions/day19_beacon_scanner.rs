@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use rayon::prelude::*;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -43,25 +44,36 @@ lazy_static! {
 }
 
 impl Mapping {
-    /// Returns all the different mappings that can be used
+    /// Returns all 24 different mappings that can be used
     fn all() -> Vec<Self> {
-        let base = [1, 2, 3]
-            .iter()
-            .permutations(3)
-            .map(|x| Self(*x[0], *x[1], *x[2]))
-            .collect::<Vec<_>>();
         [
-            (1, 1, 1),
-            (-1, -1, -1),
-            (1, 1, -1),
-            (1, -1, 1),
-            (1, -1, -1),
-            (-1, 1, 1),
-            (-1, 1, -1),
-            (-1, -1, 1),
+            (1, 2, 3), // Z on top
+            (2, -1, 3),
+            (-1, -2, 3),
+            (-2, 1, 3),
+            (-3, 2, 1), // X on top
+            (2, 3, 1),
+            (3, -2, 1),
+            (-2, -3, 1),
+            (-3, -1, 2), // Y on top
+            (-1, 3, 2),
+            (3, 1, 2),
+            (1, -3, 2),
+            (1, -2, -3), // -Z on top
+            (-2, -1, -3),
+            (-1, 2, -3),
+            (2, 1, -3),
+            (-3, -2, -1), // -X on top
+            (-2, 3, -1),
+            (3, 2, -1),
+            (2, -3, -1),
+            (1, 3, -2), // -Y on top
+            (3, -1, -2),
+            (-1, -3, -2),
+            (-3, 1, -2),
         ]
         .iter()
-        .flat_map(|(a, b, c)| base.iter().map(move |m| Self(m.0 * a, m.1 * b, m.2 * c)))
+        .map(|(a, b, c)| Self(*a, *b, *c))
         .collect()
     }
 }
@@ -129,8 +141,8 @@ impl Scanner {
     ///
     /// Returns the mappings and shift that need to be applied to it if it does overlap
     fn overlaps(&self, candidate: &Self, required_hits: usize) -> Option<(Mapping, Pos)> {
-        // Try every mapping
-        for mapping in ALL_MAPPINGS.iter() {
+        // Try every mapping until we find one which has enough hits
+        ALL_MAPPINGS.par_iter().find_map_any(|mapping| {
             let mut hits = HashMap::new();
             // For all beacons, see what the distance is to all beacons from the candidate
             // scanner with this mapping
@@ -144,10 +156,8 @@ impl Scanner {
             if *max >= required_hits {
                 return Some((mapping.clone(), delta.clone()));
             }
-        }
-
-        // Doesn't overlap with any mappings
-        None
+            None
+        })
     }
 }
 

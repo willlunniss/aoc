@@ -17,7 +17,7 @@ impl Player {
     fn new(s: &str) -> Self {
         Self {
             id: s.chars().nth(7).unwrap().to_digit(10).unwrap(),
-            space: s.chars().last().unwrap().to_digit(10).unwrap(),
+            space: s.chars().last().unwrap().to_digit(10).unwrap() - 1,
             score: 0,
         }
     }
@@ -27,11 +27,8 @@ impl Player {
     }
 
     fn play_turn(&mut self, spaces: u32, requires: u32) -> bool {
-        self.space += spaces;
-        while self.space > 10 {
-            self.space -= 10;
-        }
-        self.score += self.space as u32;
+        self.space = (self.space + spaces) % 10;
+        self.score += self.space + 1;
         self.has_won(requires)
     }
 }
@@ -88,18 +85,12 @@ fn dirac_winner(p1_pos: u8, p1_score: u8, p2_pos: u8, p2_score: u8) -> (u128, u1
         for (p2_roll, p2_roll_count) in DIRAC_ROLL_3_SUMS.iter() {
             // Create new parallel players for each outcome by purposefully re-defining passed in values
             // Move players based on their rolls
-            let mut p1_pos = p1_pos + p1_roll;
-            if p1_pos > 10 {
-                p1_pos -= 10;
-            }
-            let mut p2_pos = p2_pos + p2_roll;
-            if p2_pos > 10 {
-                p2_pos -= 10;
-            }
+            let p1_pos = (p1_pos + p1_roll) % 10;
+            let p2_pos = (p2_pos + p2_roll) % 10;
 
             // Calculate scores
-            let p1_score = p1_score + p1_pos;
-            let p2_score = p2_score + p2_pos;
+            let p1_score = p1_score + p1_pos + 1;
+            let p2_score = p2_score + p2_pos + 1;
 
             // See if someone won
             if p1_score >= 21 {

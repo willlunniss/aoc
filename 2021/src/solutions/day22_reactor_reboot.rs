@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
@@ -28,19 +29,11 @@ impl Cube {
     ///
     /// Returns a new `Cube` if they intersect or None if they don't
     fn intersection(&self, other: &Self) -> Option<Self> {
-        let x = (
-            isize::max(self.x.0, other.x.0),
-            isize::min(self.x.1, other.x.1),
-        );
-        let y = (
-            isize::max(self.y.0, other.y.0),
-            isize::min(self.y.1, other.y.1),
-        );
-        let z = (
-            isize::max(self.z.0, other.z.0),
-            isize::min(self.z.1, other.z.1),
-        );
-
+        let (x, y, z) = [(self.x, other.x), (self.y, other.y), (self.z, other.z)]
+            .iter()
+            .map(|(a, b)| (isize::max(a.0, b.0), isize::min(a.1, b.1)))
+            .collect_tuple()
+            .unwrap();
         if x.0 <= x.1 && y.0 <= y.1 && z.0 <= z.1 {
             // Cubes intersect, return the intersection
             Some(Self { x, y, z })
@@ -77,27 +70,31 @@ impl Step {
 
 /// From a list of `steps`, calculates how many cubes will be on at the end
 fn on_cubes<'a>(steps: impl Iterator<Item = &'a Step>) -> isize {
-    // Track on/off (sub-)cubes in a HashMap of <Cube, +/- counts>
-    // where counts is 1 for on, -1 for off
+    // Track on/off cubes in a HashMap of <Cube, State>
+    // Where state is 1 for on, 0 for cancelled out, and -1 for off (used when contained within an on cube)
+    // Rather than splitting cubes into sub cubes when they are intersected, we simply store
+    // a cube representing the intersection with a state such that it negates the pixels from the cube it intersected
+    // The final result is then the sum of the volume of on cubes - volume of off cubes
     let mut cubes: HashMap<Cube, isize> = HashMap::new();
     for step in steps {
         let mut updates = HashMap::new();
         let mut removals = Vec::new();
         // For each step, work out what impact it has on the existing cubes
-        for (cube, counts) in &cubes {
+        for (existing, state) in &cubes {
             // See if this new step intersects with an existing one
-            if let Some(intersection) = cube.intersection(&step.cube) {
-                if intersection == *cube {
-                    // The new cube fully contains the existing one, remove it
-                    removals.push(cube.clone());
+            if let Some(intersection) = existing.intersection(&step.cube) {
+                if intersection == *existing {
+                    // The new cube fully contains the existing one
+                    // Remove it the existing cube as no need to separately track it
+                    removals.push(existing.clone());
                 } else {
                     // The new cube partially intersects the existing one
-                    // Cancel out the pixels representing the intersection by inverting their count
-                    *updates.entry(intersection).or_insert(0) -= counts;
+                    // Cancel out the pixels representing the intersection
+                    *updates.entry(intersection).or_insert(0) -= state;
                 }
-            }
+            } // Doesn't intersect, no impact on existing cube
         }
-        // If this is an on step, add a new cube representing it
+        // If this is an on step, add a new cube representing it with pixels turned on
         if step.on {
             *updates.entry(step.cube.clone()).or_insert(0) += 1;
         }
@@ -106,21 +103,21 @@ fn on_cubes<'a>(steps: impl Iterator<Item = &'a Step>) -> isize {
             cubes.remove(&cube);
         }
         // Add all of the new cubes we generated (and update existing ones if applicable) ready for the next step
-        for (cube, count) in updates {
-            if count == 0 {
+        for (cube, state) in updates {
+            if state == 0 {
                 // Cube has been canceled out (turned on then off again)
                 // Stop tracking it
                 cubes.remove(&cube);
             } else {
-                // Cube is on or off, update
-                *cubes.entry(cube).or_insert(0) += count;
+                // Cube is on or off (inside an on cube), update
+                *cubes.entry(cube).or_insert(0) += state;
             }
         }
     }
     // Final result is the sum of the volumes * on/off state
     cubes
         .iter()
-        .map(|(cube, count)| cube.volume() * count)
+        .map(|(cube, &state)| cube.volume() * state)
         .sum()
 }
 

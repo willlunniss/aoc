@@ -12,7 +12,7 @@ struct Scanner {
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
-struct Pos(isize, isize, isize);
+struct Pos(i16, i16, i16);
 
 impl PartialOrd for Pos {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
@@ -37,7 +37,7 @@ impl Ord for Pos {
 }
 
 #[derive(Debug, Clone)]
-struct Mapping(isize, isize, isize);
+struct Mapping(i16, i16, i16);
 
 lazy_static! {
     static ref ALL_MAPPINGS: Vec<Mapping> = Mapping::all();
@@ -82,7 +82,7 @@ impl Pos {
     fn new(s: &str) -> Self {
         let (x, y, z) = s
             .split(',')
-            .map(|x| x.parse::<isize>().unwrap())
+            .map(|x| x.parse::<i16>().unwrap())
             .collect_tuple()
             .unwrap();
 
@@ -97,11 +97,11 @@ impl Pos {
         Self(self.0 + shift.0, self.1 + shift.1, self.2 + shift.2)
     }
 
-    const fn manhattan_distance(&self, other: &Self) -> isize {
-        isize::abs(self.0 - other.0) + isize::abs(self.1 - other.1) + isize::abs(self.2 - other.2)
+    const fn manhattan_distance(&self, other: &Self) -> i16 {
+        i16::abs(self.0 - other.0) + i16::abs(self.1 - other.1) + i16::abs(self.2 - other.2)
     }
 
-    fn get_mapped(&self, map: isize) -> isize {
+    fn get_mapped(&self, map: i16) -> i16 {
         match map {
             1 => self.0,
             -1 => -self.0,
@@ -221,7 +221,7 @@ fn part1(input: &Vec<Scanner>) -> usize {
 }
 
 #[aoc(day19, part2)]
-fn part2(input: &Vec<Scanner>) -> isize {
+fn part2(input: &Vec<Scanner>) -> i16 {
     let (_, scanners) = group(input);
     scanners
         .iter()

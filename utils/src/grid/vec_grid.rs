@@ -37,7 +37,7 @@ impl<'a, V: Clone + Copy> Iterator for VecGridIterator<'a, V> {
             // Get the value
             let result = Some((self.pos, self.grid.get_ref_no_check(self.pos)));
             // Work out where next
-            if self.pos.x < self.grid.width() as isize - 1 {
+            if self.pos.x < self.grid.data[self.pos.y as usize].len() as isize - 1 {
                 self.pos.x += 1;
             } else {
                 self.pos.x = 0;
@@ -152,6 +152,18 @@ impl<V> From<Vec<Vec<V>>> for VecGrid<V> {
     /// Creates a new `VecGrid` from an existing nested vector
     fn from(data: Vec<Vec<V>>) -> Self {
         Self { data }
+    }
+}
+
+impl From<Vec<&str>> for VecGrid<char> {
+    /// Creates a new `VecGrid` of chars from a Vector of strings
+    fn from(lines: Vec<&str>) -> Self {
+        Self {
+            data: lines
+                .iter()
+                .map(|line| line.chars().collect::<Vec<_>>())
+                .collect(),
+        }
     }
 }
 

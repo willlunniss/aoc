@@ -22,3 +22,4 @@ mod day21_dirac_die;
 mod day22_reactor_reboot;
 mod day23_amphipod;
 mod day24_alu;
+mod day25_sea_cucumber;

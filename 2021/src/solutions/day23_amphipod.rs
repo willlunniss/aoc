@@ -1,11 +1,15 @@
-use itertools::Itertools;
-use pathfinding::prelude::dijkstra;
-use std::cmp::Ordering;
-use std::collections::hash_map::Entry;
-use std::collections::{HashMap, HashSet, VecDeque};
-use std::fmt;
-use std::hash::{Hash, Hasher};
+use itertools::Either;
+use pathfinding::prelude::*;
+use std::ops::Sub;
 use utils::grid::{Pos, VecGrid};
+
+fn abs_diff<T: Sub<Output = T> + Ord>(x: T, y: T) -> T {
+    if x < y {
+        y - x
+    } else {
+        x - y
+    }
+}
 
 fn requires_energy(amphipod: char) -> usize {
     match amphipod {
@@ -17,195 +21,190 @@ fn requires_energy(amphipod: char) -> usize {
     }
 }
 
-fn targets(amphipod: char) -> (Pos, Pos, Pos, Pos) {
-    let x = match amphipod {
-        'A' => 3,
-        'B' => 5,
-        'C' => 7,
-        'D' => 9,
+fn room(amphipod: char) -> usize {
+    match amphipod {
+        'A' => 0,
+        'B' => 1,
+        'C' => 2,
+        'D' => 3,
         _ => unreachable!(),
-    };
-    (
-        Pos::new(x, 5),
-        Pos::new(x, 4),
-        Pos::new(x, 3),
-        Pos::new(x, 2),
-    )
-}
-
-fn is_target(
-    amphipod: char,
-    pos: &Pos,
-    spaces: &HashSet<Pos>,
-    amphipods: &HashMap<Pos, char>,
-) -> bool {
-    let (t1, t2, t3, t4) = targets(amphipod);
-    if *pos == t1 {
-        true
-    } else if *pos == t2 {
-        !spaces.contains(&t1) && !amphipods.contains_key(&t1)
-    } else if *pos == t3 {
-        !spaces.contains(&t2) && !amphipods.contains_key(&t2)
-    } else if *pos == t4 {
-        !spaces.contains(&t3) && !amphipods.contains_key(&t3)
-    } else {
-        false
     }
 }
 
-const fn in_hallway(pos: &Pos) -> bool {
-    pos.y == 1
+fn owner(room: usize) -> char {
+    match room {
+        0 => 'A',
+        1 => 'B',
+        2 => 'C',
+        3 => 'D',
+        _ => unreachable!(),
+    }
 }
 
-const fn can_stop(pos: &Pos) -> bool {
-    pos.y != 1 || !matches!(pos.x, 3 | 5 | 7 | 9)
+fn room_entrance(amphipod: char) -> usize {
+    match amphipod {
+        'A' => 2,
+        'B' => 4,
+        'C' => 6,
+        'D' => 8,
+        _ => unreachable!(),
+    }
 }
 
-const fn is_amphipod(c: char) -> bool {
-    matches!(c, 'A' | 'B' | 'C' | 'D')
+const fn is_entrance(index: usize) -> bool {
+    matches!(index, 2 | 4 | 6 | 8)
 }
 
-fn can_move_to(
-    amphipod: char,
-    start: &Pos,
-    spaces: &HashSet<Pos>,
-    amphipods: &HashMap<Pos, char>,
-) -> Vec<(Pos, usize)> {
-    let mut candidates = HashMap::new();
-    let mut queue = VecDeque::new();
-    queue.push_back((*start, 0));
-    while let Some((pos, moves)) = queue.pop_front() {
-        for candidate in pos.neighbours().filter(|pos| spaces.contains(pos)) {
-            if let Entry::Vacant(e) = candidates.entry(candidate) {
-                e.insert(moves + 1);
-                queue.push_back((candidate, moves + 1));
+#[derive(Clone, Hash, Eq, PartialEq)]
+struct State<const SLOTS: usize> {
+    hallway: [char; 11],
+    rooms: [[char; SLOTS]; 4],
+}
+
+impl<const SLOTS: usize> State<SLOTS> {
+    fn new(input: &VecGrid<char>) -> Self {
+        let mut rooms = [['?'; SLOTS]; 4];
+        let mut hallway = ['?'; 11];
+        for idx in 0..hallway.len() {
+            hallway[idx] = input[Pos::new(1 + idx, 1)];
+        }
+        for room in 0..rooms.len() {
+            for slot in 0..SLOTS {
+                rooms[room][slot] = input[Pos::new(3 + (room * 2), 2 + slot)];
             }
         }
-    }
-    return candidates
-        .iter()
-        .filter(|(pos, _)| {
-            can_stop(pos)
-                && ((in_hallway(pos) && !in_hallway(start))
-                    || is_target(amphipod, pos, spaces, amphipods))
-        })
-        .map(|(k, v)| (*k, *v))
-        .collect();
-}
-
-fn debug(spaces: &HashSet<Pos>, amphipods: &HashMap<Pos, char>, energy: usize) {
-    let mut grid = VecGrid::new_sized('#', 14, 7);
-    for pos in spaces {
-        grid[*pos] = '.';
-    }
-    for (pos, amphipod) in amphipods {
-        grid[*pos] = *amphipod;
-    }
-    println!("Cost {}", energy);
-    grid.print();
-}
-
-#[derive(Clone)]
-struct State {
-    spaces: HashSet<Pos>,
-    amphipods: HashMap<Pos, char>,
-}
-
-impl Hash for State {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.amphipods
-            .iter()
-            .sorted()
-            .collect::<Vec<_>>()
-            .hash(state);
-    }
-}
-
-impl PartialEq for State {
-    fn eq(&self, other: &Self) -> bool {
-        self.amphipods
-            .iter()
-            .sorted()
-            .eq(other.amphipods.iter().sorted())
-    }
-}
-
-impl Eq for State {}
-
-impl PartialOrd for State {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for State {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.amphipods.len().cmp(&other.amphipods.len())
-    }
-}
-
-impl State {
-    const fn new(spaces: HashSet<Pos>, amphipods: HashMap<Pos, char>) -> Self {
-        Self { spaces, amphipods }
+        Self { hallway, rooms }
     }
 
     fn organised(&self) -> bool {
-        self.amphipods.is_empty()
+        self.rooms.iter().enumerate().all(|(room, contents)| {
+            let owner = owner(room);
+            contents.iter().all(|&x| x == owner)
+        })
+    }
+
+    #[allow(dead_code)]
+    fn debug(&self, energy: usize) {
+        let mut grid = VecGrid::new_sized('#', 14, 3 + SLOTS);
+        for idx in 0..self.hallway.len() {
+            grid[Pos::new(1 + idx, 1)] = self.hallway[idx];
+        }
+        for room in 0..4 {
+            for slot in 0..SLOTS {
+                grid[Pos::new(3 + (room * 2), 2 + slot)] = self.rooms[room][slot];
+            }
+        }
+        println!("Energy: {}", energy);
+        grid.print();
     }
 }
 
-impl fmt::Debug for State {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("State")
-            .field("remaining", &self.amphipods.len())
-            .finish()
-    }
-}
-
-fn organise_amphipods(input: &VecGrid<char>) -> usize {
-    let spaces = input
-        .into_iter()
-        .filter(|(_, &x)| x == '.')
-        .map(|(pos, _)| pos)
-        .collect::<HashSet<Pos>>();
-    let mut amphipods = input
-        .into_iter()
-        .filter(|(_, &x)| is_amphipod(x))
-        .map(|(pos, &a)| (pos, a))
-        .collect::<HashMap<Pos, char>>();
-    let in_target = amphipods
-        .iter()
-        .filter(|(pos, &amphipod)| is_target(amphipod, pos, &spaces, &amphipods))
-        .map(|(pos, _)| *pos)
-        .collect::<Vec<_>>();
-    for pos in in_target {
-        amphipods.remove(&pos);
-    }
-    let initial = State::new(spaces.clone(), amphipods.clone());
+fn organise_amphipods<const SLOTS: usize>(input: &VecGrid<char>) -> usize {
+    let initial: State<SLOTS> = State::new(input);
     dijkstra(
         &initial,
         |state| {
+            // From this state, consider what next states there could be
             let mut next = Vec::new();
-            // Consider all amphipods
-            for (pos, amphipod) in &state.amphipods {
-                let candidates = can_move_to(*amphipod, pos, &state.spaces, &state.amphipods);
-                if candidates.is_empty() {
-                    continue;
-                }
-                // Check where they could go to
-                for (candidate, moves) in candidates {
-                    let mut amphipods = state.amphipods.clone();
-                    let mut spaces = state.spaces.clone();
-                    // Move to the new state
-                    amphipods.remove(pos);
-                    if !is_target(*amphipod, &candidate, &spaces, &state.amphipods) {
-                        amphipods.insert(candidate, *amphipod);
+            // First consider all amphipods in hallway
+            'HallwayLoop: for (idx, amphipod) in
+                state.hallway.iter().enumerate().filter(|(_, &x)| x != '.')
+            {
+                // Can only move directly to their room from the hallway
+                // Check if there is space and if there are any amphipods already there, that they are of the right type
+                let room = room(*amphipod);
+                if state.rooms[room]
+                    .iter()
+                    .filter(|&x| *x != '.')
+                    .all(|x| x == amphipod)
+                {
+                    // OK to go into the room
+                    // See if we can actually get there (i.e. hallway isn't blocked)
+                    // Check from here to the entrance to the room
+                    let entrance = room_entrance(*amphipod);
+                    let (h1, h2) = if entrance > idx {
+                        (idx + 1, entrance)
+                    } else {
+                        (entrance, idx - 1)
+                    };
+                    for contains in (h1..=h2).map(|i| state.hallway[i]) {
+                        if contains != '.' {
+                            // Hallway isn't clear - can't move
+                            // Check this isn't a deadlock state
+                            let blockers_entrance = room_entrance(contains);
+                            if if idx > entrance {
+                                blockers_entrance > idx
+                            } else {
+                                blockers_entrance < idx
+                            } {
+                                // Two amphipods are stuck in the hallways trying to get to rooms either side of each other
+                                // This state can never complete - don't attempt to generate any new ones from it
+                                return Vec::new();
+                            }
+                            // No deadlock, but can't move this time round
+                            continue 'HallwayLoop;
+                        }
                     }
-                    // Free up the space where we were and remove where we have gone to
-                    spaces.insert(*pos);
-                    spaces.remove(&candidate);
+                    // Hallway is clear - find the last empty slot
+                    let (slot, _) = state.rooms[room]
+                        .iter()
+                        .enumerate()
+                        .filter(|(_, &x)| x == '.')
+                        .last()
+                        .unwrap();
+                    // Work out how far we need to move
+                    let moves = abs_diff(entrance, idx) + slot + 1;
                     let energy = moves * requires_energy(*amphipod);
-                    next.push((State::new(spaces, amphipods), energy));
+                    // Create new state with the amphipod moved
+                    let mut state = state.clone();
+                    std::mem::swap(&mut state.hallway[idx], &mut state.rooms[room][slot]);
+                    next.push((state, energy));
+                }
+            }
+
+            // Then consider all amphipods in rooms
+            for room in 0..state.rooms.len() {
+                let owner = owner(room);
+                let mut first = SLOTS;
+                for (slot, contains) in (0..SLOTS)
+                    .map(|slot| (slot, state.rooms[room][slot]))
+                    .filter(|(_, x)| *x != '.')
+                {
+                    if slot < first {
+                        // Find the first taken slot
+                        first = slot;
+                    }
+                    if contains != owner {
+                        // Found an amphipod in this room that shouldn't be here
+                        // Move the first one out (may or may not be this one)
+                        let amphipod = state.rooms[room][first];
+                        let exit = room_entrance(owner);
+                        // Create states for all valid hallway positions that we can move into from the room exit
+                        // Will consider two sets of states, moving left and moving right
+                        let ranges = [
+                            Either::Left((0..exit).rev()),
+                            Either::Right(exit + 1..state.hallway.len()),
+                        ];
+                        for range in ranges {
+                            for idx in range.filter(|&i| !is_entrance(i)) {
+                                if state.hallway[idx] == '.' {
+                                    // Can move here - work out how far we need to move
+                                    let moves = first + 1 + abs_diff(idx, exit);
+                                    let energy = moves * requires_energy(amphipod);
+                                    // Create new state with the amphipod moved
+                                    let mut state = state.clone();
+                                    std::mem::swap(
+                                        &mut state.hallway[idx],
+                                        &mut state.rooms[room][first],
+                                    );
+                                    next.push((state, energy));
+                                } else {
+                                    // Blocked - stop
+                                    break;
+                                }
+                            }
+                        }
+                    }
                 }
             }
             next
@@ -218,7 +217,7 @@ fn organise_amphipods(input: &VecGrid<char>) -> usize {
 
 #[aoc(day23, part1)]
 fn part1(input: &str) -> usize {
-    organise_amphipods(&input.parse().unwrap())
+    organise_amphipods::<2>(&input.parse().unwrap())
 }
 
 static P2_INSERT: [&str; 2] = ["  #D#C#B#A#", "  #D#B#A#C#"];
@@ -227,7 +226,7 @@ static P2_INSERT: [&str; 2] = ["  #D#C#B#A#", "  #D#B#A#C#"];
 fn part2(input: &str) -> usize {
     let mut lines = input.lines().collect::<Vec<_>>();
     lines.splice(3..3, P2_INSERT);
-    organise_amphipods(&lines.into())
+    organise_amphipods::<4>(&lines.into())
 }
 
 #[cfg(test)]

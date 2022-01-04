@@ -50,6 +50,11 @@ impl Probe {
     }
 }
 
+/// Calculates the triangular number of n
+const fn tri_num(n: isize) -> isize {
+    (n * (n + 1)) / 2
+}
+
 #[aoc_generator(day17)]
 fn gen(input: &str) -> (RangeInclusive<isize>, RangeInclusive<isize>) {
     let parts = input.split(&['=', '.', ','][..]).collect::<Vec<_>>();
@@ -80,18 +85,20 @@ fn fire(
 }
 
 #[aoc(day17, part1)]
-fn part1(target: &(RangeInclusive<isize>, RangeInclusive<isize>)) -> isize {
-    // Find the max height a probe can reach and still hit the target
-    let mut heights = Vec::new();
-    for x in 0..*target.0.end() * 2 {
-        for y in isize::min(*target.1.start(), 0)..isize::abs(*target.1.start()) {
-            if let Some(height) = fire((x, y), target) {
-                heights.push(height);
-            }
-        }
-    }
+const fn part1(target: &(RangeInclusive<isize>, RangeInclusive<isize>)) -> isize {
+    // Find the max height a probe can reach and still hit the target by aiming up such that the probe will then drop
+    // down from it's highest point and hit the target
 
-    *heights.iter().max().unwrap()
+    // Ideal x velocity results in forward movement reaching 0 due to wind resistance as the probe is over the target
+    // As forward movement reduces by 1 each step, an ideal x velocity is n which gives a triangular number that is equal
+    // to the start of the target
+    // We don't actually need it though for this calculation
+
+    // Ideal y velocity is as high as possible without it over shooting the target
+    // Due to gravity, any initial positive y velocity will return to 0 with a speed of -y, so want asb(bottom of target) -1 to ensure we hit it
+    let y_velocity = isize::abs(*target.1.start()) - 1;
+    // Max height achieved can then be calculated as the triangular number for initial y velocity
+    tri_num(y_velocity)
 }
 
 #[aoc(day17, part2)]
@@ -99,7 +106,7 @@ fn part2(target: &(RangeInclusive<isize>, RangeInclusive<isize>)) -> usize {
     // Find how many initial velocities we could fire a probe with that would hit the target
     let mut hits = HashSet::new();
     for x in 0..*target.0.end() * 2 {
-        for y in isize::min(*target.1.start(), 0)..isize::abs(*target.1.start()) {
+        for y in *target.1.start()..isize::abs(*target.1.start()) {
             if fire((x, y), target).is_some() {
                 hits.insert((x, y));
             }

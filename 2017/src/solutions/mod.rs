@@ -7,3 +7,4 @@ mod day06_memory_reallocation;
 mod day07_recursive_circus;
 mod day08_i_heard_you_like_registers;
 mod day09_stream_processing;
+mod day10_knot_hash;

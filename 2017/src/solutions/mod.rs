@@ -9,3 +9,4 @@ mod day08_i_heard_you_like_registers;
 mod day09_stream_processing;
 mod day10_knot_hash;
 mod day11_hex_ed;
+mod day12_digital_plumber;

@@ -10,3 +10,4 @@ mod day09_stream_processing;
 mod day10_knot_hash;
 mod day11_hex_ed;
 mod day12_digital_plumber;
+mod day13_packet_scanners;

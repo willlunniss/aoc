@@ -1,10 +1,35 @@
 use itertools::Itertools;
 
 #[derive(Debug)]
-struct KnotHasher<const N: usize> {
+pub struct KnotHasher<const N: usize> {
     buffer: [usize; N],
     position: usize,
     skip_size: usize,
+}
+
+/// ASCII String implementation
+impl KnotHasher<256> {
+    /// Hashes an ASCII String and returns the hex knot hash
+    pub fn hash(string: &str) -> String {
+        // Calculate lengths by treating as a list of ASCII bytes, and then append special sequence
+        let lengths = string
+            .chars()
+            .map(|c| c as u8 as usize)
+            .chain([17, 31, 73, 47, 23])
+            .collect::<Vec<_>>();
+
+        // Init a 256 (ASCII legal values) hasher
+        let mut hasher = Self::new();
+
+        // Apply all lengths 64 times
+        lengths
+            .iter()
+            .cycle()
+            .take(lengths.len() * 64)
+            .for_each(|length| hasher.apply_length(*length));
+        // Calculate and return the dense hash
+        hasher.dense_hash()
+    }
 }
 
 impl<const N: usize> KnotHasher<N> {
@@ -31,8 +56,8 @@ impl<const N: usize> KnotHasher<N> {
         self.skip_size += 1;
     }
 
-    /// Applies a multiple lengths
-    fn apply<'a>(&mut self, lengths: impl IntoIterator<Item = &'a usize>) {
+    /// Applies multiple length operations
+    fn apply_lengths<'a>(&mut self, lengths: impl IntoIterator<Item = &'a usize>) {
         lengths
             .into_iter()
             .for_each(|length| self.apply_length(*length));
@@ -44,7 +69,7 @@ impl<const N: usize> KnotHasher<N> {
     }
 
     /// Calculates the dense hash
-    fn dense_hash(&mut self) -> String {
+    fn dense_hash(&self) -> String {
         // For each block of 16 values
         // xor all values in the block together
         // format each as a hex value with leading zero if needed
@@ -53,7 +78,7 @@ impl<const N: usize> KnotHasher<N> {
             .chunks(16)
             .into_iter()
             .map(|block| block.fold(0, |acc, x| acc ^ x))
-            .map(|xord| format!("{:0x}", xord))
+            .map(|xord| format!("{:02x}", xord))
             .join("")
     }
 }
@@ -67,23 +92,14 @@ fn part1(input: &str) -> usize {
         .collect::<Vec<_>>();
 
     let mut hasher = KnotHasher::<256>::new();
-    hasher.apply(lengths.iter());
+    hasher.apply_lengths(lengths.iter());
     hasher.check()
 }
 
 #[aoc(day10, part2)]
 fn part2(input: &str) -> String {
-    // Treat into as a list of ASCII bytes and append extra lengths
-    let lengths = input
-        .chars()
-        .map(|c| c as u8 as usize)
-        .chain([17, 31, 73, 47, 23])
-        .collect::<Vec<_>>();
-
-    let mut hasher = KnotHasher::<256>::new();
-    // Apply lengths 64 times
-    hasher.apply(lengths.iter().cycle().take(lengths.len() * 64));
-    hasher.dense_hash()
+    // Treat input as an ASCII String and return it's hash
+    KnotHasher::hash(input)
 }
 
 #[cfg(test)]

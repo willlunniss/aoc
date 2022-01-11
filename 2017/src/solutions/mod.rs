@@ -11,3 +11,4 @@ mod day10_knot_hash;
 mod day11_hex_ed;
 mod day12_digital_plumber;
 mod day13_packet_scanners;
+mod day14_disk_defragmentation;

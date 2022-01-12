@@ -20,10 +20,8 @@ fn part1(input: &str) -> usize {
         let key = format!("{}-{}", input, row);
         // Calculate the knot hash for this row
         let hash = KnotHasher::hash(&key);
-        // Parse as hex value
-        let value = u128::from_str_radix(&hash, 16).unwrap();
         // Number of used squares is equal to number of set bits
-        used += count_set_bits(value);
+        used += count_set_bits(hash);
     }
     used
 }
@@ -37,11 +35,9 @@ fn part2(input: &str) -> usize {
         let key = format!("{}-{}", input, row);
         // Calculate the knot hash for this row
         let hash = KnotHasher::hash(&key);
-        // Parse as hex value
-        let value = u128::from_str_radix(&hash, 16).unwrap();
         // Number of used squares is equal to number of set bits
         for col in 0..128_u128 {
-            if value & (1 << (127 - col)) != 0 {
+            if hash & (1 << (127 - col)) != 0 {
                 grid.insert(Pos::new(col as usize, row));
             }
         }

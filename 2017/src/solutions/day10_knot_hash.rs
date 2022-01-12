@@ -9,8 +9,8 @@ pub struct KnotHasher<const N: usize> {
 
 /// ASCII String implementation
 impl KnotHasher<256> {
-    /// Hashes an ASCII String and returns the hex knot hash
-    pub fn hash(string: &str) -> String {
+    /// Hashes an ASCII String and returns the knot hash value
+    pub fn hash(string: &str) -> u128 {
         // Calculate lengths by treating as a list of ASCII bytes, and then append special sequence
         let lengths = string
             .chars()
@@ -69,17 +69,16 @@ impl<const N: usize> KnotHasher<N> {
     }
 
     /// Calculates the dense hash
-    fn dense_hash(&self) -> String {
+    fn dense_hash(&self) -> u128 {
         // For each block of 16 values
         // xor all values in the block together
-        // format each as a hex value with leading zero if needed
+        // build a u128 from the blocks MSB to LSB
         self.buffer
             .into_iter()
             .chunks(16)
             .into_iter()
-            .map(|block| block.fold(0, |acc, x| acc ^ x))
-            .map(|xord| format!("{:02x}", xord))
-            .join("")
+            .map(|block| block.fold(0, |acc, x| acc ^ x) as u128)
+            .fold(0, |acc, x| (acc << 8) + x)
     }
 }
 
@@ -98,8 +97,9 @@ fn part1(input: &str) -> usize {
 
 #[aoc(day10, part2)]
 fn part2(input: &str) -> String {
-    // Treat input as an ASCII String and return it's hash
-    KnotHasher::hash(input)
+    // Treat input as an ASCII String
+    // Result is it's hash formatted as a hex string
+    format!("{:032x}", KnotHasher::hash(input))
 }
 
 #[cfg(test)]
@@ -120,6 +120,6 @@ mod tests {
     fn test_part2_example_dense() {
         let mut hasher = KnotHasher::<16>::new();
         hasher.buffer = [65, 27, 9, 1, 4, 3, 40, 50, 91, 7, 6, 0, 2, 5, 68, 22];
-        assert_eq!(hasher.dense_hash(), "40");
+        assert_eq!(hasher.dense_hash(), 0x40);
     }
 }

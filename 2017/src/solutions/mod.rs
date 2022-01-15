@@ -13,3 +13,4 @@ mod day12_digital_plumber;
 mod day13_packet_scanners;
 mod day14_disk_defragmentation;
 mod day15_dueling_generators;
+mod day16_permutation_promenade;

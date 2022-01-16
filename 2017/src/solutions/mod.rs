@@ -16,3 +16,4 @@ mod day15_dueling_generators;
 mod day16_permutation_promenade;
 mod day17_spinlock;
 mod day18_duet;
+mod day19_a_series_of_tubes;

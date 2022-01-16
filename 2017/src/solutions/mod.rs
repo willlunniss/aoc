@@ -15,3 +15,4 @@ mod day14_disk_defragmentation;
 mod day15_dueling_generators;
 mod day16_permutation_promenade;
 mod day17_spinlock;
+mod day18_duet;

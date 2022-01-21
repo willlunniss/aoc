@@ -17,3 +17,4 @@ mod day16_permutation_promenade;
 mod day17_spinlock;
 mod day18_duet;
 mod day19_a_series_of_tubes;
+mod day20_particle_swarm;

@@ -3,6 +3,7 @@ use crate::grid::Pos;
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::iter::FromIterator;
+use std::str::FromStr;
 
 /// Grid that uses a `HashMap` to store data of a unknown and non-fixed size
 #[derive(Clone, Debug)]
@@ -22,6 +23,25 @@ impl<V> FromIterator<(Pos, V)> for MapGrid<V> {
         Self {
             data: HashMap::from_iter(iter),
         }
+    }
+}
+
+impl FromStr for MapGrid<char> {
+    type Err = String;
+
+    /// Creates a new `MapGrid` from an ASCII grid
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self {
+            data: s
+                .lines()
+                .enumerate()
+                .flat_map(|(y, line)| {
+                    line.chars()
+                        .enumerate()
+                        .map(move |(x, c)| (Pos::new(x, y), c))
+                })
+                .collect(),
+        })
     }
 }
 

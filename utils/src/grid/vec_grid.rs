@@ -100,6 +100,29 @@ impl<V: Clone + Copy> VecGrid<V> {
         pos.neighbours8()
             .map(move |neighbour| (neighbour, self.get(neighbour)))
     }
+
+    /// Returns a new `VecGrid` rotated 90 degrees clockwise
+    pub fn rotate(&self) -> Self {
+        assert_eq!(self.width(), self.height());
+        let mut result = self.data.clone();
+        for y in 0..self.height() {
+            for x in 0..self.width() {
+                result[y][x] = self.data[self.width() - x - 1][y];
+            }
+        }
+        result.into()
+    }
+
+    /// Returns a new `VecGrid` with all rows reversed
+    pub fn mirror(&self) -> Self {
+        let mut result = self.data.clone();
+        for y in 0..self.height() {
+            for x in 0..self.width() {
+                result[y][x] = self.data[y][self.width() - x - 1];
+            }
+        }
+        result.into()
+    }
 }
 
 impl<V> Index<Pos> for VecGrid<V> {

@@ -2,8 +2,8 @@ use std::collections::VecDeque;
 use std::convert::Infallible;
 use std::str::FromStr;
 
-#[derive(Debug, Clone)]
-enum Arg {
+#[derive(Debug, Clone, PartialEq)]
+pub enum Arg {
     Register(usize),
     Value(isize),
 }
@@ -21,15 +21,17 @@ impl FromStr for Arg {
     }
 }
 
-#[derive(Debug, Clone)]
-enum Op {
+#[derive(Debug, Clone, PartialEq)]
+pub enum Op {
     Snd(Arg),
     Set(Arg, Arg),
     Add(Arg, Arg),
+    Sub(Arg, Arg),
     Mul(Arg, Arg),
     Mod(Arg, Arg),
     Rcv(Arg),
     Jgz(Arg, Arg),
+    Jnz(Arg, Arg),
 }
 
 impl FromStr for Op {
@@ -47,6 +49,10 @@ impl FromStr for Op {
                 parts[1].parse().unwrap(),
                 parts[2].parse().unwrap(),
             )),
+            "sub" => Ok(Self::Sub(
+                parts[1].parse().unwrap(),
+                parts[2].parse().unwrap(),
+            )),
             "mul" => Ok(Self::Mul(
                 parts[1].parse().unwrap(),
                 parts[2].parse().unwrap(),
@@ -60,27 +66,31 @@ impl FromStr for Op {
                 parts[1].parse().unwrap(),
                 parts[2].parse().unwrap(),
             )),
-            _ => unreachable!(),
+            "jnz" => Ok(Self::Jnz(
+                parts[1].parse().unwrap(),
+                parts[2].parse().unwrap(),
+            )),
+            _ => unreachable!("{}", s),
         }
     }
 }
 
 #[derive(Debug)]
-enum ExecResult {
+pub enum ExecResult {
     ReceiveBlock,
     Send(isize),
     End,
 }
 
 #[derive(Debug)]
-struct Machine {
-    registers: [isize; 26],
+pub struct Machine {
+    pub registers: [isize; 26],
     pc: usize,
     queue: VecDeque<isize>,
 }
 
 impl Machine {
-    fn new(id: usize) -> Self {
+    pub fn new(id: usize) -> Self {
         let mut m = Self {
             registers: vec![0; 26].try_into().unwrap(),
             pc: 0,
@@ -97,6 +107,10 @@ impl Machine {
         }
     }
 
+    pub const fn pc(&self) -> usize {
+        self.pc
+    }
+
     fn get_mut<'a>(&'a mut self, arg: &'a Arg) -> &'a mut isize {
         match arg {
             Arg::Register(r) => &mut self.registers[*r],
@@ -110,13 +124,14 @@ impl Machine {
     }
 
     /// Execute a single `Op`
-    fn exec(&mut self, op: &Op) -> Option<ExecResult> {
+    pub fn exec(&mut self, op: &Op) -> Option<ExecResult> {
         // Assume it will fully execute
         self.pc += 1;
         match op {
             Op::Snd(x) => return Some(ExecResult::Send(self.get(x))),
             Op::Set(x, y) => *self.get_mut(x) = self.get(y),
             Op::Add(x, y) => *self.get_mut(x) += self.get(y),
+            Op::Sub(x, y) => *self.get_mut(x) -= self.get(y),
             Op::Mul(x, y) => *self.get_mut(x) *= self.get(y),
             Op::Mod(x, y) => *self.get_mut(x) %= self.get(y),
             Op::Rcv(x) => {
@@ -129,8 +144,20 @@ impl Machine {
                 }
             }
             Op::Jgz(x, y) => {
-                // If non-zero, jump
+                // If greater than zero, jump
                 if self.get(x) > 0 {
+                    // Update the PC (account for it already having been advanced by 1)
+                    let jump = self.get(y);
+                    if jump > 0 {
+                        self.pc += jump as usize - 1;
+                    } else {
+                        self.pc -= isize::abs(jump) as usize + 1;
+                    }
+                }
+            }
+            Op::Jnz(x, y) => {
+                // If non-zero, jump
+                if self.get(x) != 0 {
                     // Update the PC (account for it already having been advanced by 1)
                     let jump = self.get(y);
                     if jump > 0 {
@@ -162,7 +189,7 @@ impl Machine {
     /// * A value is sent
     /// * Blocked waiting to receive a value
     /// * Reached the end
-    fn run(&mut self, ops: &[Op]) -> ExecResult {
+    pub fn run(&mut self, ops: &[Op]) -> ExecResult {
         while self.pc < ops.len() {
             if let Some(result) = self.exec(&ops[self.pc]) {
                 return result;

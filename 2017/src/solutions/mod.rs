@@ -22,3 +22,4 @@ mod day21_fractal_art;
 mod day22_sporifica_virus;
 mod day23_coprocessor_conflagration;
 mod day24_electromagnetic_moat;
+mod day25_the_halting_problem;

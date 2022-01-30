@@ -12,7 +12,7 @@ fn infect(grid: &MapGrid<char>, bursts: usize, evolved: bool) -> usize {
     let mut direction = Direction::Up;
     let mut infections = 0;
     for _ in 0..bursts {
-        let state = *grid.get(&position).unwrap_or(&'.');
+        let state = grid.entry(position).or_insert('.');
         // Update direction based on current node state
         direction = match state {
             '#' => direction.rotate_right(),
@@ -22,7 +22,7 @@ fn infect(grid: &MapGrid<char>, bursts: usize, evolved: bool) -> usize {
             _ => unreachable!(),
         };
         // Update state of node
-        let next = match state {
+        *state = match state {
             '#' => {
                 if evolved {
                     'F'
@@ -45,7 +45,6 @@ fn infect(grid: &MapGrid<char>, bursts: usize, evolved: bool) -> usize {
             }
             _ => unreachable!(),
         };
-        grid.insert(position, next);
         // Move forward
         position = position.next(direction);
     }
@@ -82,6 +81,6 @@ mod tests {
 
     #[test]
     fn test_part2_example() {
-        assert_eq!(part2(&gen(EXAMPLE_INPUT)), 2511944);
+        assert_eq!(part2(&gen(EXAMPLE_INPUT)), 2_511_944);
     }
 }

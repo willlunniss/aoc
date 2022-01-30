@@ -2,7 +2,7 @@ use itertools::Itertools;
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 
-type ComponentId = u8;
+type ComponentId = u64;
 type Pins = usize;
 
 #[derive(Debug, Clone)]
@@ -46,7 +46,7 @@ impl Component {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 struct Bridge {
     length: usize,
     strength: usize,
@@ -72,11 +72,13 @@ fn gen(
     // Map to look up which components could be used to connect to a port with a given number of pins
     let mut pins_to_ids: HashMap<Pins, HashSet<ComponentId>> = HashMap::new();
     // Map of all components
+    // Assign each component a unique id as a bit field in a u64 (OK as there are less than 64 components)
+    // This makes it trivial to compare available components by summing up all ids
     let mut components: HashMap<ComponentId, Component> = HashMap::new();
     for component in input
         .lines()
         .enumerate()
-        .map(|(idx, line)| Component::new(idx.try_into().unwrap(), line))
+        .map(|(idx, line)| Component::new(1 << idx, line))
     {
         for pins in component.pins() {
             (*pins_to_ids.entry(pins).or_default()).insert(component.id);
@@ -89,6 +91,7 @@ fn gen(
 /// Recursively builds the best bridge possible from the available components that will connect
 /// to the port based on it's number of pins using the supplied comparison function
 fn build_bridge<F>(
+    cache: &mut HashMap<u64, Bridge>,
     components: &HashMap<ComponentId, Component>,
     pins_to_ids: &HashMap<Pins, HashSet<ComponentId>>,
     port_pins: Pins,
@@ -97,7 +100,14 @@ fn build_bridge<F>(
 where
     F: Copy + Fn(&Bridge, &Bridge) -> Ordering,
 {
-    pins_to_ids
+    // See if we have already built a bridge with these components
+    // NOTE: Can't use cache.entry().or_insert_with() as we need to pass cache into the recursive call
+    let available_components = components.keys().sum::<u64>();
+    if let Some(bridge) = cache.get(&available_components) {
+        return bridge.clone();
+    }
+
+    let bridge = pins_to_ids
         .get(&port_pins)
         .unwrap()
         .iter()
@@ -112,6 +122,7 @@ where
             }
             // and then join it onto the best bridge we can build with what is left
             build_bridge(
+                cache,
                 &components,
                 &pins_to_ids,
                 component.other_end(port_pins),
@@ -120,7 +131,9 @@ where
             .join(&component)
         })
         .max_by(|x, y| compare(x, y)) // Picking the best bridge based on the supplied comparison
-        .unwrap_or_default()
+        .unwrap_or_default();
+    cache.insert(available_components, bridge.clone());
+    bridge
 }
 
 #[aoc(day24, part1)]
@@ -131,7 +144,10 @@ fn part1(
     ),
 ) -> usize {
     // Build the strongest bridge
-    build_bridge(&input.0, &input.1, 0, |x, y| x.strength.cmp(&y.strength)).strength
+    build_bridge(&mut HashMap::new(), &input.0, &input.1, 0, |x, y| {
+        x.strength.cmp(&y.strength)
+    })
+    .strength
 }
 
 #[aoc(day24, part2)]
@@ -142,7 +158,7 @@ fn part2(
     ),
 ) -> usize {
     // Build the longest bridge, if there is a tie pick the strongest
-    build_bridge(&input.0, &input.1, 0, |x, y| {
+    build_bridge(&mut HashMap::new(), &input.0, &input.1, 0, |x, y| {
         let length = x.length.cmp(&y.length);
         if length == Ordering::Equal {
             x.strength.cmp(&y.strength)

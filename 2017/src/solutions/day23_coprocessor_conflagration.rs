@@ -1,4 +1,5 @@
 use crate::solutions::day18_duet::{Arg, Machine, Op};
+use rayon::prelude::*;
 
 #[aoc_generator(day23)]
 fn gen(input: &str) -> Vec<Op> {
@@ -36,23 +37,21 @@ fn part2(input: &[Op]) -> usize {
         let op = &input[machine.pc()];
         machine.exec(op);
     }
-    let mut numbers_with_factors = 0;
     // Get the step size from the input instructions
     if let Op::Sub(_, Arg::Value(istep)) = input[30] {
-        let step = isize::abs(istep) as usize;
+        let step = isize::abs(istep).try_into().unwrap();
         // Get the range from the registers
         let from = machine.registers[1];
         let to = machine.registers[2];
         // Know we have all the parameters, we can check for factors
-        for n in (from..=to).step_by(step) {
-            // For all numbers in the range, check to see if they have any factors (excluding 1 or themselves)
-            if (2..n).into_iter().any(|x| n % x == 0) {
-                numbers_with_factors += 1;
-            }
-        }
-    } else {
-        unreachable!();
+        return (from..to + 1)
+            .into_par_iter()
+            .step_by(step)
+            .filter(|&n| {
+                // For all numbers in the range, check to see if they have any factors (excluding 1 or themselves)
+                (2..n).into_iter().any(|x| n % x == 0)
+            })
+            .count();
     }
-
-    numbers_with_factors
+    0
 }

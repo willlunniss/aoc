@@ -1,6 +1,6 @@
 use utils::grid::{Direction, MapGrid, Pos};
 
-/// Implements an integrator for allocating positions in
+/// Implements an iterator for allocating positions in
 /// a spiral pattern like this:
 /// 17  16  15  14  13
 /// 18   5   4   3  12

@@ -90,3 +90,27 @@ impl Direction {
         Direction::iter()
     }
 }
+
+impl Add<Direction> for Direction {
+    type Output = Self;
+
+    fn add(self, other: Direction) -> Self {
+        match other {
+            Direction::Left => self.rotate_left(),
+            Direction::Right => self.rotate_right(),
+            Direction::Up => self,
+            Direction::Down => self.back(),
+        }
+    }
+}
+
+impl AddAssign<Direction> for Direction {
+    fn add_assign(&mut self, other: Direction) {
+        *self = match other {
+            Direction::Left => self.rotate_left(),
+            Direction::Right => self.rotate_right(),
+            Direction::Up => *self,
+            Direction::Down => self.back(),
+        }
+    }
+}

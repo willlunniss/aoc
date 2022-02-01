@@ -1,1 +1,2 @@
 mod day01_no_time_for_a_taxicab;
+mod day02_bathroom_security;

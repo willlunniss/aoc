@@ -2,7 +2,16 @@ use crate::grid::Direction;
 use itertools::Itertools;
 use std::cmp::Ordering;
 use std::ops::{Add, Sub};
-use std::{convert::Infallible, str::FromStr};
+use std::str::FromStr;
+use thiserror::Error;
+
+#[derive(Error, Debug, PartialEq)]
+pub enum ParsePosError {
+    #[error("invalid format: '{0}' is not a comma separated pair")]
+    InvalidPair(String),
+    #[error("invalid number: '{0}' is not a valid number")]
+    InvalidNumber(String),
+}
 
 /// (x, y) position for referencing values in a `MapGrid` or `VecGrid`
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -12,16 +21,25 @@ pub struct Pos {
 }
 
 impl FromStr for Pos {
-    type Err = Infallible;
+    type Err = ParsePosError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         // Split 'x,y' string, parse as a number and build a Pos from it
-        let (x, y) = s
+        let values = s
             .split(',')
-            .map(|value| value.parse::<isize>().unwrap())
-            .collect_tuple()
-            .unwrap();
-        Ok(Self { x, y })
+            .map(|n| {
+                n.parse()
+                    .map_err(|_| ParsePosError::InvalidNumber(n.to_owned()))
+            })
+            .collect::<Result<Vec<isize>, _>>()?;
+        if values.len() == 2 {
+            Ok(Self {
+                x: values[0],
+                y: values[1],
+            })
+        } else {
+            Err(ParsePosError::InvalidPair(s.to_owned()))
+        }
     }
 }
 
@@ -238,5 +256,28 @@ impl Sub<(usize, usize)> for Pos {
             x: self.x - other.0 as isize,
             y: self.y - other.1 as isize,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_str() {
+        assert_eq!("1,1".parse::<Pos>(), Ok(Pos::new(1, 1)));
+        assert_eq!("1,-1".parse::<Pos>(), Ok(Pos::from((1, -1i32))));
+        assert_eq!(
+            "1".parse::<Pos>(),
+            Err(ParsePosError::InvalidPair("1".to_owned()))
+        );
+        assert_eq!(
+            "1,n".parse::<Pos>(),
+            Err(ParsePosError::InvalidNumber("n".to_owned()))
+        );
+        assert_eq!(
+            "1,2,3".parse::<Pos>(),
+            Err(ParsePosError::InvalidPair("1,2,3".to_owned()))
+        );
     }
 }

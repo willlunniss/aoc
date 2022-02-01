@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet, VecDeque};
 use utils::grid::{Direction, MapGrid, Pos};
+use std::convert::TryFrom;
 
 /// Builds a map of the building from the regex directions
 fn build_map(input: &str) -> MapGrid<char> {
@@ -12,7 +13,7 @@ fn build_map(input: &str) -> MapGrid<char> {
         match c {
             'N' | 'S' | 'E' | 'W' => {
                 // Move forward into the door
-                let direction = Direction::from(c);
+                let direction = Direction::try_from(c).unwrap();
                 let door = pos.next(direction);
                 let door_type = match direction {
                     Direction::Up | Direction::Down => '-',

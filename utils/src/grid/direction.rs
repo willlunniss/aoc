@@ -1,3 +1,5 @@
+use std::ops::{Add, AddAssign};
+use std::str::FromStr;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
@@ -10,17 +12,31 @@ pub enum Direction {
     Right,
 }
 
-impl From<char> for Direction {
+impl FromStr for Direction {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "U" | "up" | "N" | "north" => Ok(Self::Up),
+            "D" | "down" | "S" | "south" => Ok(Self::Down),
+            "L" | "left" | "W" | "west" => Ok(Self::Left),
+            "R" | "right" | "E" | "east" => Ok(Self::Right),
+            _ => Err(format!("Cannot parse '{}' to direction", s)),
+        }
+    }
+}
+
+impl TryFrom<char> for Direction {
+    type Error = String;
+
     /// Returns a Direction from NSEW or UDLR single chars
-    fn from(item: char) -> Self {
-        match item {
-            'U' | 'N' => Self::Up,
-            'D' | 'S' => Self::Down,
-            'L' | 'W' => Self::Left,
-            'R' | 'E' => Self::Right,
-            _ => {
-                panic!("Cannot convert '{}' to direction", item)
-            }
+    fn try_from(c: char) -> Result<Self, Self::Error> {
+        match c {
+            'U' | 'N' => Ok(Self::Up),
+            'D' | 'S' => Ok(Self::Down),
+            'L' | 'W' => Ok(Self::Left),
+            'R' | 'E' => Ok(Self::Right),
+            _ => Err(format!("Cannot convert '{}' to direction", c)),
         }
     }
 }

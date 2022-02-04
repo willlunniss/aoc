@@ -1,5 +1,6 @@
 use lazy_static;
 use std::collections::{HashMap, HashSet};
+use std::convert::TryFrom;
 use std::fmt;
 use std::iter::FromIterator;
 use std::str::FromStr;
@@ -57,6 +58,22 @@ impl FromIterator<(isize, isize)> for OcrString {
 impl FromIterator<Point> for OcrString {
     fn from_iter<I: IntoIterator<Item = Point>>(iter: I) -> Self {
         OcrString::new_without_bounds(iter.into_iter()).unwrap()
+    }
+}
+
+impl TryFrom<Vec<Vec<char>>> for OcrString {
+    type Error = OcrStringError;
+
+    /// Builds an `OcrString` from a `Vec` of row `Vec` of `char` where '#' is used to draw the letters
+    fn try_from(vec: Vec<Vec<char>>) -> Result<Self, Self::Error> {
+        let height = vec.len();
+        let points = vec.iter().enumerate().flat_map(|(y, row)| {
+            row.iter()
+                .enumerate()
+                .filter(|(_, c)| c == &&'#')
+                .map(move |(x, _)| (x, y))
+        });
+        OcrString::new(points, (0, 0), height)
     }
 }
 

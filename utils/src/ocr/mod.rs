@@ -185,7 +185,7 @@ mod tests {
     use indoc::indoc;
 
     #[test]
-    fn test_6x4_str() {
+    fn test_6x4_str1() {
         static SAMPLE: &str = indoc! {"
         .##..###..#..#...##.####.###...##...##.
         #..#.#..#.#.#.....#.#....#..#.#..#.#..#
@@ -198,6 +198,21 @@ mod tests {
         assert_eq!(ocr.len(), 8);
         assert_eq!(ocr.height, 6);
         assert_eq!(ocr.decode(), Some("ABKJFBGC".to_owned()));
+    }
+    #[test]
+    fn test_6x4_str2() {
+        static SAMPLE: &str = indoc! {"
+        ####.####.####.#...##..#.####.###..####..###...##.
+        #....#....#....#...##.#..#....#..#.#......#.....#.
+        ###..###..###...#.#.##...###..#..#.###....#.....#.
+        #....#....#......#..#.#..#....###..#......#.....#.
+        #....#....#......#..#.#..#....#.#..#......#..#..#.
+        ####.#....####...#..#..#.#....#..#.#.....###..##..
+        "};
+        let ocr: OcrString = SAMPLE.parse().unwrap();
+        assert_eq!(ocr.len(), 10);
+        assert_eq!(ocr.height, 6);
+        assert_eq!(ocr.decode(), Some("EFEYKFRFIJ".to_owned()));
     }
 
     #[test]

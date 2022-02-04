@@ -5,3 +5,4 @@ mod day04_security_through_obscurity;
 mod day05_how_about_a_nice_game_of_chess;
 mod day06_signals_and_noise;
 mod day07_internet_protocol_version_7;
+mod day08_two_factor_authentication;

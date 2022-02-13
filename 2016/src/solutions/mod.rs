@@ -13,3 +13,4 @@ mod day12_leonardos_monorail;
 mod day13_a_maze_of_twisty_little_cubicles;
 mod day14_one_time_pad;
 mod day15_timing_is_everything;
+mod day16_dragon_checksum;

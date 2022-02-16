@@ -1,4 +1,4 @@
-use lazy_static;
+use lazy_static::lazy_static;
 use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
 use std::fmt;

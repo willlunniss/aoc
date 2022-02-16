@@ -4,7 +4,7 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 /// Four heading direction enum to aid moving around a grid
-#[derive(Debug, Copy, Clone, Eq, PartialEq, EnumIter)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, EnumIter, Hash)]
 pub enum Direction {
     Up,
     Down,
@@ -37,6 +37,18 @@ impl TryFrom<char> for Direction {
             'L' | 'W' => Ok(Self::Left),
             'R' | 'E' => Ok(Self::Right),
             _ => Err(format!("Cannot convert '{}' to direction", c)),
+        }
+    }
+}
+
+impl From<Direction> for char {
+    // Converts into UDLR single char representation
+    fn from(direction: Direction) -> char {
+        match direction {
+            Direction::Up => 'U',
+            Direction::Down => 'D',
+            Direction::Left => 'L',
+            Direction::Right => 'R',
         }
     }
 }

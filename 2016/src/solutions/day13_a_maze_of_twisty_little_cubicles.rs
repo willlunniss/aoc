@@ -72,9 +72,4 @@ mod tests {
     fn test_part1_example() {
         assert_eq!(part1(&gen("10")), 11);
     }
-
-    #[test]
-    fn test_part2_example() {
-        assert_eq!(part2(&gen("10")), 0);
-    }
 }

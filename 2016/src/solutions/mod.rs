@@ -17,3 +17,4 @@ mod day16_dragon_checksum;
 mod day17_two_steps_forward;
 mod day18_like_a_rogue;
 mod day19_an_elephant_named_joseph;
+mod day20_firewall_rules;

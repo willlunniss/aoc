@@ -22,3 +22,4 @@ mod day21_scrambled_letters_and_hash;
 mod day22_grid_computing;
 mod day23_safe_cracking;
 mod day24_air_duct_spelunking;
+mod day25_clock_signal;

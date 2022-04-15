@@ -35,6 +35,7 @@ pub enum Op {
     Dec(Arg),
     Jnz(Arg, Arg),
     Tgl(Arg),
+    Out(Arg),
 }
 
 impl FromStr for Op {
@@ -54,6 +55,7 @@ impl FromStr for Op {
                 parts[2].parse().unwrap(),
             )),
             "tgl" => Ok(Self::Tgl(parts[1].parse().unwrap())),
+            "out" => Ok(Self::Out(parts[1].parse().unwrap())),
             _ => unreachable!("{}", s),
         }
     }
@@ -64,7 +66,7 @@ impl Op {
     fn toggle(&mut self) {
         *self = match self {
             Self::Inc(x) => Self::Dec(*x),
-            Self::Dec(x) | Self::Tgl(x) => Self::Inc(*x),
+            Self::Dec(x) | Self::Tgl(x) | Self::Out(x) => Self::Inc(*x),
             Self::Cpy(x, y) => Self::Jnz(*x, *y),
             Self::Jnz(x, y) => Self::Cpy(*x, *y),
         }
@@ -79,6 +81,7 @@ pub struct Computer {
 }
 
 impl Computer {
+    /// Initialises a new computer
     pub fn new(memory: &[Op]) -> Self {
         Self {
             registers: [0; 4],
@@ -87,6 +90,7 @@ impl Computer {
         }
     }
 
+    /// Returns the value of an `Arg`
     pub const fn get(&self, arg: &Arg) -> isize {
         match arg {
             Arg::Register(r) => self.registers[*r],
@@ -94,6 +98,9 @@ impl Computer {
         }
     }
 
+    /// Returns a mutable reference to a register
+    ///
+    /// Errors if `Arg` is not a register
     pub fn get_mut<'a>(&'a mut self, arg: &'a Arg) -> Result<&'a mut isize, ExecError> {
         match arg {
             Arg::Register(r) => Ok(&mut self.registers[*r]),
@@ -102,8 +109,13 @@ impl Computer {
     }
 
     /// Execute the `Op` based on the current PC value
-    pub fn exec(&mut self) -> Result<(), ExecError> {
+    ///
+    /// Returns either:
+    /// Some(value) in the case of an output instruction
+    /// None for all other valid instructions
+    pub fn exec(&mut self) -> Result<Option<isize>, ExecError> {
         let mut new_pc = self.pc + 1;
+        let mut output = None;
         match *self.memory.get(self.pc).ok_or(ExecError::EndOfProgram)? {
             Op::Cpy(x, y) => *self.get_mut(&y)? = self.get(&x),
             Op::Inc(x) => *self.get_mut(&x)? += 1,
@@ -122,10 +134,15 @@ impl Computer {
                     self.memory[target as usize].toggle();
                 }
             }
+            Op::Out(x) => {
+                // Set the output value
+                output = Some(self.get(&x));
+            }
         }
         // Update PC
         self.pc = new_pc;
-        Ok(())
+        // Return the optional output value
+        Ok(output)
     }
 
     /// Runs until the end of the program

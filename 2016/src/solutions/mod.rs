@@ -19,3 +19,4 @@ mod day18_like_a_rogue;
 mod day19_an_elephant_named_joseph;
 mod day20_firewall_rules;
 mod day21_scrambled_letters_and_hash;
+mod day22_grid_computing;

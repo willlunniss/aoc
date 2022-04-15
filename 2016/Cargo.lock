@@ -16,6 +16,7 @@ dependencies = [
  "rayon",
  "strum",
  "strum_macros",
+ "thiserror",
  "utils",
 ]
 

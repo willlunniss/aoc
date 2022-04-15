@@ -1,6 +1,15 @@
 use std::str::FromStr;
+use thiserror::Error;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Error, Debug, PartialEq)]
+pub enum ExecError {
+    #[error("Cannot mutate non-register {arg:?}")]
+    ArgNotARegister { arg: Arg },
+    #[error("End of program")]
+    EndOfProgram,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Arg {
     Register(usize),
     Value(isize),
@@ -19,12 +28,13 @@ impl FromStr for Arg {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Op {
     Cpy(Arg, Arg),
     Inc(Arg),
     Dec(Arg),
     Jnz(Arg, Arg),
+    Tgl(Arg),
 }
 
 impl FromStr for Op {
@@ -43,66 +53,84 @@ impl FromStr for Op {
                 parts[1].parse().unwrap(),
                 parts[2].parse().unwrap(),
             )),
+            "tgl" => Ok(Self::Tgl(parts[1].parse().unwrap())),
             _ => unreachable!("{}", s),
         }
     }
 }
 
+impl Op {
+    /// Toggles an `Op` in place
+    fn toggle(&mut self) {
+        *self = match self {
+            Self::Inc(x) => Self::Dec(*x),
+            Self::Dec(x) | Self::Tgl(x) => Self::Inc(*x),
+            Self::Cpy(x, y) => Self::Jnz(*x, *y),
+            Self::Jnz(x, y) => Self::Cpy(*x, *y),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
-struct Computer {
+pub struct Computer {
     registers: [isize; 4],
     pc: usize,
+    memory: Vec<Op>,
 }
 
 impl Computer {
-    const fn new() -> Self {
+    pub fn new(memory: &[Op]) -> Self {
         Self {
             registers: [0; 4],
             pc: 0,
+            memory: memory.to_owned(),
         }
     }
 
-    const fn get(&self, arg: &Arg) -> isize {
+    pub const fn get(&self, arg: &Arg) -> isize {
         match arg {
             Arg::Register(r) => self.registers[*r],
             Arg::Value(v) => *v,
         }
     }
 
-    fn get_mut<'a>(&'a mut self, arg: &'a Arg) -> &'a mut isize {
+    pub fn get_mut<'a>(&'a mut self, arg: &'a Arg) -> Result<&'a mut isize, ExecError> {
         match arg {
-            Arg::Register(r) => &mut self.registers[*r],
-            Arg::Value(_) => panic!(),
+            Arg::Register(r) => Ok(&mut self.registers[*r]),
+            Arg::Value(_) => Err(ExecError::ArgNotARegister { arg: *arg }),
         }
     }
 
-    /// Execute a single `Op`
-    pub fn exec(&mut self, op: &Op) {
-        // Assume it will fully execute
-        self.pc += 1;
-        match op {
-            Op::Cpy(x, y) => *self.get_mut(y) = self.get(x),
-            Op::Inc(x) => *self.get_mut(x) += 1,
-            Op::Dec(x) => *self.get_mut(x) -= 1,
+    /// Execute the `Op` based on the current PC value
+    pub fn exec(&mut self) -> Result<(), ExecError> {
+        let mut new_pc = self.pc + 1;
+        match *self.memory.get(self.pc).ok_or(ExecError::EndOfProgram)? {
+            Op::Cpy(x, y) => *self.get_mut(&y)? = self.get(&x),
+            Op::Inc(x) => *self.get_mut(&x)? += 1,
+            Op::Dec(x) => *self.get_mut(&x)? -= 1,
             Op::Jnz(x, y) => {
                 // If non-zero, jump
-                if self.get(x) != 0 {
-                    // Update the PC (account for it already having been advanced by 1)
-                    let jump = self.get(y);
-                    if jump > 0 {
-                        self.pc += jump as usize - 1;
-                    } else {
-                        self.pc -= isize::abs(jump) as usize + 1;
-                    }
+                if self.get(&x) != 0 {
+                    //Calculate new PC value (based on original)
+                    new_pc = (self.pc as isize + self.get(&y)) as usize;
+                }
+            }
+            Op::Tgl(x) => {
+                // Modify the target op in memory
+                let target = self.pc as isize + self.get(&x);
+                if target >= 0 && target < self.memory.len() as isize {
+                    self.memory[target as usize].toggle();
                 }
             }
         }
+        // Update PC
+        self.pc = new_pc;
+        Ok(())
     }
 
-    pub fn run(&mut self, ops: &[Op]) {
-        while self.pc < ops.len() {
-            self.exec(&ops[self.pc]);
-        }
+    /// Runs until the end of the program
+    pub fn run(&mut self) {
+        while self.exec() != Err(ExecError::EndOfProgram) {}
     }
 }
 
@@ -113,16 +141,16 @@ fn gen(input: &str) -> Vec<Op> {
 
 #[aoc(day12, part1)]
 fn part1(input: &[Op]) -> isize {
-    let mut computer = Computer::new();
-    computer.run(input);
+    let mut computer = Computer::new(input);
+    computer.run();
     computer.registers[0]
 }
 
 #[aoc(day12, part2)]
 fn part2(input: &[Op]) -> isize {
-    let mut computer = Computer::new();
+    let mut computer = Computer::new(input);
     computer.registers[2] = 1;
-    computer.run(input);
+    computer.run();
     computer.registers[0]
 }
 

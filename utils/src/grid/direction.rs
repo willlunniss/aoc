@@ -29,13 +29,13 @@ impl FromStr for Direction {
 impl TryFrom<char> for Direction {
     type Error = String;
 
-    /// Returns a Direction from NSEW or UDLR single chars
+    /// Returns a Direction from NSEW, UDLR or ^v>< single chars
     fn try_from(c: char) -> Result<Self, Self::Error> {
         match c {
-            'U' | 'N' => Ok(Self::Up),
-            'D' | 'S' => Ok(Self::Down),
-            'L' | 'W' => Ok(Self::Left),
-            'R' | 'E' => Ok(Self::Right),
+            'U' | 'N' | '^' => Ok(Self::Up),
+            'D' | 'S' | 'v' => Ok(Self::Down),
+            'L' | 'W' | '>' => Ok(Self::Left),
+            'R' | 'E' | '<' => Ok(Self::Right),
             _ => Err(format!("Cannot convert '{}' to direction", c)),
         }
     }

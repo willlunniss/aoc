@@ -5,3 +5,4 @@ mod day04_the_ideal_stocking_stuffer;
 mod day05_doesnt_he_have_intern_elves_for_this;
 mod day06_probably_a_fire_hazard;
 mod day07_some_assembly_required;
+mod day08_matchsticks;

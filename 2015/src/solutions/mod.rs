@@ -6,3 +6,4 @@ mod day05_doesnt_he_have_intern_elves_for_this;
 mod day06_probably_a_fire_hazard;
 mod day07_some_assembly_required;
 mod day08_matchsticks;
+mod day09_all_in_a_single_night;

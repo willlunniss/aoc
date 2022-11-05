@@ -12,6 +12,7 @@ dependencies = [
  "itertools",
  "md5",
  "pathfinding",
+ "serde_json",
  "utils",
 ]
 

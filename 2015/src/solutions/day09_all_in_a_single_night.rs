@@ -69,7 +69,7 @@ fn part1(input: &[Route]) -> usize {
     }
 
     // Completed when we have visited all locations
-    let target = distances.keys().sum();
+    let target: u32 = distances.keys().sum();
     let places = distances.len();
     for i in 0..places {
         // Add distance of 0 from the virtual start location to each real location

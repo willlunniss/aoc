@@ -8,3 +8,4 @@ mod day07_some_assembly_required;
 mod day08_matchsticks;
 mod day09_all_in_a_single_night;
 mod day10_elves_look_elves_say;
+mod day11_corporate_policy;

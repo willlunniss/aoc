@@ -7,3 +7,4 @@ mod day06_probably_a_fire_hazard;
 mod day07_some_assembly_required;
 mod day08_matchsticks;
 mod day09_all_in_a_single_night;
+mod day10_elves_look_elves_say;

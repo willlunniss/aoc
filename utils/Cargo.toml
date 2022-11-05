@@ -5,8 +5,8 @@ authors = ["Will Lunniss <willlunniss@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-strum = "0.23"
-strum_macros = "0.23"
+strum = "0.24"
+strum_macros = "0.24"
 itertools = "0.10"
 lazy_static = "1.4"
 indoc = "1.0"

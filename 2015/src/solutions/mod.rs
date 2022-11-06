@@ -10,3 +10,4 @@ mod day09_all_in_a_single_night;
 mod day10_elves_look_elves_say;
 mod day11_corporate_policy;
 mod day12_jsabacusframeworkio;
+mod day13_knights_of_the_dinner_table;

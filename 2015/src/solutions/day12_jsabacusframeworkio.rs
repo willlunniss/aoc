@@ -1,30 +1,31 @@
+use itertools::FoldWhile::{Continue, Done};
+use itertools::Itertools;
 use serde_json::Value;
 
 #[aoc(day12, part1)]
-fn part1(input: &str) -> isize {
+fn part1(input: &str) -> i64 {
     // Split into values, keep only numbers and sum
     input
         .split(&[':', ',', '[', ']', '{', '}'][..])
-        .flat_map(str::parse::<isize>)
+        .flat_map(str::parse::<i64>)
         .sum()
 }
 
-// Sums all numbers that are not within objects that contain a 'red' property
+// Recursively sums all numbers that are not within objects that contain a 'red' property
 fn sum_valid(data: &Value) -> i64 {
     match data {
         Value::Number(x) => x.as_i64().unwrap(),
         Value::Array(arr) => arr.iter().map(sum_valid).sum(),
-        Value::Object(obj) => {
-            let mut sum = 0;
-            for (_, value) in obj {
+        Value::Object(obj) => obj
+            .values()
+            .fold_while(0, |sum, value| {
                 if value == &Value::String("red".to_owned()) {
-                    // Discard all numbers in this object
-                    return 0;
+                    Done(0) // Discard all numbers in this object
+                } else {
+                    Continue(sum + sum_valid(value))
                 }
-                sum += sum_valid(value);
-            }
-            sum
-        }
+            })
+            .into_inner(),
         _ => 0,
     }
 }

@@ -12,3 +12,4 @@ mod day11_corporate_policy;
 mod day12_jsabacusframeworkio;
 mod day13_knights_of_the_dinner_table;
 mod day14_reindeer_olympics;
+mod day15_science_for_hungry_people;

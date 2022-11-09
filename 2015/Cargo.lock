@@ -20,6 +20,7 @@ dependencies = [
  "derive_more",
  "indoc",
  "itertools",
+ "lazy_static",
  "md5",
  "pathfinding",
  "reformation",

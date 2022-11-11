@@ -16,3 +16,4 @@ mod day15_science_for_hungry_people;
 mod day16_aunt_sue;
 mod day17_no_such_thing_as_too_much;
 mod day18_like_a_gif_for_your_yard;
+mod day19_medicine_for_rudolph;

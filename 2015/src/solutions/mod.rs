@@ -18,3 +18,4 @@ mod day17_no_such_thing_as_too_much;
 mod day18_like_a_gif_for_your_yard;
 mod day19_medicine_for_rudolph;
 mod day20_infinite_elves_and_infinite_houses;
+mod day21_rpg_simulator_20xx;

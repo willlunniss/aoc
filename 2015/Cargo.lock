@@ -25,6 +25,8 @@ dependencies = [
  "pathfinding",
  "reformation",
  "serde_json",
+ "strum",
+ "strum_macros",
  "utils",
 ]
 

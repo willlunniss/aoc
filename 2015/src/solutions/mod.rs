@@ -22,3 +22,4 @@ mod day21_rpg_simulator_20xx;
 mod day22_wizard_simulator_20xx;
 mod day23_opening_the_turning_lock;
 mod day24_it_hangs_in_the_balance;
+mod day25_let_it_snow;

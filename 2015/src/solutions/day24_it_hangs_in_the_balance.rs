@@ -1,12 +1,9 @@
 use itertools::Itertools;
 use std::collections::HashSet;
 
-/// Balances packages between the specified number of groups
-fn balance(
-    packages: &Vec<usize>,
-    groups: usize,
-    target_weight: Option<usize>,
-) -> Option<(usize, bool)> {
+/// Balances packages between the specified number of groups finding the lowest
+/// Quantum Entanglement (QE) of the first group
+fn balance(packages: &Vec<usize>, groups: usize, target_weight: Option<usize>) -> Option<usize> {
     // If target_weight is None then this is the first group so should
     // * Base the target weight for all other groups based on what ever selection we use for this group
     // * Calculate the QE if it balances
@@ -57,15 +54,18 @@ fn balance(
                     // Found an even lower QE
                     lowest_qe = qe;
                 }
+            } else {
+                // Not the first group, so any balanced arrangement will do
+                return Some(0);
             }
         }
         if balanced {
             // Managed to balance packages using this split size
             // (No need to try any other splits)
-            return Some((lowest_qe, true));
+            return Some(lowest_qe);
         }
     }
-
+    // Failed to balance
     None
 }
 
@@ -75,13 +75,13 @@ fn gen(input: &str) -> Vec<usize> {
 }
 
 #[aoc(day24, part1)]
-fn part1(input: &Vec<usize>) -> usize {
-    balance(input, 3, None).unwrap().0
+fn part1(input: &Vec<usize>) -> Option<usize> {
+    balance(input, 3, None)
 }
 
 #[aoc(day24, part2)]
-fn part2(input: &Vec<usize>) -> usize {
-    balance(input, 4, None).unwrap().0
+fn part2(input: &Vec<usize>) -> Option<usize> {
+    balance(input, 4, None)
 }
 
 #[cfg(test)]
@@ -104,11 +104,11 @@ mod tests {
 
     #[test]
     fn test_part1_example() {
-        assert_eq!(part1(&gen(EXAMPLE_INPUT)), 99);
+        assert_eq!(part1(&gen(EXAMPLE_INPUT)), Some(99));
     }
 
     #[test]
     fn test_part2_example() {
-        assert_eq!(part2(&gen(EXAMPLE_INPUT)), 44);
+        assert_eq!(part2(&gen(EXAMPLE_INPUT)), Some(44));
     }
 }

@@ -4,15 +4,17 @@ use std::collections::HashSet;
 /// Balances packages between the specified number of groups finding the lowest
 /// Quantum Entanglement (QE) of the first group
 fn balance(packages: &Vec<usize>, groups: usize, target_weight: Option<usize>) -> Option<usize> {
-    // If target_weight is None then this is the first group so should
-    // * Base the target weight for all other groups based on what ever selection we use for this group
-    // * Calculate the QE if it balances
-    let calculate_qe = target_weight.is_none();
-    let mut lowest_qe = usize::MAX;
-    let mut balanced = false;
     for split in 1..packages.len() - groups {
-        // Select some packages for this group
-        for selected in packages.iter().combinations(split).collect::<HashSet<_>>() {
+        // Get all possible selections of split size for this group
+        let mut selections = packages.iter().combinations(split).collect::<Vec<_>>();
+        if target_weight.is_none() {
+            // First group - we need to find the one with the lowest QE
+            // Sort selections from lowest to highest QE
+            selections.sort_by_cached_key(|p| p.iter().copied().product::<usize>());
+        }
+
+        // Go through each to find the first one that balances
+        for selected in &selections {
             let mut target_weight = target_weight;
             // Check if this group is balanced
             let weight = selected.iter().copied().sum::<usize>();
@@ -25,9 +27,10 @@ fn balance(packages: &Vec<usize>, groups: usize, target_weight: Option<usize>) -
             }
 
             // Work out what is left
+            let removed = selected.iter().collect::<HashSet<_>>();
             let remaining = packages
                 .iter()
-                .filter(|p| !selected.contains(p))
+                .filter(|p| !removed.contains(p))
                 .copied()
                 .collect::<Vec<_>>();
 
@@ -46,23 +49,7 @@ fn balance(packages: &Vec<usize>, groups: usize, target_weight: Option<usize>) -
             }
 
             // Balanced this and all remaining groups!
-            balanced = true;
-            if calculate_qe {
-                // First group, calculate and update QE if lower than what we have already
-                let qe = selected.iter().copied().product();
-                if qe < lowest_qe {
-                    // Found an even lower QE
-                    lowest_qe = qe;
-                }
-            } else {
-                // Not the first group, so any balanced arrangement will do
-                return Some(0);
-            }
-        }
-        if balanced {
-            // Managed to balance packages using this split size
-            // (No need to try any other splits)
-            return Some(lowest_qe);
+            return Some(selected.iter().copied().product());
         }
     }
     // Failed to balance

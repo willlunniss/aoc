@@ -12,6 +12,7 @@ To run an entire year's solutions:
 
 To run a specific day:
 ```
+ cargo install cargo-aoc
  cd <YEAR>
  cargo aoc -d <DAY>
 ```

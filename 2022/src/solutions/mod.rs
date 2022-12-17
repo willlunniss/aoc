@@ -1,1 +1,2 @@
 mod day01_calorie_counting;
+mod day02_rock_paper_scissors;

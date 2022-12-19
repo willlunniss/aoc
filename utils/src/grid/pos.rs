@@ -191,6 +191,13 @@ impl Pos {
             .map(|(x, y)| Pos { x: *x, y })
             .collect_vec()
     }
+
+    /// Returns the next position to move to when going from -> to
+    /// 1 step at a time (where steps can include diagonals)
+    pub fn step_towards(self, to: Pos) -> Pos {
+        let delta: Pos = to - self;
+        self + (Direction::Right * delta.x) + (Direction::Down * delta.y)
+    }
 }
 
 impl Add<(isize, isize)> for Pos {
@@ -237,6 +244,25 @@ impl Add<(i32, i32)> for Pos {
     }
 }
 
+impl Add<Option<Direction>> for Pos {
+    type Output = Self;
+
+    fn add(self, other: Option<Direction>) -> Self {
+        match other {
+            None => self,
+            Some(direction) => self.next(direction),
+        }
+    }
+}
+
+impl Add<Direction> for Pos {
+    type Output = Self;
+
+    fn add(self, direction: Direction) -> Self {
+        self.next(direction)
+    }
+}
+
 impl Sub<(isize, isize)> for Pos {
     type Output = Self;
 
@@ -255,6 +281,17 @@ impl Sub<(usize, usize)> for Pos {
         Self {
             x: self.x - other.0 as isize,
             y: self.y - other.1 as isize,
+        }
+    }
+}
+
+impl Sub<Pos> for Pos {
+    type Output = Self;
+
+    fn sub(self, other: Pos) -> Self {
+        Self {
+            x: self.x - other.x,
+            y: self.y - other.y,
         }
     }
 }

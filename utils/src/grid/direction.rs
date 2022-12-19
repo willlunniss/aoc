@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign};
+use std::ops::{Add, AddAssign, Mul};
 use std::str::FromStr;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
@@ -123,6 +123,18 @@ impl AddAssign<Direction> for Direction {
             Direction::Right => self.rotate_right(),
             Direction::Up => *self,
             Direction::Down => self.back(),
+        }
+    }
+}
+
+impl Mul<isize> for Direction {
+    type Output = Option<Direction>;
+
+    fn mul(self, rhs: isize) -> Self::Output {
+        match rhs {
+            1.. => Some(self),      // Positive -> same direction
+            0 => None,              // Zero - no direction
+            _ => Some(self.back()), // Negative -> reverse direction
         }
     }
 }

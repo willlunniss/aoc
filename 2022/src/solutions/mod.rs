@@ -6,3 +6,4 @@ mod day05_supply_stacks;
 mod day06_tuning_trouble;
 mod day07_no_space_left_on_device;
 mod day08_treetop_tree_house;
+mod day09_rope_bridge;

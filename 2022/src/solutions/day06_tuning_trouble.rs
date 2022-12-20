@@ -28,11 +28,11 @@ mod tests {
 
     #[test]
     fn test_part1_example() {
-        assert_eq!(part1(&"zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw"), 11);
+        assert_eq!(part1("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw"), 11);
     }
 
     #[test]
     fn test_part2_example() {
-        assert_eq!(part2(&"zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw"), 26);
+        assert_eq!(part2("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw"), 26);
     }
 }

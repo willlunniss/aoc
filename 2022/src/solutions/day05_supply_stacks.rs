@@ -41,7 +41,7 @@ impl Cargo {
     fn move_single(&mut self, r: &Rearrangement) {
         for _i in 0..r.count {
             let item = self.stacks[r.from - 1].pop().unwrap();
-            self.stacks[r.to - 1].push(item)
+            self.stacks[r.to - 1].push(item);
         }
     }
 
@@ -51,7 +51,7 @@ impl Cargo {
         let items = self.stacks[r.from - 1]
             .drain(remove_from..)
             .collect::<Vec<_>>();
-        self.stacks[r.to - 1].extend(items)
+        self.stacks[r.to - 1].extend(items);
     }
 }
 

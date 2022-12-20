@@ -96,7 +96,7 @@ fn part1(input: &FileSystem) -> usize {
         .contents
         .keys()
         .map(|path| input.size(path))
-        .filter(|size| *size <= 100000)
+        .filter(|size| *size <= 100_000)
         .sum()
 }
 
@@ -105,7 +105,7 @@ fn part2(input: &FileSystem) -> usize {
     // Work out how much space needs to be freed based on what can be used
     let used = input.size(&PathBuf::from(r"/"));
     // Can use total - required for the update
-    let can_use = 70000000 - 30000000;
+    let can_use = 70_000_000 - 30_000_000;
     let to_free = used - can_use;
     // Find the smallest directory that will free up at least enough space
     input
@@ -155,6 +155,6 @@ mod tests {
 
     #[test]
     fn test_part2_example() {
-        assert_eq!(part2(&gen(EXAMPLE_INPUT)), 24933642);
+        assert_eq!(part2(&gen(EXAMPLE_INPUT)), 24_933_642);
     }
 }
